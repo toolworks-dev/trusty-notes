@@ -5,7 +5,7 @@ export interface SyncSettings {
     custom_servers: string[];
     seed_phrase: string | null;
   }
-  
+    
   export interface SyncProgress {
     total_notes: number;
     processed_notes: number;

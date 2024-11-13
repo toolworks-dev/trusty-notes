@@ -12,6 +12,7 @@ import {
   Select,
   TextInput,
   ActionIcon,
+ // Box,
 } from '@mantine/core';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
 import { invoke } from '@tauri-apps/api/core';
@@ -34,8 +35,31 @@ export function SyncSettings() {
   const [syncProgress, setSyncProgress] = useState<SyncProgressType | null>(null);
   const [selectedServer, setSelectedServer] = useState(DEFAULT_SERVERS[0].value);
   const [customServers, setCustomServers] = useState<string[]>([]);
-  const [newServer, setNewServer] = useState('');
+  const [newServerUrl, setNewServerUrl] = useState('');
   const [showAddServer, setShowAddServer] = useState(false);
+  const [isValidUrl, setIsValidUrl] = useState(false);
+
+  const validateUrl = (url: string) => {
+    try {
+      new URL(url);
+      return true;
+    } catch {
+      return false;
+    }
+  };
+
+  const handleUrlChange = (value: string) => {
+    setNewServerUrl(value);
+    setIsValidUrl(validateUrl(value));
+  };
+
+  const handleKeyPress = (event: React.KeyboardEvent) => {
+    if (event.key === 'Enter' && isValidUrl) {
+      handleAddServer();
+    }
+  };
+
+
 
   useEffect(() => {
     const loadSettings = async () => {
@@ -43,15 +67,10 @@ export function SyncSettings() {
         const settings = await invoke<SyncSettingsType>('get_sync_settings');
         setAutoSync(settings.auto_sync);
         setSelectedServer(settings.server_url);
-        setCustomServers(settings.custom_servers);
+        setCustomServers(settings.custom_servers || []);
         setSeedPhrase(settings.seed_phrase ?? '');
-        console.log('Loaded settings:', settings);
       } catch (err) {
         console.error('Failed to load settings:', err);
-        setAutoSync(false);
-        setSelectedServer(DEFAULT_SERVERS[0].value);
-        setCustomServers([]);
-        setSeedPhrase('');
       }
     };
     loadSettings();
@@ -61,7 +80,6 @@ export function SyncSettings() {
     const unlisten = listen<SyncProgressType>('sync:progress', (event) => {
       setSyncProgress(event.payload);
     });
-  
     return () => {
       unlisten.then(fn => fn());
     };
@@ -70,7 +88,6 @@ export function SyncSettings() {
   const saveSettings = async (updates: Partial<SyncSettingsType>) => {
     try {
       const currentSettings = await invoke<SyncSettingsType>('get_sync_settings');
-      
       const newSettings: SyncSettingsType = {
         auto_sync: 'auto_sync' in updates ? updates.auto_sync! : autoSync,
         server_url: 'server_url' in updates ? updates.server_url! : selectedServer,
@@ -78,98 +95,51 @@ export function SyncSettings() {
         seed_phrase: 'seed_phrase' in updates ? updates.seed_phrase! : seedPhrase,
         sync_interval: currentSettings.sync_interval,
       };
-  
       await invoke('save_sync_settings', { settings: newSettings });
-      console.log('Saved settings:', newSettings);
-    } catch (error) {
-      console.error('Failed to save settings:', error);
-      notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to save settings',
-        color: 'red',
-      });
-    }
-  };
-  
-  const generateNewSeedPhrase = async () => {
-    try {
-      const phrase = await invoke<string>('generate_seed_phrase');
-      setNewSeedPhrase(phrase);
-      setShowNewSeedPhrase(true);
     } catch (error) {
       notifications.show({
         title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to generate seed phrase',
+        message: 'Failed to save settings',
         color: 'red',
       });
     }
   };
 
-  const handleSync = async () => {
-    if (!seedPhrase || !selectedServer) {
-      notifications.show({
-        title: 'Error',
-        message: 'Please enter your seed phrase and select a server',
-        color: 'red',
-      });
-      return;
-    }
-
+  const handleAddServer = async () => {
     try {
-      setSyncing(true);
+      if (!isValidUrl) {
+        return;
+      }
       
-      await invoke('initialize_sync', { 
-        seedPhrase,
-        serverUrl: selectedServer
+      if (customServers.includes(newServerUrl) || 
+          DEFAULT_SERVERS.some(s => s.value === newServerUrl)) {
+        notifications.show({
+          title: 'Error',
+          message: 'Server already exists',
+          color: 'red',
+        });
+        return;
+      }
+      
+      const updatedServers = [...customServers, newServerUrl];
+      setCustomServers(updatedServers);
+      setSelectedServer(newServerUrl);
+      await saveSettings({ 
+        custom_servers: updatedServers,
+        server_url: newServerUrl
       });
-
-      await invoke('sync_notes', { 
-        seedPhrase,
-        serverUrl: selectedServer
-      });
+      setNewServerUrl('');
+      setShowAddServer(false);
       
       notifications.show({
-        title: 'Sync Complete',
-        message: 'Your notes have been synchronized successfully',
+        title: 'Success',
+        message: 'Server added successfully',
         color: 'green',
       });
     } catch (error) {
-      console.error('Sync error:', error);
       notifications.show({
-        title: 'Sync Failed',
-        message: error instanceof Error ? error.message : 'Failed to sync notes',
-        color: 'red',
-      });
-    } finally {
-      setSyncing(false);
-      setSyncProgress(null);
-    }
-  };
-
-  const handleServerChange = async (value: string | null) => {
-    if (value) {
-      setSelectedServer(value);
-      await saveSettings({ server_url: value });
-    }
-  };
-  
-  const handleAddServer = async () => {
-    if (!newServer) return;
-    
-    try {
-      new URL(newServer);
-      
-      const updatedServers = [...customServers, newServer];
-      setCustomServers(updatedServers);
-      await saveSettings({ custom_servers: updatedServers });
-      setNewServer('');
-      setShowAddServer(false);
-      
-      await handleServerChange(newServer);
-    } catch (error) {
-      notifications.show({
-        title: 'Invalid URL',
-        message: 'Please enter a valid server URL',
+        title: 'Error',
+        message: 'Failed to add server',
         color: 'red',
       });
     }
@@ -181,16 +151,71 @@ export function SyncSettings() {
     await saveSettings({ custom_servers: updatedServers });
     
     if (selectedServer === serverUrl) {
-      await handleServerChange(DEFAULT_SERVERS[0].value);
+      const newServer = DEFAULT_SERVERS[0].value;
+      setSelectedServer(newServer);
+      await saveSettings({ server_url: newServer });
+    }
+  };
+
+  const handleServerChange = async (value: string | null) => {
+    if (value) {
+      setSelectedServer(value);
+      await saveSettings({ server_url: value });
+    }
+  };
+
+  const handleSync = async () => {
+    if (!seedPhrase) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter a seed phrase',
+        color: 'red',
+      });
+      return;
+    }
+  
+    setSyncing(true);
+    try {
+      await invoke('sync_notes', {
+        seedPhrase,
+        serverUrl: selectedServer
+      });
+      notifications.show({
+        title: 'Success',
+        message: 'Notes synced successfully',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Sync error:', error);
+      notifications.show({
+        title: 'Error',
+        message: typeof error === 'string' ? error : 'Failed to sync notes',
+        color: 'red',
+      });
+    } finally {
+      setSyncing(false);
     }
   };
   
+  const generateNewSeedPhrase = async () => {
+    try {
+      const phrase = await invoke<string>('generate_seed_phrase');
+      setNewSeedPhrase(phrase);
+      setShowNewSeedPhrase(true);
+    } catch (error) {
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to generate seed phrase',
+        color: 'red',
+      });
+    }
+  };
+
   const serverOptions = [
     ...DEFAULT_SERVERS,
     ...customServers.map(url => ({
       label: url,
       value: url,
-      group: 'Custom Servers',
       rightSection: (
         <ActionIcon 
           size="sm" 
@@ -200,48 +225,42 @@ export function SyncSettings() {
             handleRemoveServer(url);
           }}
         >
-          <IconTrash size={16} />
+          <IconTrash size={14} />
         </ActionIcon>
-      ),
-    })),
+      )
+    }))
   ];
-
-  // Save settings when they change
-  useEffect(() => {
-    if (seedPhrase) {
-      saveSettings({ seed_phrase: seedPhrase });
-    }
-  }, [seedPhrase]);
-
-  useEffect(() => {
-    saveSettings({ auto_sync: autoSync });
-  }, [autoSync]);
 
   return (
     <Stack>
       <Paper p="md" withBorder>
         <Stack>
-          <Text size="lg" fw={500}>Sync Settings</Text>
-          
-          <Select
-            label="Sync Server"
-            placeholder="Select a server"
-            data={serverOptions}
-            value={selectedServer}
-            onChange={handleServerChange}
-            rightSection={
-              <ActionIcon onClick={() => setShowAddServer(true)}>
-                <IconPlus size={16} />
-              </ActionIcon>
-            }
-            allowDeselect={false}
-          />
+          <Group align="flex-end">
+            <Select
+              label="Sync Server"
+              placeholder="Select a server"
+              data={serverOptions}
+              value={selectedServer}
+              onChange={handleServerChange}
+              style={{ flex: 1 }}
+            />
+            <Button 
+              variant="light"
+              onClick={() => setShowAddServer(true)}
+              leftSection={<IconPlus size={16} />}
+            >
+              Add Server
+            </Button>
+          </Group>
           
           <PasswordInput
             label="Seed Phrase"
             description="Enter your seed phrase to sync across devices"
             value={seedPhrase}
-            onChange={(e) => setSeedPhrase(e.currentTarget.value)}
+            onChange={(e) => {
+              setSeedPhrase(e.currentTarget.value);
+              saveSettings({ seed_phrase: e.currentTarget.value });
+            }}
           />
 
           <Group justify="space-between">
@@ -263,16 +282,14 @@ export function SyncSettings() {
             label="Auto-sync"
             checked={autoSync}
             onChange={(e) => {
-                setAutoSync(e.currentTarget.checked);
-                saveSettings({ auto_sync: e.currentTarget.checked });
+              setAutoSync(e.currentTarget.checked);
+              saveSettings({ auto_sync: e.currentTarget.checked });
             }}
           />
         </Stack>
       </Paper>
 
-      {syncProgress && (
-        <SyncProgress progress={syncProgress} />
-      )}
+      {syncProgress && <SyncProgress progress={syncProgress} />}
 
       <Modal
         opened={showAddServer}
@@ -282,15 +299,21 @@ export function SyncSettings() {
         <Stack>
           <TextInput
             label="Server URL"
+            description="Enter the full URL of your sync server"
             placeholder="https://your-server.com"
-            value={newServer}
-            onChange={(e) => setNewServer(e.currentTarget.value)}
+            value={newServerUrl}
+            onChange={(e) => handleUrlChange(e.currentTarget.value)}
+            onKeyPress={handleKeyPress}
+            error={newServerUrl && !isValidUrl ? "Please enter a valid URL" : null}
           />
           <Group justify="flex-end">
             <Button variant="light" onClick={() => setShowAddServer(false)}>
               Cancel
             </Button>
-            <Button onClick={handleAddServer}>
+            <Button 
+              onClick={handleAddServer}
+              disabled={!isValidUrl}
+            >
               Add Server
             </Button>
           </Group>
