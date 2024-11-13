@@ -2,6 +2,9 @@
 
 A secure, (WIP) cross-platform note-taking application built with Rust. Features end-to-end encryption for cloud sync and a modern React frontend.
 
+![image](https://github.com/user-attachments/assets/ee3dc121-5413-44f6-b242-7b816b540fb2)
+
+
 ## Features
 
 - 📝 Markdown editor with live preview
