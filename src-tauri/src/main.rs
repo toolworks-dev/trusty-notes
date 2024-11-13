@@ -351,37 +351,53 @@ fn main() {
             let hide = MenuItem::with_id(app, "hide", "Hide", true, None::<&str>)?;
             let menu = Menu::with_items(app, &[&show, &hide, &quit])?;
 
-            let _tray = TrayIconBuilder::new()
-                .menu(&menu)
-                .icon(app.default_window_icon().unwrap().clone())
-                .on_menu_event(move |app, event| match event.id.as_ref() {
-                    "quit" => {
-                        app.exit(0);
-                    }
-                    "show" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            window.show().unwrap();
-                            window.set_focus().unwrap();
+            let tray = TrayIconBuilder::new()
+            .menu(&menu)
+            .icon(app.default_window_icon().unwrap().clone())
+            .tooltip("Rusty Notes")
+            .on_menu_event(move |app, event| match event.id.as_ref() {
+                "quit" => {
+                    app.exit(0);
+                }
+                "show" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        window.show().unwrap();
+                        window.set_focus().unwrap();
+                        
+                        #[cfg(target_os = "linux")]
+                        {
+                            window.set_always_on_top(true).unwrap();
+                            window.set_always_on_top(false).unwrap();
                         }
                     }
-                    "hide" => {
-                        if let Some(window) = app.get_webview_window("main") {
-                            window.hide().unwrap();
-                        }
+                }
+                "hide" => {
+                    if let Some(window) = app.get_webview_window("main") {
+                        window.hide().unwrap();
                     }
-                    _ => {}
-                })
-                .build(app)?;
-
+                }
+                _ => {}
+            })
+            .build(app)?;
+        
+        #[cfg(target_os = "linux")]
+        {
             let window = app.get_webview_window("main").unwrap();
             let window_clone = window.clone();
-            window.on_window_event(move |event| {
-                if let tauri::WindowEvent::CloseRequested { api, .. } = event {
-                    api.prevent_close();
-                    window_clone.hide().unwrap();
+            tray.on_tray_icon_event(move |event| {
+                if let tauri::tray::TrayIconEvent::LeftClick { .. } = event {
+                    if window_clone.is_visible().unwrap() {
+                        window_clone.hide().unwrap();
+                    } else {
+                        window_clone.show().unwrap();
+                        window_clone.set_focus().unwrap();
+                        // Bring to front
+                        window_clone.set_always_on_top(true).unwrap();
+                        window_clone.set_always_on_top(false).unwrap();
+                    }
                 }
             });
-
+        }
             Ok(())
         })
         .invoke_handler(tauri::generate_handler![
