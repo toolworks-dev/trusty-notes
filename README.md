@@ -22,7 +22,6 @@ A secure, (WIP) cross-platform note-taking application built with Rust. Features
 - [ ] Mobile support
 - [ ] Improved Sync
 - [ ] Mac/Linux Support (I really only need to change the file locations and it should work)
-- [ ] Custom Sync Server Address
 - [ ] a lot more
 
 ## Installation
@@ -51,10 +50,10 @@ A secure, (WIP) cross-platform note-taking application built with Rust. Features
 
 ### Setup
 1. Clone the repository
-2. Run `docker compose up --build` to build and start the server.
+2. Run `docker compose up --build` inside the server directory to build and start the server.
 
 ### Configuration
-Currently you need to rebuild the client with your server address - will fix this soon.
+Add your ip:port or if reverse proxying, your domain in sync server settings
 
 
 
