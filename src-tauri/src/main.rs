@@ -1,3 +1,4 @@
+#![cfg_attr(not(debug_assertions), windows_subsystem = "windows")]
 mod types;
 mod crypto;
 mod sync;
@@ -36,12 +37,7 @@ fn get_settings_path(app_handle: &AppHandle) -> PathBuf {
 
 #[tauri::command]
 async fn get_sync_settings(app_handle: AppHandle) -> Result<SyncSettings, String> {
-    let app_dir = app_handle
-        .path()
-        .app_local_data_dir()
-        .expect("Failed to get app data directory");
-    let settings_path = app_dir.join("sync_settings.json");
-    
+    let settings_path = get_settings_path(&app_handle);
     println!("Loading settings from: {:?}", settings_path);
 
     if settings_path.exists() {
@@ -61,15 +57,13 @@ async fn get_sync_settings(app_handle: AppHandle) -> Result<SyncSettings, String
 
 #[tauri::command]
 async fn save_sync_settings(app_handle: AppHandle, settings: SyncSettings) -> Result<(), String> {
-    let app_dir = app_handle
-        .path()
-        .app_local_data_dir()
-        .expect("Failed to get app data directory");
+    let settings_path = get_settings_path(&app_handle);
     
-    fs::create_dir_all(&app_dir)
-        .map_err(|e| format!("Failed to create settings directory: {}", e))?;
+    if let Some(parent) = settings_path.parent() {
+        fs::create_dir_all(parent)
+            .map_err(|e| format!("Failed to create settings directory: {}", e))?;
+    }
     
-    let settings_path = app_dir.join("sync_settings.json");
     println!("Saving settings to: {:?}", settings_path);
     
     let settings_str = serde_json::to_string_pretty(&settings)
@@ -85,7 +79,7 @@ async fn save_sync_settings(app_handle: AppHandle, settings: SyncSettings) -> Re
 fn initialize_database(app_handle: &AppHandle) -> Result<Connection, rusqlite::Error> {
     let app_dir = app_handle
         .path()
-        .app_local_data_dir()
+        .app_data_dir()
         .expect("Failed to get app local data directory");
     
     fs::create_dir_all(&app_dir).expect("Failed to create app data directory");

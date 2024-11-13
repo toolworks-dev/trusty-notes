@@ -338,7 +338,7 @@ async function handleSave() {
           title="Sync Settings"
           size="lg"
         >
-          <SyncSettings />
+            <SyncSettings onSync={loadNotes} />
         </Modal>
       </AppShell>
     );

@@ -26,7 +26,11 @@ const DEFAULT_SERVERS = [
   { label: 'Local Server', value: 'http://localhost:3222' },
 ];
 
-export function SyncSettings() {
+interface SyncSettingsProps {
+  onSync?: () => Promise<void>;
+}
+
+export function SyncSettings({ onSync }: SyncSettingsProps) {
   const [seedPhrase, setSeedPhrase] = useState('');
   const [autoSync, setAutoSync] = useState(false);
   const [showNewSeedPhrase, setShowNewSeedPhrase] = useState(false);
@@ -180,6 +184,12 @@ export function SyncSettings() {
         seedPhrase,
         serverUrl: selectedServer
       });
+      
+      // Call the onSync callback after successful sync
+      if (onSync) {
+        await onSync();
+      }
+      
       notifications.show({
         title: 'Success',
         message: 'Notes synced successfully',
