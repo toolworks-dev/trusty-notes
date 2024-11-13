@@ -13,7 +13,7 @@ A secure, (WIP) cross-platform note-taking application built with Rust. Features
 - 🌙 Dark/Light mode
 - 💾 Automatic saving
 - 🔍 Full-text search
-- 📱 Cross-platform (Soon) (macOS, Linux, and Mobile are planned)
+- 📱 Cross-platform (Soon) (Mobile is planned)
 - 💾 Import/Export functionality
 - 🔒 Seed phrase-based encryption
 - 🖥️ System tray support
