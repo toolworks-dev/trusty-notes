@@ -21,8 +21,8 @@ A secure, (WIP) cross-platform note-taking application built with Rust. Features
 ## To-Do
 - [ ] Mobile support
 - [ ] Improved Sync
-- [ ] Mac/Linux Support (I really only need to change the file locations and it should work)
-- [ ] a lot more
+- [ ] Rich Text
+- [ ] Attachments/Files
 
 ## Installation
 
