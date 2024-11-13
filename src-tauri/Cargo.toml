@@ -1,0 +1,28 @@
+[package]
+name = "rusty-notes"
+version = "0.1.0"
+description = "A Tauri App"
+authors = ["0xgingi"]
+edition = "2021"
+
+[lib]
+name = "rusty_notes_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [ "tray-icon" ] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+rusqlite = { version = "0.32.1", features = ["bundled"] }
+aes-gcm = "0.10"
+bip39 = "2.0"
+ed25519-dalek = "2.1"
+base64 = "0.21"
+reqwest = { version = "0.11", features = ["json"] }
+tokio = { version = "1.28", features = ["full"] }
+futures = "0.3"
+rand = "0.8"
