@@ -10,6 +10,7 @@ import 'highlight.js/styles/github.css';
 interface MarkdownEditorProps {
   content: string;
   onChange: (value: string) => void;
+  isMobile?: boolean;
 }
 
 function WordCount({ content }: { content: string }) {
@@ -28,10 +29,49 @@ function WordCount({ content }: { content: string }) {
   );
 }
 
-export function MarkdownEditor({ content, onChange }: MarkdownEditorProps) {
-  const [view, setView] = useState<'edit' | 'preview' | 'split'>('edit');
+export function MarkdownEditor({ content, onChange, isMobile }: MarkdownEditorProps) {
+  const [view, setView] = useState<'edit' | 'preview' | 'split'>(isMobile ? 'edit' : 'split');
 
   const renderContent = () => {
+    if (isMobile) {
+      return view === 'edit' ? (
+        <Textarea
+          value={content}
+          onChange={(e) => onChange(e.currentTarget.value)}
+          styles={{
+            root: { height: '100%' },
+            wrapper: { height: '100%' },
+            input: {
+              height: '100%',
+              padding: '1rem',
+              fontSize: '16px', // Prevents zoom on iOS
+              borderRadius: 'var(--mantine-radius-md)',
+              border: '1px solid var(--mantine-color-gray-3)',
+              backgroundColor: 'var(--mantine-color-body)',
+              transition: 'border-color 100ms ease',
+              '&:focus': {
+                borderColor: 'var(--mantine-color-blue-filled)',
+                outline: 'none'
+              },
+              '&:hover': {
+                borderColor: 'var(--mantine-color-gray-5)'
+              }
+            }
+          }}
+        />
+      ) : (
+        <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
+          <ReactMarkdown
+            remarkPlugins={[remarkGfm]}
+            rehypePlugins={[rehypeRaw, rehypeHighlight]}
+          >
+            {content}
+          </ReactMarkdown>
+        </Box>
+      );
+    }
+
+    // Desktop layout
     switch (view) {
       case 'edit':
         return (
@@ -114,30 +154,41 @@ export function MarkdownEditor({ content, onChange }: MarkdownEditorProps) {
       <Group justify="space-between" mb="xs">
         <WordCount content={content} />
         <Group>
-          <Tooltip label="Edit">
+          {isMobile ? (
             <ActionIcon
               variant={view === 'edit' ? 'filled' : 'subtle'}
-              onClick={() => setView('edit')}
+              onClick={() => setView(view === 'edit' ? 'preview' : 'edit')}
             >
-              <IconEdit size={16} />
+              {view === 'edit' ? <IconEye size={16} /> : <IconEdit size={16} />}
             </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Preview">
-            <ActionIcon
-              variant={view === 'preview' ? 'filled' : 'subtle'}
-              onClick={() => setView('preview')}
-            >
-              <IconEye size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Split View">
-            <ActionIcon
-              variant={view === 'split' ? 'filled' : 'subtle'}
-              onClick={() => setView('split')}
-            >
-              <IconColumns size={16} />
-            </ActionIcon>
-          </Tooltip>
+          ) : (
+            <>
+              <Tooltip label="Edit">
+                <ActionIcon
+                  variant={view === 'edit' ? 'filled' : 'subtle'}
+                  onClick={() => setView('edit')}
+                >
+                  <IconEdit size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Preview">
+                <ActionIcon
+                  variant={view === 'preview' ? 'filled' : 'subtle'}
+                  onClick={() => setView('preview')}
+                >
+                  <IconEye size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Split View">
+                <ActionIcon
+                  variant={view === 'split' ? 'filled' : 'subtle'}
+                  onClick={() => setView('split')}
+                >
+                  <IconColumns size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </>
+          )}
         </Group>
       </Group>
       {renderContent()}

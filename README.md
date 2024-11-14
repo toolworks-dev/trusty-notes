@@ -1,6 +1,6 @@
 # Trusty Notes
 
-A secure, (WIP) cross-platform note-taking application. Features end-to-end encryption for cloud sync and a modern React frontend.
+A secure cross-platform note-taking application. Features end-to-end encryption for cloud sync and a modern React frontend.
 
 https://notes.toolworks.dev
 
@@ -15,12 +15,11 @@ https://notes.toolworks.dev
 - 🌙 Dark/Light mode
 - 💾 Automatic saving
 - 🔍 Full-text search
-- 📱 Cross-platform (Soon) (Mobile is planned)
+- 📱 Cross-platform
 - 💾 Import/Export functionality
 - 🔒 Seed phrase-based encryption
 
 ## To-Do
-- [ ] Mobile support
 - [ ] Improved Sync
 - [ ] Rich Text
 - [ ] Attachments/Files

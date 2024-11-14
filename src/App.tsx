@@ -13,6 +13,9 @@ import {
   Box,
   Tooltip,
   Modal,
+  rem,
+  Burger,
+  Drawer
 } from '@mantine/core';
 import { 
   IconSun, 
@@ -27,12 +30,13 @@ import {
   IconUpload,
   IconCloud,
 } from '@tabler/icons-react';
-import { useDebouncedCallback } from '@mantine/hooks';
+import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MarkdownEditor } from './components/MarkdownEditor';
 import { SyncSettings } from './components/SyncSettings';
 import { useAutoSync } from './hooks/useAutoSync';
 import { SyncSettings as SyncSettingsType } from './types/sync';
 import { WebStorageService } from './services/webStorage';
+
 interface Note {
   id?: number;
   title: string;
@@ -52,6 +56,9 @@ function App() {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [showSyncSettings, setShowSyncSettings] = useState(false);
   const [syncSettings, setSyncSettings] = useState<SyncSettingsType | null>(null);
+  const isMobile = useMediaQuery('(max-width: 768px)');
+  const [mobileNavOpened, setMobileNavOpened] = useState(false);
+
 
   useEffect(() => {
     loadNotes();
@@ -180,14 +187,129 @@ async function deleteNote(noteId: number) {
     input.click();
   }
   return (
-      <AppShell
-        navbar={{
-          width: sidebarCollapsed ? 80 : 300,
-          breakpoint: 'sm',
-          collapsed: { mobile: sidebarCollapsed }
-        }}
-        padding="0"
-      >
+    <AppShell
+      header={isMobile ? { height: 60 } : undefined}
+      navbar={{
+        width: isMobile ? 0 : (sidebarCollapsed ? 80 : 300),
+        breakpoint: 'sm',
+        collapsed: { mobile: true }
+      }}
+      padding="0"
+    >
+      {isMobile && (
+        <AppShell.Header>
+          <Group h="100%" px="md" justify="space-between">
+            <Burger
+              opened={mobileNavOpened}
+              onClick={() => setMobileNavOpened(o => !o)}
+              hiddenFrom="sm"
+              size="sm"
+            />
+            <TextInput
+              placeholder="Note title"
+              value={title}
+              onChange={(e) => setTitle(e.currentTarget.value)}
+              style={{ flex: 1 }}
+            />
+            <ActionIcon variant="subtle" onClick={clearForm}>
+              <IconPlus size={20} />
+            </ActionIcon>
+          </Group>
+        </AppShell.Header>
+      )}
+
+      {isMobile ? (
+        <Drawer
+          opened={mobileNavOpened}
+          onClose={() => setMobileNavOpened(false)}
+          size="100%"
+          padding="md"
+          title="Notes"
+          hiddenFrom="sm"
+        >
+          <Stack h="100%">
+            <Group justify="space-between">
+              <Button
+                leftSection={<IconPlus size={14} />}
+                variant="light"
+                onClick={() => {
+                  clearForm();
+                  setMobileNavOpened(false);
+                }}
+                fullWidth
+              >
+                New Note
+              </Button>
+            </Group>
+
+            <Group grow mb="md">
+              <ActionIcon variant="light" onClick={() => toggleColorScheme()} w="100%" h={rem(36)}>
+                {colorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+              </ActionIcon>
+              <ActionIcon variant="light" onClick={() => setShowSyncSettings(true)} w="100%" h={rem(36)}>
+                <IconCloud size={20} />
+              </ActionIcon>
+            </Group>
+
+            <TextInput
+              placeholder="Search notes..."
+              leftSection={<IconSearch size={16} />}
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.currentTarget.value)}
+              mb="md"
+            />
+
+            <Stack gap="xs" style={{ overflow: 'auto', flex: 1 }}>
+              {filteredNotes.map((note) => (
+                <Paper
+                  key={note.id}
+                  shadow="xs"
+                  p="md"
+                  onClick={() => {
+                    selectNote(note);
+                    setMobileNavOpened(false);
+                  }}
+                  style={{
+                    cursor: 'pointer',
+                    backgroundColor: selectedNote?.id === note.id ? 
+                      'var(--mantine-color-blue-light)' : undefined,
+                  }}
+                >
+                  <Group justify="space-between" wrap="nowrap">
+                    <Box style={{ flex: 1 }}>
+                      <Text fw={500} truncate="end">
+                        {note.title || 'Untitled'}
+                      </Text>
+                      <Text size="xs" c="dimmed">
+                        {format(note.updated_at, 'MMM d, yyyy HH:mm')}
+                      </Text>
+                    </Box>
+                    <ActionIcon
+                      variant="subtle"
+                      color="red"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        deleteNote(note.id!);
+                      }}
+                    >
+                      <IconTrash size={16} />
+                    </ActionIcon>
+                  </Group>
+                </Paper>
+              ))}
+            </Stack>
+
+            <Group grow>
+              <Button variant="light" leftSection={<IconDownload size={14} />} onClick={exportNotes}>
+                Export
+              </Button>
+              <Button variant="light" leftSection={<IconUpload size={14} />} onClick={importNotes}>
+                Import
+              </Button>
+            </Group>
+          </Stack>
+        </Drawer>
+      ) : (
         <AppShell.Navbar p="md">
           <Stack h="100%" gap="sm">
             <Group justify="space-between">
@@ -299,9 +421,11 @@ async function deleteNote(noteId: number) {
             )}
           </Stack>
         </AppShell.Navbar>
-  
-        <AppShell.Main>
-          <Stack h="100vh" gap={0}>
+        )}
+
+<AppShell.Main>
+        <Stack h="100vh" gap={0}>
+          {!isMobile && (
             <Box p="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
               <Group justify="space-between" align="center">
                 <TextInput
@@ -326,25 +450,36 @@ async function deleteNote(noteId: number) {
                 </Group>
               </Group>
             </Box>
-            <Box style={{ flex: 1, position: 'relative', minHeight: 0, padding: '1rem' }}>
-              <MarkdownEditor
-                content={content}
-                onChange={setContent}
-              />
-            </Box>
-          </Stack>
-        </AppShell.Main>
-  
-        <Modal
-          opened={showSyncSettings}
-          onClose={() => setShowSyncSettings(false)}
-          title="Sync Settings"
-          size="lg"
-        >
-            <SyncSettings onSync={loadNotes} />
-        </Modal>
-      </AppShell>
-    );
+          )}
+          <Box 
+            style={{ 
+              flex: 1, 
+              position: 'relative', 
+              minHeight: 0, 
+              padding: isMobile ? '0.5rem' : '1rem',
+              paddingTop: isMobile ? '0.5rem' : '1rem'
+            }}
+          >
+            <MarkdownEditor
+              content={content}
+              onChange={setContent}
+              isMobile={isMobile}
+            />
+          </Box>
+        </Stack>
+      </AppShell.Main>
+
+      <Modal
+        opened={showSyncSettings}
+        onClose={() => setShowSyncSettings(false)}
+        title="Sync Settings"
+        size="lg"
+        fullScreen={isMobile}
+      >
+        <SyncSettings onSync={loadNotes} />
+      </Modal>
+    </AppShell>
+  );
 }
 
 export default App;
