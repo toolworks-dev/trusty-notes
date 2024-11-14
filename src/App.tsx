@@ -39,6 +39,7 @@ import { SyncSettings } from './components/SyncSettings';
 import { useAutoSync } from './hooks/useAutoSync';
 import { SyncSettings as SyncSettingsType } from './types/sync';
 import { WebStorageService } from './services/webStorage';
+import './styles/richtext.css';
 
 interface Note {
   id?: number;
@@ -212,8 +213,8 @@ async function deleteNote(noteId: number) {
               <Image
                 src="/trusty.jpg"
                 alt="Logo"
-                w={150}
-                h={150}
+                w={30}
+                h={30}
               />
             </Group>
             <TextInput
@@ -493,12 +494,13 @@ async function deleteNote(noteId: number) {
               paddingTop: isMobile ? '0.5rem' : '1rem'
             }}
           >
-            <MarkdownEditor
-              content={content}
-              onChange={setContent}
-              isMobile={isMobile}
-              defaultView="edit"
-            />
+          <MarkdownEditor
+            content={content}
+            onChange={setContent}
+            isMobile={isMobile}
+            defaultView="edit"
+            editorType="richtext"
+          />
           </Box>
         </Stack>
       </AppShell.Main>

@@ -1,0 +1,45 @@
+.ProseMirror {
+    flex: 1 1 auto;
+    min-height: 0;
+    outline: none;
+    overflow-y: auto;
+}
+
+.ProseMirror p {
+  margin: 1em 0;
+}
+
+.ProseMirror h1 {
+  font-size: 2em;
+  margin: 0.67em 0;
+}
+
+.ProseMirror h2 {
+  font-size: 1.5em;
+  margin: 0.75em 0;
+}
+
+.ProseMirror h3 {
+  font-size: 1.17em;
+  margin: 0.83em 0;
+}
+
+.ProseMirror blockquote {
+  border-left: 3px solid var(--mantine-color-gray-4);
+  margin: 1em 0;
+  padding-left: 1em;
+  color: var(--mantine-color-gray-6);
+}
+
+.ProseMirror pre {
+  background: var(--mantine-color-gray-1);
+  border-radius: var(--mantine-radius-md);
+  padding: 0.75em 1em;
+  margin: 1em 0;
+}
+
+.ProseMirror code {
+  background: var(--mantine-color-gray-1);
+  border-radius: var(--mantine-radius-sm);
+  padding: 0.2em 0.4em;
+} 

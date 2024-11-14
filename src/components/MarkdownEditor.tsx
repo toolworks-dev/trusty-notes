@@ -4,14 +4,21 @@ import remarkGfm from 'remark-gfm';
 import rehypeRaw from 'rehype-raw';
 import rehypeHighlight from 'rehype-highlight';
 import { Box, Group, ActionIcon, Tooltip, Textarea, Text } from '@mantine/core';
-import { IconEye, IconEdit, IconColumns } from '@tabler/icons-react';
+import { 
+  IconEye, 
+  IconEdit, 
+  IconColumns, 
+  IconTypography 
+} from '@tabler/icons-react';
 import 'highlight.js/styles/github.css';
+import { RichTextEditor } from './RichTextEditor';
 
 interface MarkdownEditorProps {
   content: string;
   onChange: (value: string) => void;
   isMobile?: boolean;
   defaultView?: 'edit' | 'preview' | 'split';
+  editorType?: 'markdown' | 'richtext';
 }
 
 function WordCount({ content }: { content: string }) {
@@ -30,123 +37,69 @@ function WordCount({ content }: { content: string }) {
   );
 }
 
-export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edit' }: MarkdownEditorProps) {
+export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edit', editorType: initialEditorType = 'markdown' }: MarkdownEditorProps) {
   const [view, setView] = useState<'edit' | 'preview' | 'split'>(isMobile ? 'edit' : defaultView);
+  const [editorType, setEditorType] = useState(initialEditorType);
+
+  const renderEditor = () => (
+    editorType === 'richtext' ? (
+      <RichTextEditor content={content} onChange={onChange} />
+    ) : (
+      <Textarea
+        value={content}
+        onChange={(e) => onChange(e.currentTarget.value)}
+        styles={{
+          root: { height: '100%' },
+          wrapper: { height: '100%' },
+          input: {
+            height: '100%',
+            padding: '1rem',
+            fontSize: isMobile ? '16px' : undefined,
+            borderRadius: 'var(--mantine-radius-md)',
+            border: '1px solid var(--mantine-color-gray-3)',
+            backgroundColor: 'var(--mantine-color-body)',
+            transition: 'border-color 100ms ease',
+            '&:focus': {
+              borderColor: 'var(--mantine-color-blue-filled)',
+              outline: 'none'
+            },
+            '&:hover': {
+              borderColor: 'var(--mantine-color-gray-5)'
+            }
+          }
+        }}
+      />
+    )
+  );
+
+  const renderPreview = () => (
+    <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
+      <ReactMarkdown
+        remarkPlugins={[remarkGfm]}
+        rehypePlugins={[rehypeRaw, rehypeHighlight]}
+      >
+        {content}
+      </ReactMarkdown>
+    </Box>
+  );
 
   const renderContent = () => {
     if (isMobile) {
-      return view === 'edit' ? (
-        <Textarea
-          value={content}
-          onChange={(e) => onChange(e.currentTarget.value)}
-          styles={{
-            root: { height: '100%' },
-            wrapper: { height: '100%' },
-            input: {
-              height: '100%',
-              padding: '1rem',
-              fontSize: '16px', // Prevents zoom on iOS
-              borderRadius: 'var(--mantine-radius-md)',
-              border: '1px solid var(--mantine-color-gray-3)',
-              backgroundColor: 'var(--mantine-color-body)',
-              transition: 'border-color 100ms ease',
-              '&:focus': {
-                borderColor: 'var(--mantine-color-blue-filled)',
-                outline: 'none'
-              },
-              '&:hover': {
-                borderColor: 'var(--mantine-color-gray-5)'
-              }
-            }
-          }}
-        />
-      ) : (
-        <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
-          <ReactMarkdown
-            remarkPlugins={[remarkGfm]}
-            rehypePlugins={[rehypeRaw, rehypeHighlight]}
-          >
-            {content}
-          </ReactMarkdown>
-        </Box>
-      );
+      return view === 'edit' ? renderEditor() : renderPreview();
     }
 
-    // Desktop layout
     switch (view) {
-      case 'edit':
-        return (
-          <Textarea
-            value={content}
-            onChange={(e) => onChange(e.currentTarget.value)}
-            styles={{
-              root: { height: '100%' },
-              wrapper: { height: '100%' },
-              input: {
-                height: '100%',
-                padding: '1rem',
-                borderRadius: 'var(--mantine-radius-md)',
-                border: '1px solid var(--mantine-color-gray-3)',
-                backgroundColor: 'var(--mantine-color-body)',
-                transition: 'border-color 100ms ease',
-                '&:focus': {
-                  borderColor: 'var(--mantine-color-blue-filled)',
-                  outline: 'none'
-                },
-                '&:hover': {
-                  borderColor: 'var(--mantine-color-gray-5)'
-                }
-              }
-            }}
-          />
-        );
       case 'preview':
-        return (
-          <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
-            <ReactMarkdown
-              remarkPlugins={[remarkGfm]}
-              rehypePlugins={[rehypeRaw, rehypeHighlight]}
-            >
-              {content}
-            </ReactMarkdown>
-          </Box>
-        );
+        return renderPreview();
       case 'split':
         return (
           <Group grow style={{ height: '100%' }}>
-            <Textarea
-              value={content}
-              onChange={(e) => onChange(e.currentTarget.value)}
-              styles={{
-                root: { height: '100%' },
-                wrapper: { height: '100%' },
-                input: {
-                  height: '100%',
-                  padding: '1rem',
-                  borderRadius: 'var(--mantine-radius-md)',
-                  border: '1px solid var(--mantine-color-gray-3)',
-                  backgroundColor: 'var(--mantine-color-body)',
-                  transition: 'border-color 100ms ease',
-                  '&:focus': {
-                    borderColor: 'var(--mantine-color-blue-filled)',
-                    outline: 'none'
-                  },
-                  '&:hover': {
-                    borderColor: 'var(--mantine-color-gray-5)'
-                  }
-                }
-              }}
-            />
-            <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
-              <ReactMarkdown
-                remarkPlugins={[remarkGfm]}
-                rehypePlugins={[rehypeRaw, rehypeHighlight]}
-              >
-                {content}
-              </ReactMarkdown>
-            </Box>
+            {renderEditor()}
+            {renderPreview()}
           </Group>
         );
+      default: // 'edit'
+        return renderEditor();
     }
   };
 
@@ -164,12 +117,26 @@ export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edi
             </ActionIcon>
           ) : (
             <>
-              <Tooltip label="Edit">
+              <Tooltip label="Markdown">
                 <ActionIcon
-                  variant={view === 'edit' ? 'filled' : 'subtle'}
-                  onClick={() => setView('edit')}
+                  variant={editorType === 'markdown' && view === 'edit' ? 'filled' : 'subtle'}
+                  onClick={() => {
+                    setEditorType('markdown');
+                    setView('edit');
+                  }}
                 >
                   <IconEdit size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Rich Text">
+                <ActionIcon
+                  variant={editorType === 'richtext' && view === 'edit' ? 'filled' : 'subtle'}
+                  onClick={() => {
+                    setEditorType('richtext');
+                    setView('edit');
+                  }}
+                >
+                  <IconTypography size={16} />
                 </ActionIcon>
               </Tooltip>
               <Tooltip label="Preview">
