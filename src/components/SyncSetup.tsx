@@ -24,10 +24,10 @@ export function SyncSetup({ onSync }: SyncSetupProps) {
     try {
       setStatus('syncing');
       await WebStorageService.initializeCrypto(seedPhrase);
-      await WebStorageService.syncWithServer('https://notes-sync.0xgingi.com');
+      await WebStorageService.syncWithServer('https://notes-sync.toolworks.dev');
       await WebStorageService.saveSyncSettings({ 
         seed_phrase: seedPhrase,
-        server_url: 'https://notes-sync.0xgingi.com',
+        server_url: 'https://notes-sync.toolworks.dev',
         auto_sync: false,
         sync_interval: 5,
         custom_servers: []

@@ -66,7 +66,7 @@ export class WebStorageService {
     return settingsJson ? JSON.parse(settingsJson) : {
       auto_sync: false,
       sync_interval: 300,
-      server_url: 'https://notes-sync.0xgingi.com',
+      server_url: 'https://notes-sync.toolworks.dev',
       custom_servers: [],
       seed_phrase: null
     };

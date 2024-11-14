@@ -30,3 +30,5 @@ server/node_modules
 src/node_modules
 
 .docker
+
+server/db

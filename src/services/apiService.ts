@@ -10,7 +10,7 @@
     notes: EncryptedNote[];
   }
   
-  //const DEFAULT_SERVER = 'https://notes-sync.0xgingi.com';
+  //const DEFAULT_SERVER = 'https://notes-sync.toolworks.dev';
   
   export class ApiService {
     private static getEndpoint(serverUrl: string, path: string): string {

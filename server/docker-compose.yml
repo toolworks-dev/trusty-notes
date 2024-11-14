@@ -1,0 +1,43 @@
+services:
+  app:
+    build: .
+    ports:
+      - "3222:3222"
+    environment:
+      - NODE_ENV=production
+      - MONGODB_URI=mongodb://mongodb:27018/notes-sync
+      - PORT=3222
+      - ALLOWED_ORIGINS=http://localhost:3222
+    depends_on:
+      - mongodb
+    restart: unless-stopped
+    networks:
+      - notes-network
+
+  mongodb:
+    image: mongo:latest
+    user: root
+    ports:
+      - "27018:27017"
+    volumes:
+      - ./db:/data/db
+    networks:
+      - notes-network
+    command: mongod --bind_ip_all
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 10s
+      retries: 5
+      start_period: 40s
+    environment:
+      - MONGO_INITDB_ROOT_USERNAME=root
+      - MONGO_INITDB_ROOT_PASSWORD=gdsfsadgjkhsdagh
+    entrypoint: >
+      bash -c "chown -R 1001:1001 /data/db &&
+      chmod -R 775 /data/db &&
+      mongod --bind_ip_all"
+
+networks:
+  notes-network:
+    driver: bridge

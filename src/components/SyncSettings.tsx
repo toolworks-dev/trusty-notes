@@ -21,7 +21,7 @@ import { CryptoService } from '../services/cryptoService';
 import { ApiService } from '../services/apiService';
 
 const DEFAULT_SERVERS = [
-  { label: 'Official Server', value: 'https://notes-sync.0xgingi.com' },
+  { label: 'Official Server', value: 'https://notes-sync.toolworks.dev' },
   { label: 'Local Server', value: 'http://localhost:3222' },
 ];
 
