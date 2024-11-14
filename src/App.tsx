@@ -15,7 +15,9 @@ import {
   Modal,
   rem,
   Burger,
-  Drawer
+  Drawer,
+  Anchor,
+  Image,
 } from '@mantine/core';
 import { 
   IconSun, 
@@ -29,6 +31,7 @@ import {
   IconDownload,
   IconUpload,
   IconCloud,
+  IconBrandGithub,
 } from '@tabler/icons-react';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MarkdownEditor } from './components/MarkdownEditor';
@@ -199,32 +202,47 @@ async function deleteNote(noteId: number) {
       {isMobile && (
         <AppShell.Header>
           <Group h="100%" px="md" justify="space-between">
-            <Burger
-              opened={mobileNavOpened}
-              onClick={() => setMobileNavOpened(o => !o)}
-              hiddenFrom="sm"
-              size="sm"
-            />
+            <Group>
+              <Burger
+                opened={mobileNavOpened}
+                onClick={() => setMobileNavOpened(o => !o)}
+                hiddenFrom="sm"
+                size="sm"
+              />
+              <Image
+                src="/trusty.jpg"
+                alt="Logo"
+                w={150}
+                h={150}
+              />
+            </Group>
             <TextInput
               placeholder="Note title"
               value={title}
               onChange={(e) => setTitle(e.currentTarget.value)}
               style={{ flex: 1 }}
             />
-            <ActionIcon variant="subtle" onClick={clearForm}>
-              <IconPlus size={20} />
-            </ActionIcon>
+            <Group>
+              <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
+                <ActionIcon variant="subtle">
+                  <IconBrandGithub size={20} />
+                </ActionIcon>
+              </Anchor>
+              <ActionIcon variant="subtle" onClick={clearForm}>
+                <IconPlus size={20} />
+              </ActionIcon>
+            </Group>
           </Group>
         </AppShell.Header>
       )}
-
+  
       {isMobile ? (
         <Drawer
           opened={mobileNavOpened}
           onClose={() => setMobileNavOpened(false)}
           size="100%"
           padding="md"
-          title="Notes"
+          title="Trusty Notes"
           hiddenFrom="sm"
         >
           <Stack h="100%">
@@ -241,7 +259,7 @@ async function deleteNote(noteId: number) {
                 New Note
               </Button>
             </Group>
-
+  
             <Group grow mb="md">
               <ActionIcon variant="light" onClick={() => toggleColorScheme()} w="100%" h={rem(36)}>
                 {colorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
@@ -250,7 +268,7 @@ async function deleteNote(noteId: number) {
                 <IconCloud size={20} />
               </ActionIcon>
             </Group>
-
+  
             <TextInput
               placeholder="Search notes..."
               leftSection={<IconSearch size={16} />}
@@ -258,7 +276,7 @@ async function deleteNote(noteId: number) {
               onChange={(e) => setSearchQuery(e.currentTarget.value)}
               mb="md"
             />
-
+  
             <Stack gap="xs" style={{ overflow: 'auto', flex: 1 }}>
               {filteredNotes.map((note) => (
                 <Paper
@@ -298,7 +316,7 @@ async function deleteNote(noteId: number) {
                 </Paper>
               ))}
             </Stack>
-
+  
             <Group grow>
               <Button variant="light" leftSection={<IconDownload size={14} />} onClick={exportNotes}>
                 Export
@@ -313,10 +331,25 @@ async function deleteNote(noteId: number) {
         <AppShell.Navbar p="md">
           <Stack h="100%" gap="sm">
             <Group justify="space-between">
-              <Text size="lg" fw={500}>Notes</Text>
+              <Group>
+                <Image
+                  src="/trusty.jpg"
+                  alt="Logo"
+                  w={30}
+                  h={30}
+                />
+                <Text size="lg" fw={500}>Trusty Notes</Text>
+              </Group>
               <Group>
                 {!sidebarCollapsed && (
                   <>
+                    <Tooltip label="GitHub">
+                      <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
+                        <ActionIcon variant="default" size={30}>
+                          <IconBrandGithub size={16} />
+                        </ActionIcon>
+                      </Anchor>
+                    </Tooltip>
                     <Tooltip label="Sync Settings">
                       <ActionIcon variant="default" onClick={() => setShowSyncSettings(true)} size={30}>
                         <IconCloud size={16} />
@@ -421,9 +454,9 @@ async function deleteNote(noteId: number) {
             )}
           </Stack>
         </AppShell.Navbar>
-        )}
-
-<AppShell.Main>
+      )}
+  
+      <AppShell.Main>
         <Stack h="100vh" gap={0}>
           {!isMobile && (
             <Box p="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
@@ -464,11 +497,12 @@ async function deleteNote(noteId: number) {
               content={content}
               onChange={setContent}
               isMobile={isMobile}
+              defaultView="edit"
             />
           </Box>
         </Stack>
       </AppShell.Main>
-
+  
       <Modal
         opened={showSyncSettings}
         onClose={() => setShowSyncSettings(false)}

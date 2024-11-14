@@ -11,6 +11,7 @@ interface MarkdownEditorProps {
   content: string;
   onChange: (value: string) => void;
   isMobile?: boolean;
+  defaultView?: 'edit' | 'preview' | 'split';
 }
 
 function WordCount({ content }: { content: string }) {
@@ -29,8 +30,8 @@ function WordCount({ content }: { content: string }) {
   );
 }
 
-export function MarkdownEditor({ content, onChange, isMobile }: MarkdownEditorProps) {
-  const [view, setView] = useState<'edit' | 'preview' | 'split'>(isMobile ? 'edit' : 'split');
+export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edit' }: MarkdownEditorProps) {
+  const [view, setView] = useState<'edit' | 'preview' | 'split'>(isMobile ? 'edit' : defaultView);
 
   const renderContent = () => {
     if (isMobile) {
