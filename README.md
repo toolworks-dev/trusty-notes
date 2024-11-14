@@ -1,6 +1,8 @@
-# Rusty Notes
+# Trusty Notes
 
 A secure, (WIP) cross-platform note-taking application. Features end-to-end encryption for cloud sync and a modern React frontend.
+
+https://notes.toolworks.dev
 
 ![image](https://github.com/user-attachments/assets/cc6c2dca-e71f-42d9-ae78-4a5abfae5d3e)
 

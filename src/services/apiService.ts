@@ -62,7 +62,7 @@
           body: JSON.stringify({
             public_key: publicKey,
             notes: encryptedNotes,
-            client_version: '0.1.1'
+            client_version: '0.1.3'
           }),
         });
     
