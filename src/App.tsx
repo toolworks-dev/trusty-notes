@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react';
-import { invoke } from '@tauri-apps/api/core';
 import { format } from 'date-fns';
 import {
   AppShell,
@@ -33,7 +32,7 @@ import { MarkdownEditor } from './components/MarkdownEditor';
 import { SyncSettings } from './components/SyncSettings';
 import { useAutoSync } from './hooks/useAutoSync';
 import { SyncSettings as SyncSettingsType } from './types/sync';
-
+import { WebStorageService } from './services/webStorage';
 interface Note {
   id?: number;
   title: string;
@@ -65,12 +64,13 @@ function App() {
 
   const loadNotes = async () => {
     try {
-      const notesJson = await invoke<string>('get_notes_json');
-      setNotes(JSON.parse(notesJson));
+      const notes = await WebStorageService.getNotes();
+      setNotes(notes);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
     }
   };
+  
 
   const debouncedSave = useDebouncedCallback(async () => {
     if (title.trim() === '' && content.trim() === '') return;
@@ -102,52 +102,53 @@ function App() {
   }
 
   useEffect(() => {
-    invoke<SyncSettingsType>('get_sync_settings').then(setSyncSettings);
+    WebStorageService.getSyncSettings().then(setSyncSettings);
   }, []);
-  
+
   useAutoSync(
     syncSettings?.auto_sync ?? false,
     syncSettings?.sync_interval ?? 5
   );
 
-async function handleSave() {
-  try {
-    const now = Date.now();
-    const note: Note = {
-      id: selectedNote?.id,
-      title: title.trim() === '' ? 'Untitled' : title,
-      content,
-      created_at: selectedNote?.created_at || now,
-      updated_at: now,
-    };
-    
-    console.log('Attempting to save note:', note);
-    await invoke('save_note', { note });
-    console.log('Save completed');
-    
-    await loadNotes();
-    setSaveStatus('saved');
-    setTimeout(() => setSaveStatus(null), 2000);
-  } catch (error) {
-    console.error('Failed to save note:', error);
-    setSaveStatus(null);
-    // Add user feedback
-    alert(`Failed to save note: ${error}`);
+  async function handleSave() {
+    try {
+      const now = Date.now();
+      const note: Note = {
+        id: selectedNote?.id,
+        title: title.trim() === '' ? 'Untitled' : title,
+        content,
+        created_at: selectedNote?.created_at || now,
+        updated_at: now,
+      };
+      
+      await WebStorageService.saveNote(note);
+      await loadNotes();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus(null), 2000);
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      setSaveStatus(null);
+      alert(`Failed to save note: ${error}`);
+    }
   }
-}
 
-  async function deleteNote(noteId: number) {
-    if (!window.confirm('Are you sure you want to delete this note?')) return;
-    await invoke('delete_note', { noteId });
+async function deleteNote(noteId: number) {
+  if (!window.confirm('Are you sure you want to delete this note?')) return;
+  try {
+    await WebStorageService.deleteNote(noteId);
     if (selectedNote?.id === noteId) {
       clearForm();
     }
     await loadNotes();
+  } catch (error) {
+    console.error('Failed to delete note:', error);
+    alert('Failed to delete note');
   }
+}
 
   async function exportNotes() {
-    const notesJson = await invoke<string>('export_notes');
-    const blob = new Blob([notesJson], { type: 'application/json' });
+    const notes = await WebStorageService.getNotes();
+    const blob = new Blob([JSON.stringify(notes)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
@@ -157,7 +158,7 @@ async function handleSave() {
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
   }
-
+  
   async function importNotes() {
     const input = document.createElement('input');
     input.type = 'file';
@@ -168,14 +169,16 @@ async function handleSave() {
       const reader = new FileReader();
       reader.onload = async (e) => {
         const content = e.target?.result as string;
-        await invoke('import_notes', { notesJson: content });
+        const notes = JSON.parse(content);
+        for (const note of notes) {
+          await WebStorageService.saveNote(note);
+        }
         await loadNotes();
       };
       reader.readAsText(file);
     };
     input.click();
   }
-
   return (
       <AppShell
         navbar={{

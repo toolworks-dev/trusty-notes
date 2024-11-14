@@ -12,14 +12,12 @@ import {
   Select,
   TextInput,
   ActionIcon,
- // Box,
 } from '@mantine/core';
 import { IconPlus, IconTrash } from '@tabler/icons-react';
-import { invoke } from '@tauri-apps/api/core';
 import { notifications } from '@mantine/notifications';
-import { SyncProgress } from './SyncProgress';
-import { SyncSettings as SyncSettingsType, SyncProgress as SyncProgressType } from '../types/sync';
-import { listen } from '@tauri-apps/api/event';
+import { WebStorageService } from '../services/webStorage';
+import { SyncSettings as SyncSettingsType } from '../types/sync';
+import { CryptoService } from '../services/cryptoService';
 
 const DEFAULT_SERVERS = [
   { label: 'Official Server', value: 'https://notes-sync.0xgingi.com' },
@@ -36,7 +34,6 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   const [showNewSeedPhrase, setShowNewSeedPhrase] = useState(false);
   const [newSeedPhrase, setNewSeedPhrase] = useState('');
   const [syncing, setSyncing] = useState(false);
-  const [syncProgress, setSyncProgress] = useState<SyncProgressType | null>(null);
   const [selectedServer, setSelectedServer] = useState(DEFAULT_SERVERS[0].value);
   const [customServers, setCustomServers] = useState<string[]>([]);
   const [newServerUrl, setNewServerUrl] = useState('');
@@ -68,7 +65,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   useEffect(() => {
     const loadSettings = async () => {
       try {
-        const settings = await invoke<SyncSettingsType>('get_sync_settings');
+        const settings = await WebStorageService.getSyncSettings();
         setAutoSync(settings.auto_sync);
         setSelectedServer(settings.server_url);
         setCustomServers(settings.custom_servers || []);
@@ -80,18 +77,10 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
     loadSettings();
   }, []);
 
-  useEffect(() => {
-    const unlisten = listen<SyncProgressType>('sync:progress', (event) => {
-      setSyncProgress(event.payload);
-    });
-    return () => {
-      unlisten.then(fn => fn());
-    };
-  }, []);
 
   const saveSettings = async (updates: Partial<SyncSettingsType>) => {
     try {
-      const currentSettings = await invoke<SyncSettingsType>('get_sync_settings');
+      const currentSettings = await WebStorageService.getSyncSettings();
       const newSettings: SyncSettingsType = {
         auto_sync: 'auto_sync' in updates ? updates.auto_sync! : autoSync,
         server_url: 'server_url' in updates ? updates.server_url! : selectedServer,
@@ -99,7 +88,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
         seed_phrase: 'seed_phrase' in updates ? updates.seed_phrase! : seedPhrase,
         sync_interval: currentSettings.sync_interval,
       };
-      await invoke('save_sync_settings', { settings: newSettings });
+      await WebStorageService.saveSyncSettings(newSettings);
     } catch (error) {
       notifications.show({
         title: 'Error',
@@ -180,12 +169,10 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   
     setSyncing(true);
     try {
-      await invoke('sync_notes', {
-        seedPhrase,
-        serverUrl: selectedServer
-      });
+      await WebStorageService.initializeCrypto(seedPhrase);
+      await WebStorageService.syncWithServer(selectedServer);
+      await WebStorageService.saveSyncSettings({ seed_phrase: seedPhrase });
       
-      // Call the onSync callback after successful sync
       if (onSync) {
         await onSync();
       }
@@ -209,10 +196,19 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   
   const generateNewSeedPhrase = async () => {
     try {
-      const phrase = await invoke<string>('generate_seed_phrase');
-      setNewSeedPhrase(phrase);
+      // Use CryptoService's method instead of manual generation
+      const mnemonic = CryptoService.generateNewSeedPhrase();
+      
+      // Initialize crypto service with the new seed phrase
+      await WebStorageService.initializeCrypto(mnemonic);
+      
+      // Save and display the new seed phrase
+      setNewSeedPhrase(mnemonic);
+      setSeedPhrase(mnemonic);
+      await saveSettings({ seed_phrase: mnemonic });
       setShowNewSeedPhrase(true);
     } catch (error) {
+      console.error('Failed to generate seed phrase:', error);
       notifications.show({
         title: 'Error',
         message: 'Failed to generate seed phrase',
@@ -298,8 +294,6 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
           />
         </Stack>
       </Paper>
-
-      {syncProgress && <SyncProgress progress={syncProgress} />}
 
       <Modal
         opened={showAddServer}

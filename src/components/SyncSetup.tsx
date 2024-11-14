@@ -1,23 +1,60 @@
 import { useState } from 'react';
 import { Button, Stack, Text, PasswordInput } from '@mantine/core';
-import { invoke } from '@tauri-apps/api/core';
+import { notifications } from '@mantine/notifications';
+import { WebStorageService } from '../services/webStorage';
 
-export function SyncSetup() {
+interface SyncSetupProps {
+  onSync?: () => Promise<void>;
+}
+
+export function SyncSetup({ onSync }: SyncSetupProps) {
   const [seedPhrase, setSeedPhrase] = useState('');
   const [status, setStatus] = useState<'idle' | 'syncing' | 'error'>('idle');
-  const [error, setError] = useState('');
 
   const handleSync = async () => {
+    if (!seedPhrase) {
+      notifications.show({
+        title: 'Error',
+        message: 'Please enter a seed phrase',
+        color: 'red',
+      });
+      return;
+    }
+
     try {
       setStatus('syncing');
-      await invoke('initialize_sync', { seedPhrase });
-      await invoke('sync_notes', { seedPhrase });
+      await WebStorageService.initializeCrypto(seedPhrase);
+      await WebStorageService.syncWithServer('https://notes-sync.0xgingi.com');
+      await WebStorageService.saveSyncSettings({ 
+        seed_phrase: seedPhrase,
+        server_url: 'https://notes-sync.0xgingi.com',
+        auto_sync: false,
+        sync_interval: 5,
+        custom_servers: []
+      });
+      
+      if (onSync) {
+        await onSync();
+      }
+
+      notifications.show({
+        title: 'Success',
+        message: 'Notes synced successfully',
+        color: 'green',
+      });
+      
       setStatus('idle');
-    } catch (err: any) {
+    } catch (error) {
       setStatus('error');
-      setError(err.toString());
+      console.error('Sync error:', error);
+      notifications.show({
+        title: 'Error',
+        message: typeof error === 'string' ? error : 'Failed to sync notes',
+        color: 'red',
+      });
     }
   };
+
   return (
     <Stack>
       <Text>Enter your seed phrase to sync across devices:</Text>
@@ -25,6 +62,7 @@ export function SyncSetup() {
         value={seedPhrase}
         onChange={(e) => setSeedPhrase(e.currentTarget.value)}
         placeholder="Enter seed phrase"
+        description="This phrase is used to encrypt your notes. Keep it safe!"
       />
       <Button 
         onClick={handleSync}
@@ -33,8 +71,8 @@ export function SyncSetup() {
         Sync Notes
       </Button>
       {status === 'error' && (
-        <Text c="red">{error}</Text>
+        <Text c="red">Failed to sync notes. Please try again.</Text>
       )}
     </Stack>
   );
-} 
+}

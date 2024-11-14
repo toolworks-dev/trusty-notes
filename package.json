@@ -1,36 +1,37 @@
 {
-  "name": "rusty-notes",
+  "name": "rusty-notes-web",
   "private": true,
   "version": "0.1.1",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview",
-    "tauri": "tauri"
+    "preview": "vite preview"
   },
   "dependencies": {
     "@emotion/react": "^11.13.3",
     "@mantine/core": "^7.14.0",
     "@mantine/hooks": "^7.14.0",
     "@mantine/notifications": "^7.14.0",
+    "@noble/ed25519": "^2.1.0",
     "@tabler/icons-react": "^3.22.0",
-    "@tauri-apps/api": "^2.0.1",
-    "@tauri-apps/plugin-shell": "^2",
+    "@types/highlight.js": "^9.12.4",
+    "bip39": "^3.1.0",
+    "browserify-zlib": "^0.2.0",
+    "buffer": "^6.0.3",
     "date-fns": "^4.1.0",
-    "express-rate-limit": "^7.4.1",
-    "helmet": "^8.0.0",
     "highlight.js": "^11.10.0",
+    "process": "^0.11.10",
     "react": "^18.2.0",
     "react-dom": "^18.2.0",
     "react-markdown": "^9.0.1",
     "rehype-highlight": "^7.0.1",
     "rehype-raw": "^7.0.0",
-    "remark-gfm": "^4.0.0"
+    "remark-gfm": "^4.0.0",
+    "stream-browserify": "^3.0.0",
+    "util": "^0.12.5"
   },
   "devDependencies": {
-    "@tauri-apps/cli": "^2.0.0-rc.18",
-    "@types/node": "^22.9.0",
     "@types/react": "^18.2.15",
     "@types/react-dom": "^18.2.7",
     "@vitejs/plugin-react": "^4.2.1",
