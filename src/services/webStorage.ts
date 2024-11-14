@@ -1,4 +1,5 @@
 import { CryptoService } from './cryptoService';
+import { ApiService } from './apiService';
 
 interface Note {
   id?: number;
@@ -6,14 +7,6 @@ interface Note {
   content: string;
   created_at: number;
   updated_at: number;
-}
-
-interface EncryptedNote {
-  id: string;
-  data: string;
-  nonce: string;
-  timestamp: number;
-  signature: string;
 }
 
 interface SyncSettings {
@@ -25,8 +18,8 @@ interface SyncSettings {
 }
 
 export class WebStorageService {
-  private static NOTES_KEY = 'notes';
-  private static SETTINGS_KEY = 'sync_settings';
+  private static readonly NOTES_KEY = 'notes';
+  private static readonly SETTINGS_KEY = 'sync_settings';
   private static crypto: CryptoService | null = null;
 
   static async initializeCrypto(seedPhrase: string) {
@@ -38,17 +31,25 @@ export class WebStorageService {
     return notesJson ? JSON.parse(notesJson) : [];
   }
 
-  static async saveNote(note: Note): Promise<void> {
+  static async saveNote(note: Partial<Note>): Promise<void> {
     const notes = await this.getNotes();
+    const now = Date.now();
     
-    if (note.id) {
-      const index = notes.findIndex(n => n.id === note.id);
-      if (index !== -1) {
-        notes[index] = note;
-      }
+    const updatedNote = {
+      ...note,
+      updated_at: now,
+      created_at: note.created_at || now,
+    } as Note;
+
+    if (!updatedNote.id) {
+      updatedNote.id = now;
+    }
+    
+    const index = notes.findIndex(n => n.id === updatedNote.id);
+    if (index !== -1) {
+      notes[index] = updatedNote;
     } else {
-      note.id = Date.now();
-      notes.push(note);
+      notes.push(updatedNote);
     }
     
     localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
@@ -77,38 +78,99 @@ export class WebStorageService {
     localStorage.setItem(this.SETTINGS_KEY, JSON.stringify(newSettings));
   }
 
-  static async syncWithServer(serverUrl: string): Promise<void> {
+  static async syncWithServer(serverUrl: string, retries = 3): Promise<void> {
     if (!this.crypto) {
-      throw new Error('Crypto not initialized. Please set up sync first.');
+      throw new Error('Crypto not initialized');
     }
 
-    const notes = await this.getNotes();
-    const encryptedNotes = await Promise.all(
-      notes.map(note => this.crypto!.encryptNote(note))
-    );
-
-    const response = await fetch(`${serverUrl}/api/sync`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        public_key: await this.crypto.getPublicKeyBase64(),
-        notes: encryptedNotes,
-        client_version: '0.1.1'
-      }),
-    });
-
-    if (!response.ok) {
-      throw new Error('Sync failed: ' + await response.text());
-    }
-
-    const result = await response.json();
+    let lastError: Error | null = null;
     
-    const decryptedNotes = await Promise.all(
-      result.notes.map((encNote: EncryptedNote) => this.crypto!.decryptNote(encNote))
-    );
+    for (let attempt = 0; attempt < retries; attempt++) {
+      try {
+        const isHealthy = await ApiService.healthCheck(serverUrl);
+        if (!isHealthy) {
+          throw new Error('Server is not healthy');
+        }
 
-    localStorage.setItem(this.NOTES_KEY, JSON.stringify(decryptedNotes));
+        const localNotes = await this.getNotes();
+        console.log('Local notes before encryption:', localNotes);
+        
+        // Ensure all notes have IDs
+        const notesWithIds = localNotes.map(note => ({
+          ...note,
+          id: note.id || Date.now()
+        }));
+
+        const encryptedNotes = await Promise.all(
+          notesWithIds.map(note => this.crypto!.encryptNote(note))
+        );
+        
+        console.log('Encrypted notes:', encryptedNotes);
+        
+        //const publicKey = await this.crypto.getPublicKeyBase64();
+
+        const userId = localStorage.getItem('user_id');
+        if (!userId) {
+          throw new Error('User ID not found');
+        }
+
+        const response = await ApiService.syncNotes(
+          serverUrl, 
+          userId,
+          encryptedNotes
+        );
+        console.log('Server response:', response);
+        
+        const serverNotes = await Promise.all(
+          response.notes.map(async note => {
+            const decrypted = await this.crypto!.decryptNote(note);
+            return decrypted;
+          })
+        );
+        
+        console.log('Decrypted server notes:', serverNotes);
+
+        const mergedNotes = this.mergeNotes(notesWithIds, serverNotes);
+        console.log('Merged notes:', mergedNotes);
+        
+        localStorage.setItem(this.NOTES_KEY, JSON.stringify(mergedNotes));
+        return;
+        
+      } catch (error) {
+        console.error(`Sync attempt ${attempt + 1} failed:`, error);
+        lastError = error as Error;
+        
+        if (attempt < retries - 1) {
+          await new Promise(resolve => 
+            setTimeout(resolve, Math.pow(2, attempt) * 1000)
+          );
+          continue;
+        }
+      }
+    }
+
+    throw lastError || new Error('Sync failed after retries');
+  }
+
+  private static mergeNotes(localNotes: Note[], serverNotes: Note[]): Note[] {
+    const notesMap = new Map<number, Note>();
+    
+    localNotes.forEach(note => {
+      if (note.id) {
+        notesMap.set(note.id, note);
+      }
+    });
+    
+    serverNotes.forEach(note => {
+      if (note.id) {
+        const existingNote = notesMap.get(note.id);
+        if (!existingNote || note.updated_at > existingNote.updated_at) {
+          notesMap.set(note.id, note);
+        }
+      }
+    });
+    
+    return Array.from(notesMap.values())
+      .sort((a, b) => b.updated_at - a.updated_at);
   }
 }

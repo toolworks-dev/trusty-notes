@@ -18,6 +18,7 @@ import { notifications } from '@mantine/notifications';
 import { WebStorageService } from '../services/webStorage';
 import { SyncSettings as SyncSettingsType } from '../types/sync';
 import { CryptoService } from '../services/cryptoService';
+import { ApiService } from '../services/apiService';
 
 const DEFAULT_SERVERS = [
   { label: 'Official Server', value: 'https://notes-sync.0xgingi.com' },
@@ -169,9 +170,26 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   
     setSyncing(true);
     try {
+      console.log('Starting sync process...');
+      
+      // Initialize crypto
       await WebStorageService.initializeCrypto(seedPhrase);
+      console.log('Crypto initialized');
+      
+      // Validate server health
+      const isHealthy = await ApiService.healthCheck(selectedServer);
+      if (!isHealthy) {
+        throw new Error(`Server ${selectedServer} is not healthy`);
+      }
+      console.log('Server health check passed');
+      
+      // Perform sync
       await WebStorageService.syncWithServer(selectedServer);
+      console.log('Sync completed');
+      
+      // Save settings
       await WebStorageService.saveSyncSettings({ seed_phrase: seedPhrase });
+      console.log('Settings saved');
       
       if (onSync) {
         await onSync();
@@ -186,14 +204,15 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
       console.error('Sync error:', error);
       notifications.show({
         title: 'Error',
-        message: typeof error === 'string' ? error : 'Failed to sync notes',
+        message: error instanceof Error ? error.message : 'Failed to sync notes',
         color: 'red',
+        autoClose: false,
       });
     } finally {
       setSyncing(false);
     }
   };
-  
+
   const generateNewSeedPhrase = async () => {
     try {
       // Use CryptoService's method instead of manual generation

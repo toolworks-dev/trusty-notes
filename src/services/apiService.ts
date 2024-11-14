@@ -10,23 +10,16 @@
     notes: EncryptedNote[];
   }
   
-  const DEFAULT_SERVER = 'https://notes-sync.0xgingi.com';
+  //const DEFAULT_SERVER = 'https://notes-sync.0xgingi.com';
   
   export class ApiService {
     private static getEndpoint(serverUrl: string, path: string): string {
-      // Always use the proxy for the default server
-      if (serverUrl === DEFAULT_SERVER) {
-        return `/api${path}`;
-      }
-      // For custom servers, use the full URL
       return `${serverUrl}/api${path}`;
     }
   
     static async healthCheck(serverUrl: string): Promise<boolean> {
       try {
         const endpoint = this.getEndpoint(serverUrl, '/health');
-        console.log('Health check endpoint:', endpoint);
-        
         const response = await fetch(endpoint, {
           headers: {
             'Accept': 'application/json',
@@ -38,20 +31,26 @@
         }
         
         const data = await response.json();
-        return data.status === 'healthy';
+        return data.status === 'healthy' && data.database === 'connected';
       } catch (error) {
         console.error('Health check failed:', error);
         return false;
       }
     }
-  
+    
     static async syncNotes(
       serverUrl: string, 
       publicKey: string, 
       encryptedNotes: EncryptedNote[]
     ): Promise<SyncResponse> {
       const endpoint = this.getEndpoint(serverUrl, '/sync');
-      console.log('Sync endpoint:', endpoint);
+      
+      console.log('Syncing notes:', {
+        serverUrl,
+        endpoint,
+        notesCount: encryptedNotes.length,
+        hasPublicKey: !!publicKey
+      });
       
       try {
         const response = await fetch(endpoint, {
@@ -66,13 +65,30 @@
             client_version: '0.1.1'
           }),
         });
-  
+    
+        console.log('Server response:', {
+          status: response.status,
+          ok: response.ok,
+          headers: Object.fromEntries(response.headers.entries())
+        });
+    
         if (!response.ok) {
-          const errorText = await response.text();
-          throw new Error(`Sync failed: ${errorText}`);
+          const errorData = await response.json().catch(() => null);
+          throw new Error(errorData?.error || `Sync failed with status ${response.status}`);
         }
-  
-        return response.json();
+    
+        const data = await response.json();
+        console.log('Sync response data:', data);
+    
+        // Handle the server's response format
+        if (!data || !Array.isArray(data.notes)) {
+          console.error('Invalid response format:', data);
+          throw new Error('Invalid server response format');
+        }
+    
+        return {
+          notes: data.notes
+        };
       } catch (error) {
         console.error('Sync error:', error);
         throw error;

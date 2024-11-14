@@ -2,5 +2,5 @@ services:
   rusty-notes-webapp:
     build: .
     ports:
-      - "8080:80"
+      - "8590:80"
     restart: unless-stopped
