@@ -13,6 +13,7 @@ export interface EncryptedNote {
   nonce: string;
   timestamp: number;
   signature: string;
+  deleted?: boolean;
 }
 
 export interface SyncSettings {

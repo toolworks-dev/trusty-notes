@@ -165,25 +165,36 @@ async function processNotes(public_key, incoming_notes) {
         conflicts: [] 
       };
 
-      // Process incoming notes
       for (const note of incoming_notes) {
         const existing = await notesCollection.findOne({
           public_key,
           id: note.id,
         });
-
+      
         if (!existing || existing.timestamp < note.timestamp) {
+          await notesCollection.updateOne(
+            { public_key, id: note.id },
+            { 
+              $set: { 
+                id: note.id,
+                data: note.data,
+                nonce: note.nonce,
+                timestamp: note.timestamp,
+                signature: note.signature,
+                public_key,
+                deleted: note.deleted
+              } 
+            },
+            { upsert: true }
+          );
+          
           if (note.deleted) {
-            // If note is marked as deleted, remove it from the database
-            await notesCollection.deleteOne({ public_key, id: note.id });
-          } else {
-            // Otherwise update/insert the note
-            await notesCollection.updateOne(
-              { public_key, id: note.id },
-              { $set: { ...note, public_key } },
-              { upsert: true }
-            );
+            await notesCollection.deleteOne({ 
+              public_key, 
+              id: note.id 
+            });
           }
+          
           results.updated.push(note.id);
         } else if (existing.timestamp === note.timestamp && 
                   existing.signature !== note.signature) {
@@ -191,22 +202,20 @@ async function processNotes(public_key, incoming_notes) {
         }
       }
 
-      // Fetch all non-deleted notes for this user
       const allNotes = await notesCollection
-        .find({ 
-          public_key,
-          deleted: { $ne: true }
-        })
-        .toArray();
-      
-      results.notes = allNotes.map(note => ({
-        id: note.id,
-        data: note.data,
-        nonce: note.nonce,
-        timestamp: note.timestamp,
-        signature: note.signature,
-        deleted: note.deleted
-      }));
+      .find({ 
+        public_key,
+        deleted: { $ne: true } 
+      })
+      .toArray();
+    
+    results.notes = allNotes.map(note => ({
+      id: note.id,
+      data: note.data,
+      nonce: note.nonce,
+      timestamp: note.timestamp,
+      signature: note.signature
+    }));
 
       return results;
     });
@@ -216,6 +225,7 @@ async function processNotes(public_key, incoming_notes) {
     await session.endSession();
   }
 }
+
 app.get('/api/health', async (req, res) => {
   try {
     await db.command({ ping: 1 });

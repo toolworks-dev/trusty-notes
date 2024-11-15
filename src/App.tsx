@@ -16,6 +16,7 @@ import {
   Burger,
   Anchor,
   Image,
+  Checkbox,
 } from '@mantine/core';
 import { 
   IconSun, 
@@ -30,6 +31,7 @@ import {
   IconUpload,
   IconCloud,
   IconBrandGithub,
+  IconCheckbox,
 } from '@tabler/icons-react';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MarkdownEditor } from './components/MarkdownEditor';
@@ -61,6 +63,8 @@ function App() {
   const [syncSettings, setSyncSettings] = useState<SyncSettingsType | null>(null);
   const isMobile = useMediaQuery('(max-width: 768px)');
   const [mobileNavOpened, setMobileNavOpened] = useState(false);
+  const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
+  const [isSelectionMode, setIsSelectionMode] = useState(false);
 
 
   useEffect(() => {
@@ -81,6 +85,40 @@ function App() {
     }
   };
   
+  const toggleSelectionMode = () => {
+    setIsSelectionMode(!isSelectionMode);
+    if (isSelectionMode) {
+      setSelectedNotes(new Set());
+    }
+  };
+  
+  const toggleNoteSelection = (noteId: number, event: React.MouseEvent) => {
+    event.stopPropagation();
+    const newSelection = new Set(selectedNotes);
+    if (newSelection.has(noteId)) {
+      newSelection.delete(noteId);
+    } else {
+      newSelection.add(noteId);
+    }
+    setSelectedNotes(newSelection);
+  };
+  
+  const deleteSelectedNotes = async () => {
+    if (selectedNotes.size === 0) return;
+    
+    try {
+      await WebStorageService.deleteNote(Array.from(selectedNotes));
+      setSelectedNotes(new Set());
+      setIsSelectionMode(false);
+      if (selectedNote && selectedNotes.has(selectedNote.id!)) {
+        clearForm();
+      }
+      await loadNotes();
+    } catch (error) {
+      console.error('Failed to delete notes:', error);
+      alert('Failed to delete notes');
+    }
+  };
 
   const debouncedSave = useDebouncedCallback(async () => {
     if (title.trim() === '' && content.trim() === '') return;
@@ -220,12 +258,7 @@ async function deleteNote(noteId: number) {
                 hiddenFrom="sm"
                 size="sm"
               />
-              <Image
-                src="/trusty.jpg"
-                alt="Logo"
-                w={30}
-                h={30}
-              />
+              <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
             </Group>
             <TextInput
               placeholder="Note title"
@@ -246,45 +279,51 @@ async function deleteNote(noteId: number) {
           </Group>
         </AppShell.Header>
       )}
+  
       {isMobile ? (
-      <MobileNav
-        opened={mobileNavOpened}
-        onClose={() => setMobileNavOpened(false)}
-        onNewNote={clearForm}
-        onSearch={setSearchQuery}
-        searchQuery={searchQuery}
-        onToggleTheme={toggleColorScheme}
-        colorScheme={colorScheme}
-        onShowSyncSettings={() => setShowSyncSettings(true)}
-        onExport={exportNotes}
-        onImport={importNotes}
-        selectedNote={selectedNote}
-        notes={filteredNotes}
-        onSelectNote={selectNote}
-        onDeleteNote={deleteNote}
-      />
-    ) : (
+        <MobileNav
+          opened={mobileNavOpened}
+          onClose={() => setMobileNavOpened(false)}
+          onNewNote={clearForm}
+          onSearch={setSearchQuery}
+          searchQuery={searchQuery}
+          onToggleTheme={toggleColorScheme}
+          colorScheme={colorScheme}
+          onShowSyncSettings={() => setShowSyncSettings(true)}
+          onExport={exportNotes}
+          onImport={importNotes}
+          selectedNote={selectedNote}
+          notes={filteredNotes}
+          onSelectNote={selectNote}
+          onDeleteNote={deleteNote}
+        />
+      ) : (
         <AppShell.Navbar p="md">
           <Stack h="100%" gap="sm">
-            <Group justify="space-between">
-              <Group>
-                <Image
-                  src="/trusty.jpg"
-                  alt="Logo"
-                  w={30}
-                  h={30}
-                />
-                <Text size="lg" fw={500}>Trusty Notes</Text>
-              </Group>
-              <Group>
-                {!sidebarCollapsed && (
+          <Group justify="space-between">
+            <Group>
+              <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
+              <Text size="lg" fw={500}>Trusty Notes</Text>
+              <Tooltip label="GitHub">
+                <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
+                  <ActionIcon variant="default" size={30}>
+                    <IconBrandGithub size={16} />
+                  </ActionIcon>
+                </Anchor>
+              </Tooltip>
+            </Group>
+            <Group>
+              {!sidebarCollapsed && (
                   <>
-                    <Tooltip label="GitHub">
-                      <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
-                        <ActionIcon variant="default" size={30}>
-                          <IconBrandGithub size={16} />
-                        </ActionIcon>
-                      </Anchor>
+                    <Tooltip label="Selection Mode">
+                      <ActionIcon
+                        variant="default"
+                        onClick={toggleSelectionMode}
+                        color={isSelectionMode ? "blue" : undefined}
+                        size={30}
+                      >
+                        <IconCheckbox size={16} />
+                      </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Sync Settings">
                       <ActionIcon variant="default" onClick={() => setShowSyncSettings(true)} size={30}>
@@ -322,14 +361,25 @@ async function deleteNote(noteId: number) {
   
             {!sidebarCollapsed && (
               <>
-                <Button
-                  leftSection={<IconPlus size={14} />}
-                  variant="light"
-                  onClick={clearForm}
-                  fullWidth
-                >
-                  New Note
-                </Button>
+                <Group>
+                  <Button
+                    leftSection={<IconPlus size={14} />}
+                    variant="light"
+                    onClick={clearForm}
+                    style={{ flex: 1 }}
+                  >
+                    New Note
+                  </Button>
+                  {isSelectionMode && selectedNotes.size > 0 && (
+                    <Button
+                      color="red"
+                      leftSection={<IconTrash size={14} />}
+                      onClick={deleteSelectedNotes}
+                    >
+                      Delete ({selectedNotes.size})
+                    </Button>
+                  )}
+                </Group>
                 <TextInput
                   placeholder="Search notes..."
                   leftSection={<IconSearch size={16} />}
@@ -342,52 +392,61 @@ async function deleteNote(noteId: number) {
                       key={note.id}
                       shadow="xs"
                       p="md"
-                      onClick={() => selectNote(note)}
+                      onClick={() => !isSelectionMode && selectNote(note)}
                       style={{
-                        cursor: 'pointer',
-                        backgroundColor: selectedNote?.id === note.id ? 
+                        cursor: isSelectionMode ? 'default' : 'pointer',
+                        backgroundColor: (selectedNote?.id === note.id || selectedNotes.has(note.id!)) ? 
                           'var(--mantine-color-blue-light)' : undefined,
                       }}
                     >
                       <Group justify="space-between" wrap="nowrap">
-                        <Box style={{ flex: 1 }}>
-                          <Text fw={500} truncate="end">
-                            {note.title || 'Untitled'}
-                          </Text>
-                          <Text size="xs" c="dimmed">
-                            {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                          </Text>
-                        </Box>
-                        <ActionIcon
-                          variant="subtle"
-                          color="red"
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            deleteNote(note.id!);
-                          }}
-                        >
-                          <IconTrash size={16} />
-                        </ActionIcon>
+                        <Group style={{ flex: 1 }}>
+                          {isSelectionMode && (
+                            <Checkbox
+                              checked={selectedNotes.has(note.id!)}
+                              onChange={(e) => toggleNoteSelection(note.id!, e as any)}
+                              onClick={(e) => e.stopPropagation()}
+                            />
+                          )}
+                          <Box>
+                            <Text fw={500} truncate="end">
+                              {note.title || 'Untitled'}
+                            </Text>
+                            <Text size="xs" c="dimmed">
+                              {format(note.updated_at, 'MMM d, yyyy HH:mm')}
+                            </Text>
+                          </Box>
+                        </Group>
+                        {!isSelectionMode && (
+                          <ActionIcon
+                            variant="subtle"
+                            color="red"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              deleteNote(note.id!);
+                            }}
+                          >
+                            <IconTrash size={16} />
+                          </ActionIcon>
+                        )}
                       </Group>
                     </Paper>
                   ))}
                 </Stack>
               </>
             )}
-            {sidebarCollapsed && (
-              <Stack gap="xs" align="center">
-                <Tooltip label="New Note" position="right">
-                  <ActionIcon variant="light" onClick={clearForm} size="lg">
-                    <IconPlus size={20} />
-                  </ActionIcon>
-                </Tooltip>
-                <Tooltip label="Toggle Theme" position="right">
-                  <ActionIcon variant="light" onClick={() => toggleColorScheme()} size="lg">
-                    {colorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
-                  </ActionIcon>
-                </Tooltip>
-              </Stack>
-            )}
+          {sidebarCollapsed && (
+            <Stack 
+              gap={0}
+              align="center" 
+              style={{ 
+                flex: 1,
+                paddingTop: 'var(--mantine-spacing-md)',
+                '& > *:not(:last-child)': { marginBottom: 'var(--mantine-spacing-md)' }
+              }}
+            >
+            </Stack>
+          )}
           </Stack>
         </AppShell.Navbar>
       )}
@@ -429,13 +488,13 @@ async function deleteNote(noteId: number) {
               paddingTop: isMobile ? '0.5rem' : '1rem'
             }}
           >
-          <MarkdownEditor
-            content={content}
-            onChange={setContent}
-            isMobile={isMobile}
-            defaultView="edit"
-            editorType="richtext"
-          />
+            <MarkdownEditor
+              content={content}
+              onChange={setContent}
+              isMobile={isMobile}
+              defaultView="edit"
+              editorType="richtext"
+            />
           </Box>
         </Stack>
       </AppShell.Main>

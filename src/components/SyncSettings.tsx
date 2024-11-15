@@ -19,6 +19,7 @@ import { WebStorageService } from '../services/webStorage';
 import { SyncSettings as SyncSettingsType } from '../types/sync';
 import { CryptoService } from '../services/cryptoService';
 import { ApiService } from '../services/apiService';
+//import { NumberInput } from '@mantine/core';
 
 const DEFAULT_SERVERS = [
   { label: 'Official Server', value: 'https://notes-sync.toolworks.dev' },
@@ -40,6 +41,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   const [newServerUrl, setNewServerUrl] = useState('');
   const [showAddServer, setShowAddServer] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
+  const [syncInterval, setSyncInterval] = useState(5);
 
   const validateUrl = (url: string) => {
     try {
@@ -71,6 +73,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
         setSelectedServer(settings.server_url);
         setCustomServers(settings.custom_servers || []);
         setSeedPhrase(settings.seed_phrase ?? '');
+        setSyncInterval(settings.sync_interval);
       } catch (err) {
         console.error('Failed to load settings:', err);
       }
@@ -87,7 +90,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
         server_url: 'server_url' in updates ? updates.server_url! : selectedServer,
         custom_servers: 'custom_servers' in updates ? updates.custom_servers! : customServers,
         seed_phrase: 'seed_phrase' in updates ? updates.seed_phrase! : seedPhrase,
-        sync_interval: currentSettings.sync_interval,
+        sync_interval: 'sync_interval' in updates ? updates.sync_interval! : currentSettings.sync_interval,
       };
       await WebStorageService.saveSyncSettings(newSettings);
     } catch (error) {
@@ -172,22 +175,18 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
     try {
       console.log('Starting sync process...');
       
-      // Initialize crypto
       await WebStorageService.initializeCrypto(seedPhrase);
       console.log('Crypto initialized');
       
-      // Validate server health
       const isHealthy = await ApiService.healthCheck(selectedServer);
       if (!isHealthy) {
         throw new Error(`Server ${selectedServer} is not healthy`);
       }
       console.log('Server health check passed');
       
-      // Perform sync
       await WebStorageService.syncWithServer(selectedServer);
       console.log('Sync completed');
       
-      // Save settings
       await WebStorageService.saveSyncSettings({ seed_phrase: seedPhrase });
       console.log('Settings saved');
       
@@ -215,13 +214,10 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
 
   const generateNewSeedPhrase = async () => {
     try {
-      // Use CryptoService's method instead of manual generation
       const mnemonic = CryptoService.generateNewSeedPhrase();
       
-      // Initialize crypto service with the new seed phrase
       await WebStorageService.initializeCrypto(mnemonic);
       
-      // Save and display the new seed phrase
       setNewSeedPhrase(mnemonic);
       setSeedPhrase(mnemonic);
       await saveSettings({ seed_phrase: mnemonic });
@@ -303,14 +299,36 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
             </Button>
           </Group>
 
-          <Switch
-            label="Auto-sync"
-            checked={autoSync}
-            onChange={(e) => {
-              setAutoSync(e.currentTarget.checked);
-              saveSettings({ auto_sync: e.currentTarget.checked });
-            }}
-          />
+          <Stack gap="xs">
+            <Switch
+              label="Auto-sync"
+              checked={autoSync}
+              onChange={(e) => {
+                setAutoSync(e.currentTarget.checked);
+                saveSettings({ auto_sync: e.currentTarget.checked });
+              }}
+            />
+            
+            {autoSync && (
+              <Select
+                label="Sync Interval"
+                description="Minutes between auto-syncs"
+                value={syncInterval.toString()}
+                data={[
+                  { value: '1', label: '1 minute' },
+                  { value: '5', label: '5 minutes' },
+                  { value: '15', label: '15 minutes' },
+                  { value: '30', label: '30 minutes' },
+                  { value: '60', label: '1 hour' }
+                ]}
+                onChange={(value) => {
+                  const numericValue = parseInt(value || '1');
+                  setSyncInterval(numericValue);
+                  saveSettings({ sync_interval: numericValue });
+                }}
+              />
+            )}
+          </Stack>
         </Stack>
       </Paper>
 

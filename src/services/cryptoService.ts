@@ -8,6 +8,7 @@ interface EncryptedNote {
   nonce: string;
   timestamp: number;
   signature: string;
+  deleted?: boolean;
 }
 
   interface Note {
@@ -85,6 +86,12 @@ export class CryptoService {
     }
 
     const nonceBytes = crypto.getRandomValues(new Uint8Array(12));
+
+    console.log('Encrypting note with data:', {
+      id: note.id,
+      deleted: note.deleted,
+      timestamp: note.updated_at
+    });  
     
     const noteJson = JSON.stringify({
       title: note.title,
@@ -125,7 +132,8 @@ export class CryptoService {
       data: Buffer.from(encryptedData).toString('base64'),
       nonce: Buffer.from(nonceBytes).toString('base64'),
       timestamp: note.updated_at,
-      signature: Buffer.from(signature).toString('base64')
+      signature: Buffer.from(signature).toString('base64'),
+      deleted: note.deleted || false
     };
   }
 

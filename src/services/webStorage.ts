@@ -21,6 +21,7 @@ interface SyncSettings {
 export class WebStorageService {
   private static readonly NOTES_KEY = 'notes';
   private static readonly SETTINGS_KEY = 'sync_settings';
+  private static readonly DELETE_RETENTION_DAYS = 1;
   private static crypto: CryptoService | null = null;
 
   static async initializeCrypto(seedPhrase: string) {
@@ -32,6 +33,7 @@ export class WebStorageService {
     const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
     return notes.filter(note => !note.deleted);
   }
+
   static async saveNote(note: Partial<Note>): Promise<void> {
     const notes = await this.getNotes();
     const now = Date.now();
@@ -56,21 +58,38 @@ export class WebStorageService {
     localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
   }
 
-  static async deleteNote(noteId: number): Promise<void> {
-    const notes = await this.getNotes();
-    const noteIndex = notes.findIndex(note => note.id === noteId);
+  static async deleteNote(noteId: number | number[]): Promise<void> {
+    const notesJson = localStorage.getItem(this.NOTES_KEY);
+    let notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+    const now = Date.now();
     
-    if (noteIndex !== -1) {
-      const updatedNote: Note = {
-        ...notes[noteIndex],
-        deleted: true,
-        updated_at: Date.now()
-      };
-      notes[noteIndex] = updatedNote;
-      localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    if (Array.isArray(noteId)) {
+      notes = notes.map(note => 
+        noteId.includes(note.id!) 
+          ? { ...note, deleted: true, updated_at: now }
+          : note
+      );
+    } else {
+      notes = notes.map(note => 
+        note.id === noteId 
+          ? { ...note, deleted: true, updated_at: now }
+          : note
+      );
+    }
+    
+    localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    
+    const settings = await this.getSyncSettings();
+    if (settings?.auto_sync && settings?.seed_phrase && this.crypto) {
+      try {
+        await this.syncWithServer(settings.server_url);
+        await this.purgeDeletedNotes();
+      } catch (error) {
+        console.error('Failed to sync after deletion:', error);
+      }
     }
   }
-  
+
   static async getSyncSettings(): Promise<SyncSettings> {
     const settingsJson = localStorage.getItem(this.SETTINGS_KEY);
     return settingsJson ? JSON.parse(settingsJson) : {
@@ -92,7 +111,7 @@ export class WebStorageService {
     if (!this.crypto) {
       throw new Error('Crypto not initialized');
     }
-
+  
     let lastError: Error | null = null;
     
     for (let attempt = 0; attempt < retries; attempt++) {
@@ -101,22 +120,23 @@ export class WebStorageService {
         if (!isHealthy) {
           throw new Error('Server is not healthy');
         }
-
-        const localNotes = await this.getNotes();
-        const deletedNotes = await this.getDeletedNotes();
-        const allNotes = [...localNotes, ...deletedNotes];      
+  
+        const notesJson = localStorage.getItem(this.NOTES_KEY);
+        const allNotes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+                
         console.log('Local notes before encryption:', allNotes);
         
-        // Ensure all notes have IDs
         const notesWithIds = allNotes.map(note => ({
           ...note,
-          id: note.id || Date.now()
+          id: note.id || Date.now(),
+          deleted: note.deleted || false,
+          timestamp: note.updated_at
         }));
-
+                  
         const encryptedNotes = await Promise.all(
           notesWithIds.map(note => this.crypto!.encryptNote(note))
         );
-        
+
         console.log('Encrypted notes:', encryptedNotes);
         
         //const publicKey = await this.crypto.getPublicKeyBase64();
@@ -146,6 +166,7 @@ export class WebStorageService {
         console.log('Merged notes:', mergedNotes);
         
         localStorage.setItem(this.NOTES_KEY, JSON.stringify(mergedNotes));
+        await this.purgeDeletedNotes();
         return;
         
       } catch (error) {
@@ -175,7 +196,9 @@ export class WebStorageService {
     
     localNotes.forEach(note => {
       if (note.id) {
-        notesMap.set(note.id, note);
+        if (!note.deleted) {
+          notesMap.set(note.id, note);
+        }
       }
     });
     
@@ -183,10 +206,9 @@ export class WebStorageService {
       if (note.id) {
         const existingNote = notesMap.get(note.id);
         
-        if (note.deleted && (!existingNote || note.updated_at > existingNote.updated_at)) {
+        if (note.deleted) {
           notesMap.delete(note.id);
-        }
-        else if (!note.deleted && (!existingNote || note.updated_at > existingNote.updated_at)) {
+        } else if (!existingNote || note.updated_at > existingNote.updated_at) {
           notesMap.set(note.id, note);
         }
       }
@@ -195,4 +217,18 @@ export class WebStorageService {
     return Array.from(notesMap.values())
       .sort((a, b) => b.updated_at - a.updated_at);
   }
+
+  static async purgeDeletedNotes(): Promise<void> {
+    const notesJson = localStorage.getItem(this.NOTES_KEY);
+    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+    
+    const cutoffDate = Date.now() - (this.DELETE_RETENTION_DAYS * 24 * 60 * 60 * 1000);
+    
+    const filteredNotes = notes.filter(note => 
+      !note.deleted || note.updated_at > cutoffDate
+    );
+    
+    localStorage.setItem(this.NOTES_KEY, JSON.stringify(filteredNotes));
+  }
+
 }
