@@ -43,7 +43,10 @@ export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edi
 
   const renderEditor = () => (
     editorType === 'richtext' ? (
-      <RichTextEditor content={content} onChange={onChange} />
+      <RichTextEditor 
+        content={content} 
+        onChange={onChange} 
+      />
     ) : (
       <Textarea
         value={content}

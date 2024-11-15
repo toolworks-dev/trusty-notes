@@ -32,3 +32,8 @@ src/node_modules
 .docker
 
 server/db
+
+android/.gradle
+android/app/build
+android/build
+android/capacitor-cordova-android-plugins/build

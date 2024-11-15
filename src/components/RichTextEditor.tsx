@@ -27,36 +27,36 @@ interface RichTextEditorProps {
 }
 
 export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
-    const editor = useEditor({
-      extensions: [
-        StarterKit,
-        Link.configure({
-          openOnClick: false,
-        }),
-        Image,
-        CodeBlock,
-        Highlight,
-      ],
-      content,
-      onUpdate: ({ editor }: { editor: Editor }) => {
-        onChange(editor.getHTML());
+  const editor = useEditor({
+    extensions: [
+      StarterKit,
+      Link.configure({
+        openOnClick: false,
+      }),
+      Image,
+      CodeBlock,
+      Highlight,
+    ],
+    content,
+    onUpdate: ({ editor }: { editor: Editor }) => {
+      onChange(editor.getHTML());
+    },
+    editorProps: {
+      attributes: {
+        class: 'rich-text-editor',
       },
-      editorProps: {
-        attributes: {
-          class: 'rich-text-editor',
-        },
-      },  
-    });
-    
-    useEffect(() => {
-      if (editor && content !== editor.getHTML()) {
-        editor.commands.setContent(content);
-      }
-    }, [editor, content]);
+    },  
+  });
   
-  if (!editor) {
-    return null;
-  }
+  useEffect(() => {
+    if (editor && content !== editor.getHTML()) {
+      editor.commands.setContent(content);
+    }
+  }, [content, editor]);
+
+    if (!editor) {
+      return null;
+    }
 
   return (
     <Box style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>

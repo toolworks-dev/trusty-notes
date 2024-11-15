@@ -7,6 +7,12 @@ export const initializeMobileApp = async () => {
   try {
     await StatusBar.setStyle({ style: Style.Dark });
     
+    const viewport = document.querySelector('meta[name=viewport]');
+    if (viewport) {
+      viewport.setAttribute('content', 
+        'width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no');
+    }
+    
     Keyboard.addListener('keyboardWillShow', () => {
       document.body.classList.add('keyboard-visible');
     });
