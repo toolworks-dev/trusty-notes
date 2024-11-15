@@ -19,6 +19,7 @@ import {
   IconH3,
   IconClearFormatting,
 } from '@tabler/icons-react';
+import { useEffect } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -40,7 +41,18 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
       onUpdate: ({ editor }: { editor: Editor }) => {
         onChange(editor.getHTML());
       },
+      editorProps: {
+        attributes: {
+          class: 'rich-text-editor',
+        },
+      },  
     });
+    
+    useEffect(() => {
+      if (editor && content !== editor.getHTML()) {
+        editor.commands.setContent(content);
+      }
+    }, [editor, content]);
   
   if (!editor) {
     return null;
