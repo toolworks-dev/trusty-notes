@@ -11,8 +11,10 @@
     padding-top: var(--ion-safe-area-top);
     padding-bottom: var(--ion-safe-area-bottom);
     background-color: var(--mantine-color-body);
+    height: 100vh;
+    overflow: hidden;
   }
-  
+    
   .keyboard-visible .markdown-editor {
     max-height: calc(100vh - 270px);
   }
@@ -23,6 +25,24 @@
       overflow-x: hidden;
       -webkit-text-size-adjust: 100%;
     }
+
+    .android .ProseMirror {
+      min-height: 50vh;
+      height: calc(100vh - 200px);
+      overflow-y: auto;
+      -webkit-overflow-scrolling: touch;
+    }  
+
+    .android .rich-text-editor {
+      display: flex;
+      flex-direction: column;
+      height: calc(100vh - 120px);
+    }
+  
+    .android .mantine-AppShell-main {
+      height: 100vh;
+      overflow: hidden;
+    }  
     
     .mantine-AppShell-main {
       padding: 2px !important;
