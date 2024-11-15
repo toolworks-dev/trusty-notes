@@ -24,6 +24,17 @@ https://notes.toolworks.dev
 - [ ] Rich Text
 - [ ] Attachments/Files
 
+## Client Self-Hosting
+
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Setup
+1. Clone the repository
+2. Run `docker compose up --build` inside the root directory to build and start the client.
+
+
 ## Server Self-Hosting
 
 ### Prerequisites
