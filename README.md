@@ -4,7 +4,7 @@ A secure cross-platform note-taking application. Features end-to-end encryption 
 
 https://notes.toolworks.dev
 
-![image](https://github.com/user-attachments/assets/cc6c2dca-e71f-42d9-ae78-4a5abfae5d3e)
+![image](https://github.com/user-attachments/assets/67c661f0-d7ac-49ac-a161-628806ccb610)
 
 
 ## Features
@@ -23,6 +23,17 @@ https://notes.toolworks.dev
 - [ ] Improved Sync
 - [ ] Rich Text
 - [ ] Attachments/Files
+
+## Client Self-Hosting
+
+### Prerequisites
+- Docker
+- Docker Compose
+
+### Setup
+1. Clone the repository
+2. Run `docker compose up --build` inside the root directory to build and start the client.
+
 
 ## Server Self-Hosting
 
