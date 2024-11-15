@@ -13,9 +13,7 @@ import {
   Box,
   Tooltip,
   Modal,
-  rem,
   Burger,
-  Drawer,
   Anchor,
   Image,
 } from '@mantine/core';
@@ -40,6 +38,7 @@ import { useAutoSync } from './hooks/useAutoSync';
 import { SyncSettings as SyncSettingsType } from './types/sync';
 import { WebStorageService } from './services/webStorage';
 import './styles/richtext.css';
+import { MobileNav } from './components/MobileNav';
 
 interface Note {
   id?: number;
@@ -236,99 +235,24 @@ async function deleteNote(noteId: number) {
           </Group>
         </AppShell.Header>
       )}
-  
       {isMobile ? (
-        <Drawer
-          opened={mobileNavOpened}
-          onClose={() => setMobileNavOpened(false)}
-          size="100%"
-          padding="md"
-          title="Trusty Notes"
-          hiddenFrom="sm"
-        >
-          <Stack h="100%">
-            <Group justify="space-between">
-              <Button
-                leftSection={<IconPlus size={14} />}
-                variant="light"
-                onClick={() => {
-                  clearForm();
-                  setMobileNavOpened(false);
-                }}
-                fullWidth
-              >
-                New Note
-              </Button>
-            </Group>
-  
-            <Group grow mb="md">
-              <ActionIcon variant="light" onClick={() => toggleColorScheme()} w="100%" h={rem(36)}>
-                {colorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
-              </ActionIcon>
-              <ActionIcon variant="light" onClick={() => setShowSyncSettings(true)} w="100%" h={rem(36)}>
-                <IconCloud size={20} />
-              </ActionIcon>
-            </Group>
-  
-            <TextInput
-              placeholder="Search notes..."
-              leftSection={<IconSearch size={16} />}
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.currentTarget.value)}
-              mb="md"
-            />
-  
-            <Stack gap="xs" style={{ overflow: 'auto', flex: 1 }}>
-              {filteredNotes.map((note) => (
-                <Paper
-                  key={note.id}
-                  shadow="xs"
-                  p="md"
-                  onClick={() => {
-                    selectNote(note);
-                    setMobileNavOpened(false);
-                  }}
-                  style={{
-                    cursor: 'pointer',
-                    backgroundColor: selectedNote?.id === note.id ? 
-                      'var(--mantine-color-blue-light)' : undefined,
-                  }}
-                >
-                  <Group justify="space-between" wrap="nowrap">
-                    <Box style={{ flex: 1 }}>
-                      <Text fw={500} truncate="end">
-                        {note.title || 'Untitled'}
-                      </Text>
-                      <Text size="xs" c="dimmed">
-                        {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                      </Text>
-                    </Box>
-                    <ActionIcon
-                      variant="subtle"
-                      color="red"
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        deleteNote(note.id!);
-                      }}
-                    >
-                      <IconTrash size={16} />
-                    </ActionIcon>
-                  </Group>
-                </Paper>
-              ))}
-            </Stack>
-  
-            <Group grow>
-              <Button variant="light" leftSection={<IconDownload size={14} />} onClick={exportNotes}>
-                Export
-              </Button>
-              <Button variant="light" leftSection={<IconUpload size={14} />} onClick={importNotes}>
-                Import
-              </Button>
-            </Group>
-          </Stack>
-        </Drawer>
-      ) : (
+      <MobileNav
+        opened={mobileNavOpened}
+        onClose={() => setMobileNavOpened(false)}
+        onNewNote={clearForm}
+        onSearch={setSearchQuery}
+        searchQuery={searchQuery}
+        onToggleTheme={toggleColorScheme}
+        colorScheme={colorScheme}
+        onShowSyncSettings={() => setShowSyncSettings(true)}
+        onExport={exportNotes}
+        onImport={importNotes}
+        selectedNote={selectedNote}
+        notes={filteredNotes}
+        onSelectNote={selectNote}
+        onDeleteNote={deleteNote}
+      />
+    ) : (
         <AppShell.Navbar p="md">
           <Stack h="100%" gap="sm">
             <Group justify="space-between">
