@@ -1,0 +1,30 @@
+{
+	"appId": "dev.toolworks.trustynotes",
+	"appName": "Trusty Notes",
+	"webDir": "dist",
+	"server": {
+		"androidScheme": "https",
+		"hostname": "notes.toolworks.dev",
+		"iosScheme": "https"
+	},
+	"plugins": {
+		"LocalNotifications": {
+			"smallIcon": "ic_stat_icon_config_sample",
+			"iconColor": "#488AFF"
+		}
+	},
+	"ios": {
+		"contentInset": "automatic",
+		"preferredContentMode": "mobile"
+	},
+	"android": {
+		"backgroundColor": "#ffffff"
+	},
+	"packageClassList": [
+		"PreferencesPlugin",
+		"KeyboardPlugin",
+		"StatusBarPlugin",
+		"SplashScreenPlugin",
+		"AppPlugin"
+	]
+}

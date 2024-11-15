@@ -173,7 +173,6 @@ export class WebStorageService {
   private static mergeNotes(localNotes: Note[], serverNotes: Note[]): Note[] {
     const notesMap = new Map<number, Note>();
     
-    // First, add all local notes to the map
     localNotes.forEach(note => {
       if (note.id) {
         notesMap.set(note.id, note);

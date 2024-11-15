@@ -1,0 +1,21 @@
+.ios {
+    --ion-safe-area-top: env(safe-area-inset-top);
+    --ion-safe-area-bottom: env(safe-area-inset-bottom);
+    padding-top: var(--ion-safe-area-top);
+    padding-bottom: var(--ion-safe-area-bottom);
+  }
+  
+  .keyboard-visible .markdown-editor {
+    max-height: calc(100vh - 270px);
+  }
+  
+  @media (max-width: 768px) {
+    .mantine-AppShell-main {
+      padding: 8px !important;
+    }
+    
+    .mantine-TextInput-input,
+    .mantine-Textarea-input {
+      font-size: 16px !important;
+    }
+  }

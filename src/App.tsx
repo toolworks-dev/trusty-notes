@@ -115,6 +115,17 @@ function App() {
     WebStorageService.getSyncSettings().then(setSyncSettings);
   }, []);
 
+  useEffect(() => {
+    const initMobile = async () => {
+      if (isMobile) {
+        const { initializeMobileApp } = await import('./services/mobileInit');
+        await initializeMobileApp();
+      }
+    };
+    
+    initMobile();
+  }, [isMobile]);
+
   useAutoSync(
     syncSettings?.auto_sync ?? false,
     syncSettings?.sync_interval ?? 5
