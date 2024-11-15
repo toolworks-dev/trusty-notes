@@ -7,6 +7,7 @@ interface Note {
   content: string;
   created_at: number;
   updated_at: number;
+  deleted?: boolean;
 }
 
 interface SyncSettings {
@@ -28,9 +29,9 @@ export class WebStorageService {
 
   static async getNotes(): Promise<Note[]> {
     const notesJson = localStorage.getItem(this.NOTES_KEY);
-    return notesJson ? JSON.parse(notesJson) : [];
+    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+    return notes.filter(note => !note.deleted);
   }
-
   static async saveNote(note: Partial<Note>): Promise<void> {
     const notes = await this.getNotes();
     const now = Date.now();
@@ -57,10 +58,19 @@ export class WebStorageService {
 
   static async deleteNote(noteId: number): Promise<void> {
     const notes = await this.getNotes();
-    const filteredNotes = notes.filter(note => note.id !== noteId);
-    localStorage.setItem(this.NOTES_KEY, JSON.stringify(filteredNotes));
+    const noteIndex = notes.findIndex(note => note.id === noteId);
+    
+    if (noteIndex !== -1) {
+      const updatedNote: Note = {
+        ...notes[noteIndex],
+        deleted: true,
+        updated_at: Date.now()
+      };
+      notes[noteIndex] = updatedNote;
+      localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    }
   }
-
+  
   static async getSyncSettings(): Promise<SyncSettings> {
     const settingsJson = localStorage.getItem(this.SETTINGS_KEY);
     return settingsJson ? JSON.parse(settingsJson) : {
@@ -93,10 +103,12 @@ export class WebStorageService {
         }
 
         const localNotes = await this.getNotes();
-        console.log('Local notes before encryption:', localNotes);
+        const deletedNotes = await this.getDeletedNotes();
+        const allNotes = [...localNotes, ...deletedNotes];      
+        console.log('Local notes before encryption:', allNotes);
         
         // Ensure all notes have IDs
-        const notesWithIds = localNotes.map(note => ({
+        const notesWithIds = allNotes.map(note => ({
           ...note,
           id: note.id || Date.now()
         }));
@@ -152,9 +164,16 @@ export class WebStorageService {
     throw lastError || new Error('Sync failed after retries');
   }
 
+  static async getDeletedNotes(): Promise<Note[]> {
+    const notesJson = localStorage.getItem(this.NOTES_KEY);
+    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+    return notes.filter(note => note.deleted);
+  }
+
   private static mergeNotes(localNotes: Note[], serverNotes: Note[]): Note[] {
     const notesMap = new Map<number, Note>();
     
+    // First, add all local notes to the map
     localNotes.forEach(note => {
       if (note.id) {
         notesMap.set(note.id, note);
@@ -164,7 +183,11 @@ export class WebStorageService {
     serverNotes.forEach(note => {
       if (note.id) {
         const existingNote = notesMap.get(note.id);
-        if (!existingNote || note.updated_at > existingNote.updated_at) {
+        
+        if (note.deleted && (!existingNote || note.updated_at > existingNote.updated_at)) {
+          notesMap.delete(note.id);
+        }
+        else if (!note.deleted && (!existingNote || note.updated_at > existingNote.updated_at)) {
           notesMap.set(note.id, note);
         }
       }

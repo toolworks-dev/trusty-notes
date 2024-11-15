@@ -1,9 +1,10 @@
 export interface Note {
-  id?: number;  // Make id optional
+  id?: number;
   title: string;
   content: string;
   created_at: number;
   updated_at: number;
+  deleted?: boolean;
 }
 
 export interface EncryptedNote {

@@ -10,13 +10,14 @@ interface EncryptedNote {
   signature: string;
 }
 
-interface Note {
-  id?: number;
-  title: string;
-  content: string;
-  created_at: number;
-  updated_at: number;
-}
+  interface Note {
+    id?: number;
+    title: string;
+    content: string;
+    created_at: number;
+    updated_at: number;
+    deleted?: boolean;
+  }
 
 export class CryptoService {
   private encryptionKey: Uint8Array;
@@ -89,7 +90,8 @@ export class CryptoService {
       title: note.title,
       content: note.content,
       created_at: note.created_at,
-      updated_at: note.updated_at
+      updated_at: note.updated_at,
+      deleted: note.deleted
     });
     
     const key = await crypto.subtle.importKey(
