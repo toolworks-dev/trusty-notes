@@ -25,6 +25,7 @@ https://notes.toolworks.dev
 - [ ] Attachments/Files
 - [x] Android App
 - [ ] iOS App
+- [ ] Desktop Clients
 
 ## Client Self-Hosting
 
