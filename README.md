@@ -26,6 +26,7 @@ https://notes.toolworks.dev
 - [x] Android App
 - [ ] iOS App
 - [ ] Desktop Clients
+- [ ] Add Alternative to Seedphrase
 
 ## Client Self-Hosting
 
