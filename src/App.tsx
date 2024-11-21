@@ -65,6 +65,8 @@ function App() {
   const [mobileNavOpened, setMobileNavOpened] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
+  const [isNewNote, setIsNewNote] = useState(false);
+
 
 
   useEffect(() => {
@@ -141,14 +143,18 @@ function App() {
     setSelectedNote(note);
     setTitle(note.title);
     setContent(note.content);
+    setIsNewNote(false);
+    setSaveStatus(null);
   }
 
   function clearForm() {
     setSelectedNote(null);
     setTitle('');
     setContent('');
+    setIsNewNote(true);
+    setSaveStatus(null);
   }
-
+  
   useEffect(() => {
     WebStorageService.getSyncSettings().then(setSyncSettings);
   }, []);
@@ -169,27 +175,36 @@ function App() {
     syncSettings?.sync_interval ?? 5
   );
 
-  async function handleSave() {
-    try {
-      const now = Date.now();
-      const note: Note = {
-        id: selectedNote?.id,
-        title: title.trim() === '' ? 'Untitled' : title,
-        content,
-        created_at: selectedNote?.created_at || now,
-        updated_at: now,
-      };
-      
-      await WebStorageService.saveNote(note);
-      await loadNotes();
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus(null), 2000);
-    } catch (error) {
-      console.error('Failed to save note:', error);
-      setSaveStatus(null);
-      alert(`Failed to save note: ${error}`);
+async function handleSave() {
+  try {
+    const now = Date.now();
+    
+    const noteId = selectedNote?.id || (isNewNote ? now : undefined);
+    
+    const note: Note = {
+      id: noteId,
+      title: title.trim() === '' ? 'Untitled' : title,
+      content,
+      created_at: selectedNote?.created_at || now,
+      updated_at: now,
+    };
+
+    await WebStorageService.saveNote(note);
+    
+    if (isNewNote) {
+      setSelectedNote(note);
+      setIsNewNote(false);
     }
+    
+    await loadNotes();
+    setSaveStatus('saved');
+    setTimeout(() => setSaveStatus(null), 2000);
+  } catch (error) {
+    console.error('Failed to save note:', error);
+    setSaveStatus(null);
+    alert(`Failed to save note: ${error}`);
   }
+}
 
 async function deleteNote(noteId: number) {
   if (!window.confirm('Are you sure you want to delete this note?')) return;
