@@ -20,9 +20,13 @@ https://notes.toolworks.dev
 - 🔒 Seed phrase-based encryption
 
 ## To-Do
-- [ ] Improved Sync
-- [ ] Rich Text
+- [x] Improved Sync
+- [x] Rich Text
 - [ ] Attachments/Files
+- [x] Android App
+- [ ] iOS App
+- [ ] Desktop Clients
+- [ ] Add Alternative to Seedphrase
 
 ## Client Self-Hosting
 
