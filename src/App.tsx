@@ -365,7 +365,7 @@ async function deleteNote(noteId: number) {
               style={{ flex: 1 }}
             />
             <Group>
-              <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
+              <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
                 <ActionIcon variant="subtle">
                   <IconBrandGithub size={20} />
                 </ActionIcon>
@@ -403,7 +403,7 @@ async function deleteNote(noteId: number) {
               <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
               <Text size="lg" fw={500}>Trusty Notes</Text>
               <Tooltip label="GitHub">
-                <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank">
+                <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
                   <ActionIcon variant="default" size={30}>
                     <IconBrandGithub size={16} />
                   </ActionIcon>
