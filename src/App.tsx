@@ -401,7 +401,7 @@ async function deleteNote(noteId: number) {
           <Group justify="space-between">
             <Group>
               <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
-              <Text size="lg" fw={500}>Trusty Notes</Text>
+              <Text size="lg" fw={500}>TrustyNotes</Text>
               <Tooltip label="GitHub">
                 <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
                   <ActionIcon variant="default" size={30}>

@@ -2,7 +2,7 @@ import { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'dev.toolworks.trustynotes',
-  appName: 'Trusty Notes',
+  appName: 'TrustyNotes',
   webDir: 'dist',
   server: {
     androidScheme: 'https',

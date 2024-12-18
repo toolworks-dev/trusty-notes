@@ -64,7 +64,7 @@ export function MobileNav({
       title={
         <Group>
           <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
-          <Text size="lg" fw={500}>Trusty Notes</Text>
+          <Text size="lg" fw={500}>TrustyNotes</Text>
         </Group>
       }
     >
