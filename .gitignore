@@ -37,3 +37,5 @@ android/.gradle
 android/app/build
 android/build
 android/capacitor-cordova-android-plugins/build
+
+browser-extension/web-ext-artifacts

@@ -1,0 +1,128 @@
+body {
+    width: 350px;
+    margin: 0;
+    padding: 0;
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+  }
+  
+  .container {
+    padding: 16px;
+  }
+  
+  .header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 16px;
+  }
+  
+  .header h1 {
+    margin: 0;
+    font-size: 18px;
+  }
+  
+  .search {
+    margin-bottom: 16px;
+  }
+  
+  #searchInput {
+    width: 100%;
+    padding: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  .notes-list {
+    max-height: 400px;
+    overflow-y: auto;
+  }
+  
+  .note-item {
+    padding: 8px;
+    border-bottom: 1px solid #eee;
+    cursor: pointer;
+  }
+  
+  .note-item:hover {
+    background-color: #f5f5f5;
+  }
+  
+  .note-title {
+    font-weight: 500;
+    margin-bottom: 4px;
+  }
+  
+  .note-preview {
+    font-size: 12px;
+    color: #666;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+  
+  .footer {
+    margin-top: 16px;
+    text-align: center;
+  }
+  
+  button {
+    padding: 8px 16px;
+    border: none;
+    border-radius: 4px;
+    background-color: #007bff;
+    color: white;
+    cursor: pointer;
+  }
+  
+  button:hover {
+    background-color: #0056b3;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    body {
+      background-color: #2f2f2f;
+      color: #f6f6f6;
+    }
+  
+    .note-item {
+      border-bottom-color: #444;
+    }
+  
+    .note-item:hover {
+      background-color: #3f3f3f;
+    }
+  
+    .note-preview {
+      color: #999;
+    }
+  
+    #searchInput {
+      background-color: #3f3f3f;
+      border-color: #444;
+      color: #f6f6f6;
+    }
+  
+    button {
+      background-color: #0d6efd;
+    }
+  
+    button:hover {
+      background-color: #0b5ed7;
+    }
+  }
+  
+  .error-message {
+    padding: 16px;
+    text-align: center;
+    color: #666;
+  }
+  
+  .error-message button {
+    margin-top: 8px;
+    background-color: #dc3545;
+  }
+  
+  .error-message button:hover {
+    background-color: #c82333;
+  } 

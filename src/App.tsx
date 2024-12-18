@@ -50,6 +50,12 @@ interface Note {
   updated_at: number;
 }
 
+function isBrowserExtensionEnvironment(): boolean {
+  return typeof chrome !== 'undefined' && 
+         typeof chrome.runtime !== 'undefined' && 
+         typeof chrome.runtime.sendMessage !== 'undefined';
+}
+
 function App() {
   const [notes, setNotes] = useState<Note[]>([]);
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
@@ -73,6 +79,42 @@ function App() {
     loadNotes();
   }, []);
 
+  useEffect(() => {
+    window.addEventListener('open-sync-settings', () => {
+      setShowSyncSettings(true);
+    });
+
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('openSync') === 'true') {
+      window.history.replaceState({}, '', window.location.pathname);
+      setShowSyncSettings(true);
+    }
+
+    return () => {
+      window.removeEventListener('open-sync-settings', () => {
+        setShowSyncSettings(true);
+      });
+    };
+  }, []);
+
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search);
+    const loadNoteParam = params.get('loadNote');
+    const autoload = params.get('autoload');
+    
+    if (loadNoteParam && autoload === 'true') {
+      try {
+        const noteToLoad = JSON.parse(loadNoteParam);
+        setSelectedNote(noteToLoad);
+        setTitle(noteToLoad.title);
+        setContent(noteToLoad.content);
+        window.history.replaceState({}, '', window.location.pathname);
+      } catch (error) {
+        console.error('Failed to parse note from URL:', error);
+      }
+    }
+  }, []);
+
   const filteredNotes = notes.filter(note => 
     note.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
     note.content.toLowerCase().includes(searchQuery.toLowerCase())
@@ -82,6 +124,7 @@ function App() {
     try {
       const notes = await WebStorageService.getNotes();
       setNotes(notes);
+      await notifyExtension(notes);
     } catch (error) {
       console.error('Failed to fetch notes:', error);
     }
@@ -253,6 +296,46 @@ async function deleteNote(noteId: number) {
     };
     input.click();
   }
+
+  async function notifyExtension(notes: Note[]) {
+    if (isBrowserExtensionEnvironment()) {
+      try {
+        const runtime = chrome.runtime || browser.runtime;
+        const settings = await WebStorageService.getSyncSettings();
+        
+        if (settings?.seed_phrase) {
+          runtime.sendMessage(
+            'trusty-notes@toolworks.dev',
+            {
+              type: 'SYNC_SETTINGS_UPDATED',
+              settings: {
+                seed_phrase: settings.seed_phrase
+              }
+            }
+          );
+        }
+
+        runtime.sendMessage(
+          'trusty-notes@toolworks.dev',
+          {
+            type: 'NOTES_UPDATED',
+            notes: notes.map(note => ({
+              id: note.id,
+              title: note.title,
+              content: note.content,
+              created_at: note.created_at,
+              updated_at: note.updated_at
+            }))
+          }
+        ).catch(error => {
+          console.debug('Extension communication failed:', error);
+        });
+      } catch (error) {
+        console.debug('Browser extension not available:', error);
+      }
+    }
+  }
+
   return (
     <AppShell
       header={isMobile ? { height: 60 } : undefined}

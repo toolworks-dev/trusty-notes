@@ -7,7 +7,9 @@
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
-    "android": "npm run build && npx cap sync android && npx cap open android"
+    "android": "npm run build && npx cap sync android && npx cap open android",
+    "build:chrome": "node browser-extension/build.js chrome",
+    "build:firefox": "node browser-extension/build.js firefox"
   },
   "dependencies": {
     "@capacitor/android": "^6.1.2",
