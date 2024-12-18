@@ -1,17 +1,92 @@
 <!doctype html>
 <html lang="en">
   <head>
+    <!-- Charset and Viewport -->
     <meta charset="UTF-8" />
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="manifest" href="/site.webmanifest">    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Trusty Notes</title>
-    <script defer data-domain="notes.toolworks.dev" src="https://plausible.toolworks.dev/js/script.js"></script>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Title and Meta Description -->
+    <title>Trusty Notes: Secure, Open-Source Note-Taking with Cloud Sync</title>
+    <meta
+      name="description"
+      content="Trusty Notes is a secure, open-source note-taking app featuring end-to-end encryption, Markdown editing, cloud synchronization, and cross-platform compatibility."
+    />
+
+    <!-- Favicon and Web Manifest -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#1e1e1e" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Trusty Notes: Secure Note-Taking App" />
+    <meta
+      property="og:description"
+      content="Take notes securely with Trusty Notes. End-to-end encrypted, Markdown editor, automatic cloud sync, and cross-platform accessibility."
+    />
+    <meta property="og:url" content="https://notes.toolworks.dev" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
+    />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Trusty Notes: Secure Note-Taking App" />
+    <meta
+      name="twitter:description"
+      content="Trusty Notes offers end-to-end encrypted note-taking with Markdown support, cloud sync, and cross-platform compatibility."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://notes.toolworks.dev" />
+
+    <!-- Structured Data (Schema Markup) -->
+    <script type="application/ld+json">
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Trusty Notes",
+        "operatingSystem": "Cross-Platform",
+        "applicationCategory": "Utility",
+        "description": "Trusty Notes is a secure, open-source note-taking app featuring end-to-end encryption, Markdown editing, cloud synchronization, and cross-platform compatibility.",
+        "url": "https://notes.toolworks.dev",
+        "screenshot": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        }
+      }
+    </script>
+
+    <!-- Analytics -->
+    <script
+      defer
+      data-domain="notes.toolworks.dev"
+      src="https://plausible.toolworks.dev/js/script.js"
+    ></script>
+
+    <!-- Main App Script -->
+    <script defer type="module" src="/src/main.tsx"></script>
   </head>
 
   <body>
+    <!-- Root Div for React App -->
     <div id="root"></div>
-    <script type="module" src="/src/main.tsx"></script>
+
+    <!-- No-JS Fallback -->
+    <noscript>
+      <p>
+        Trusty Notes requires JavaScript to run. Please enable JavaScript in your browser to use this
+        application.
+      </p>
+    </noscript>
   </body>
 </html>
