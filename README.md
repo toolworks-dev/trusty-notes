@@ -4,7 +4,7 @@ A secure cross-platform note-taking application. Features end-to-end encryption 
 
 https://notes.toolworks.dev
 
-![image](https://github.com/user-attachments/assets/67c661f0-d7ac-49ac-a161-628806ccb610)
+![image](trusty-notes.png)
 
 
 ## Features
