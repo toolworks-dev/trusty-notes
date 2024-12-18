@@ -171,6 +171,22 @@ function renderNotes(notesToRender) {
   }
 }
 
+async function handleNotesUpdate(notes) {
+  if (!cryptoService) {
+    await initializeCrypto();
+  }
+  
+  if (cryptoService) {
+    const encrypted = await cryptoService.encrypt(notes);
+    await chrome.storage.local.set({ 
+      encrypted_notes: encrypted,
+      lastUpdated: Date.now()
+    });
+    
+    renderNotes(notes);
+  }
+}
+
 document.addEventListener('DOMContentLoaded', async () => {
   const searchInput = document.getElementById('searchInput');
   const notesList = document.getElementById('notesList');
@@ -184,12 +200,16 @@ document.addEventListener('DOMContentLoaded', async () => {
   }
 
   try {
-    await initializeCrypto();
-    const result = await chrome.storage.local.get(['encrypted_notes']);
-    if (result.encrypted_notes) {
-      notes = await cryptoService.decrypt(result.encrypted_notes);
-      renderNotes(notes);
-      setupButton.style.display = 'none';
+    const initialized = await initializeCrypto();
+    if (initialized) {
+      const result = await chrome.storage.local.get(['encrypted_notes']);
+      if (result.encrypted_notes) {
+        notes = await cryptoService.decrypt(result.encrypted_notes);
+        renderNotes(notes);
+        setupButton.style.display = 'none';
+      } else {
+        setupButton.style.display = 'block';
+      }
     } else {
       setupButton.style.display = 'block';
     }
@@ -255,8 +275,10 @@ document.addEventListener('DOMContentLoaded', async () => {
   });
 });
 
-chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'NOTES_UPDATED_IN_STORAGE' && message.notes) {
+chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+  if (message.type === 'NOTES_UPDATED' && message.notes) {
+    await handleNotesUpdate(message.notes);
+  } else if (message.type === 'NOTES_UPDATED_IN_STORAGE' && message.notes) {
     notes = message.notes;
     renderNotes(notes);
   }

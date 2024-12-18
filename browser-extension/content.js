@@ -1,12 +1,9 @@
-// Listen for messages from the extension
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'GET_SYNC_SETTINGS') {
-    // Create and inject the script element
     const script = document.createElement('script');
     script.src = chrome.runtime.getURL('scripts/getStorageData.js');
     script.type = 'text/javascript';
     
-    // Listen for the response from the injected script
     const listener = (event) => {
       const data = event.detail;
       if (data.settings) {

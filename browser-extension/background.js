@@ -81,48 +81,54 @@ async function encryptAndStoreNotes(notes) {
   }
 }
 
-chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
+chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'NOTES_UPDATED') {
-    await encryptAndStoreNotes(message.notes);
+    encryptAndStoreNotes(message.notes)
+      .catch(error => console.error('Failed to process notes update:', error));
   } else if (message.type === 'SYNC_SETTINGS_UPDATED') {
-    try {
-      await chrome.storage.local.set({
-        seed_phrase: message.settings.seed_phrase
-      });
-      cryptoService = await CryptoService.new(message.settings.seed_phrase);
+    (async () => {
+      try {
+        await chrome.storage.local.set({
+          seed_phrase: message.settings.seed_phrase
+        });
+        cryptoService = await CryptoService.new(message.settings.seed_phrase);
 
-      if (message.notes?.length > 0) {
-        await encryptAndStoreNotes(message.notes);
+        if (message.notes?.length > 0) {
+          await encryptAndStoreNotes(message.notes);
+        }
+      } catch (error) {
+        console.error('Error storing sync settings:', error);
       }
-    } catch (error) {
-      console.error('Error storing sync settings:', error);
-    }
+    })();
   }
-  return true;
+  return true; // Keep messaging channel open for async operations
 });
 
 chrome.runtime.onMessageExternal.addListener(
-  async (message, sender, sendResponse) => {
+  (message, sender, sendResponse) => {
     if (sender.origin === "https://notes.toolworks.dev") {
       if (message.type === 'SYNC_SETTINGS_UPDATED') {
-        try {
-          await chrome.storage.local.set({
-            seed_phrase: message.settings.seed_phrase
-          });
-          cryptoService = await CryptoService.new(message.settings.seed_phrase);
-          
-          if (message.notes?.length > 0) {
-            await encryptAndStoreNotes(message.notes);
+        (async () => {
+          try {
+            await chrome.storage.local.set({
+              seed_phrase: message.settings.seed_phrase
+            });
+            cryptoService = await CryptoService.new(message.settings.seed_phrase);
+            
+            if (message.notes?.length > 0) {
+              await encryptAndStoreNotes(message.notes);
+            }
+            
+            sendResponse({ success: true });
+          } catch (error) {
+            console.error('Error storing sync settings:', error);
+            sendResponse({ success: false, error: error.message });
           }
-          
-          sendResponse({ success: true });
-        } catch (error) {
-          console.error('Error storing sync settings:', error);
-          sendResponse({ success: false, error: error.message });
-        }
+        })();
+        return true; // Keep messaging channel open
       }
     }
-    return true;
+    return false;
   }
 );
 
