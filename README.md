@@ -36,7 +36,7 @@ https://notes.toolworks.dev
 
 ### Setup & Run
 ```
-git clone https://github.com/toolworks/trusty-notes.git
+git clone https://github.com/toolworks-dev/trusty-notes
 cd trusty-notes
 docker compose up --build -d
 ```
@@ -49,7 +49,7 @@ docker compose up --build -d
 
 ### Setup
 ```
-git clone https://github.com/toolworks/trusty-notes.git
+git clone https://github.com/toolworks-dev/trusty-notes
 cd trusty-notes/server
 ```
 
