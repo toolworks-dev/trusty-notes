@@ -433,32 +433,39 @@ async function deleteNote(noteId: number) {
         />
       ) : (
         <AppShell.Navbar p="md">
-          <Stack h="100%" gap="sm">
-          <Group justify="space-between">
-            <Group>
-              <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
-              <Text size="lg" fw={500}>TrustyNotes</Text>
-              <Tooltip label="GitHub">
-                <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
-                  <ActionIcon variant="default" size={30}>
-                    <IconBrandGithub size={16} />
-                  </ActionIcon>
-                </Anchor>
-              </Tooltip>
-              <Tooltip label="Privacy Policy">
-                <Anchor 
-                  href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" 
-                  target="_blank" 
-                  rel="noreferrer"
-                  size="sm"
-                  c="dimmed"
-                >
-                  Privacy Policy
-                </Anchor>
-              </Tooltip>
-            </Group>
-            <Group>
-              {!sidebarCollapsed && (
+          <Stack 
+            h="100%" 
+            gap="xs" 
+            style={{ 
+              overflow: 'hidden', 
+              width: '100%'
+            }}
+          >
+            <Group justify="space-between">
+              <Group>
+                <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
+                <Text size="lg" fw={500}>TrustyNotes</Text>
+                <Tooltip label="GitHub">
+                  <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
+                    <ActionIcon variant="default" size={30}>
+                      <IconBrandGithub size={16} />
+                    </ActionIcon>
+                  </Anchor>
+                </Tooltip>
+                <Tooltip label="Privacy Policy">
+                  <Anchor 
+                    href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" 
+                    target="_blank" 
+                    rel="noreferrer"
+                    size="sm"
+                    c="dimmed"
+                  >
+                    Privacy Policy
+                  </Anchor>
+                </Tooltip>
+              </Group>
+              <Group>
+                {!sidebarCollapsed && (
                   <>
                     <Tooltip label="Selection Mode">
                       <ActionIcon
@@ -531,53 +538,56 @@ async function deleteNote(noteId: number) {
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.currentTarget.value)}
                 />
-                <Stack gap="xs" style={{ overflow: 'auto', flex: 1, minHeight: 0 }}>
-                  {filteredNotes.map((note) => (
-                    <Paper
-                      key={note.id}
-                      shadow="xs"
-                      p="md"
-                      onClick={() => !isSelectionMode && selectNote(note)}
-                      style={{
-                        cursor: isSelectionMode ? 'default' : 'pointer',
-                        backgroundColor: (selectedNote?.id === note.id || selectedNotes.has(note.id!)) ? 
-                          'var(--mantine-color-blue-light)' : undefined,
-                      }}
-                    >
-                      <Group justify="space-between" wrap="nowrap">
-                        <Group style={{ flex: 1 }}>
-                          {isSelectionMode && (
-                            <Checkbox
-                              checked={selectedNotes.has(note.id!)}
-                              onChange={(e) => toggleNoteSelection(note.id!, e as any)}
-                              onClick={(e) => e.stopPropagation()}
-                            />
+                <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                  <Stack gap="xs">
+                    {filteredNotes.map((note) => (
+                      <Paper
+                        key={note.id}
+                        shadow="xs"
+                        p="md"
+                        onClick={() => selectNote(note)}
+                        style={{
+                          cursor: 'pointer',
+                          backgroundColor: selectedNote?.id === note.id ? 
+                            'var(--mantine-color-blue-light)' : undefined,
+                        }}
+                      >
+                        <Group justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
+                          <Group style={{ flex: 1, minWidth: 0 }}>
+                            {isSelectionMode && (
+                              <Checkbox
+                                checked={selectedNotes.has(note.id!)}
+                                onChange={(e) => toggleNoteSelection(note.id!, e as any)}
+                                onClick={(e) => e.stopPropagation()}
+                              />
+                            )}
+                            <Box style={{ minWidth: 0, flex: 1 }}>
+                              <Text fw={500} truncate="end" style={{ maxWidth: '100%' }}>
+                                {note.title || 'Untitled'}
+                              </Text>
+                              <Text size="xs" c="dimmed" truncate="end" style={{ maxWidth: '100%' }}>
+                                {format(note.updated_at, 'MMM d, yyyy HH:mm')}
+                              </Text>
+                            </Box>
+                          </Group>
+                          {!isSelectionMode && (
+                            <ActionIcon
+                              variant="subtle"
+                              color="red"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNote(note.id!);
+                              }}
+                              style={{ flexShrink: 0 }}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
                           )}
-                          <Box>
-                            <Text fw={500} truncate="end">
-                              {note.title || 'Untitled'}
-                            </Text>
-                            <Text size="xs" c="dimmed">
-                              {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                            </Text>
-                          </Box>
                         </Group>
-                        {!isSelectionMode && (
-                          <ActionIcon
-                            variant="subtle"
-                            color="red"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              deleteNote(note.id!);
-                            }}
-                          >
-                            <IconTrash size={16} />
-                          </ActionIcon>
-                        )}
-                      </Group>
-                    </Paper>
-                  ))}
-                </Stack>
+                      </Paper>
+                    ))}
+                  </Stack>
+                </Box>
               </>
             )}
           {sidebarCollapsed && (
