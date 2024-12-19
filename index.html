@@ -1,235 +1,92 @@
-<!DOCTYPE html>
-<html lang="en" dir="ltr">
+<!doctype html>
+<html lang="en">
   <head>
-    <!-- Core Meta Tags -->
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, shrink-to-fit=no">
-    <meta http-equiv="X-UA-Compatible" content="IE=edge">
-    
-    <!-- Enhanced Security Headers -->
-    <meta http-equiv="Content-Security-Policy" 
-          content="default-src 'self'; 
-                   script-src 'self' https://plausible.toolworks.dev 'unsafe-inline' 'unsafe-eval'; 
-                   style-src 'self' 'unsafe-inline';
-                   img-src 'self' https://raw.githubusercontent.com data: blob:;
-                   connect-src 'self' https://plausible.toolworks.dev;
-                   font-src 'self' data:;
-                   worker-src 'self' blob:;
-                   frame-ancestors 'none';
-                   object-src 'none';
-                   base-uri 'self';
-                   form-action 'self';">
-    <meta http-equiv="X-Content-Type-Options" content="nosniff">
-    <meta http-equiv="Permissions-Policy" 
-          content="accelerometer=(), camera=(), geolocation=(), gyroscope=(), magnetometer=(), microphone=(), payment=(), usb=(), interest-cohort=()">
-    <meta http-equiv="Cross-Origin-Opener-Policy" content="same-origin">
-    <meta http-equiv="Cross-Origin-Embedder-Policy" content="require-corp">
-    <meta name="referrer" content="strict-origin-when-cross-origin">
-    
-    <!-- Core SEO -->
-    <title>TrustyNotes: Secure Notes with Markdown and Sync</title>
-    <meta name="title" content="TrustyNotes: Secure Notes with Markdown and Sync">
-    <meta name="description" 
-          content="TrustyNotes: The secure, open-source note-taking app with end-to-end encryption, Markdown support, and seamless cross-platform sync. Your private thoughts, protected.">
-    <meta name="keywords" 
-          content="TrustyNotes, secure notes, encrypted notes, markdown editor, note-taking app, privacy-focused notes, end-to-end encryption, cross-platform sync, private notes">
-    
-    <!-- Enhanced Metadata -->
-    <meta name="author" content="ToolWorks Dev">
-    <meta name="copyright" content="© 2024 ToolWorks Dev. All rights reserved.">
-    <meta name="generator" content="TrustyNotes v1.0.0">
-    <meta name="version" content="1.0.0">
-    <meta name="rating" content="General">
-    <meta name="subject" content="Secure Note-Taking Application">
-    <meta name="classification" content="Software">
-    
-    <!-- Mobile & PWA Enhancement -->
-    <meta name="application-name" content="TrustyNotes">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-title" content="TrustyNotes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="default">
-    <meta name="mobile-web-app-capable" content="yes">
-    <meta name="format-detection" content="telephone=no,date=no,address=no,email=no,url=no">
-    <meta name="HandheldFriendly" content="true">
-    <meta name="apple-touch-fullscreen" content="yes">
-    
-    <!-- Enhanced Robots Directives -->
-    <meta name="robots" content="index, follow, max-image-preview:large, max-snippet:-1, max-video-preview:-1, notranslate">
-    <meta name="googlebot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    <meta name="bingbot" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
-    
-    <!-- Resource Hints -->
-    <link rel="preconnect" href="https://plausible.toolworks.dev" crossorigin>
-    <link rel="dns-prefetch" href="https://plausible.toolworks.dev">
-    <link rel="preload" href="/src/main.tsx" as="script" fetchpriority="high" crossorigin>
-    <link rel="modulepreload" href="/src/main.tsx" fetchpriority="high">
-    <link rel="preload" href="/assets/fonts/main-font.woff2" as="font" type="font/woff2" crossorigin>
-    
-    <!-- PWA Assets -->
-    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
-    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
-    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
-    <link rel="icon" type="image/x-icon" href="/favicon.ico">
-    <link rel="manifest" href="/site.webmanifest" crossorigin="use-credentials">
-    <link rel="mask-icon" href="/safari-pinned-tab.svg" color="#5bbad5">
-    <meta name="msapplication-TileColor" content="#ffffff">
-    <meta name="msapplication-TileImage" content="/mstile-144x144.png">
-    
-    <!-- Theme Support -->
-    <meta name="theme-color" content="#1e1e1e" media="(prefers-color-scheme: dark)">
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)">
-    <meta name="color-scheme" content="dark light">
-    <meta name="msapplication-navbutton-color" content="#1e1e1e">
-    
-    <!-- Enhanced Open Graph -->
-    <meta property="og:type" content="website">
-    <meta property="og:url" content="https://notes.toolworks.dev">
-    <meta property="og:title" content="TrustyNotes: Secure Notes with Markdown and Sync">
-    <meta property="og:description" content="Take notes securely with TrustyNotes. Features end-to-end encryption, Markdown editor, automatic cloud sync, and cross-platform accessibility.">
-    <meta property="og:image" content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png">
-    <meta property="og:image:type" content="image/png">
-    <meta property="og:image:width" content="1200">
-    <meta property="og:image:height" content="630">
-    <meta property="og:image:alt" content="TrustyNotes application interface showcasing secure note-taking features">
-    <meta property="og:site_name" content="TrustyNotes">
-    <meta property="og:locale" content="en_US">
-    <meta property="og:locale:alternate" content="en_GB">
-    
-    <!-- Enhanced Twitter Cards -->
-    <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:url" content="https://notes.toolworks.dev">
-    <meta name="twitter:title" content="TrustyNotes: Secure Notes with Markdown and Sync">
-    <meta name="twitter:description" content="TrustyNotes offers end-to-end encrypted note-taking with Markdown support, cloud sync, and cross-platform compatibility.">
-    <meta name="twitter:image" content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png">
-    <meta name="twitter:image:alt" content="TrustyNotes application interface screenshot">
-    <meta name="twitter:creator" content="@trustynotes">
-    <meta name="twitter:site" content="@trustynotes">
-    
-    <!-- Enhanced Canonical URLs -->
-    <link rel="canonical" href="https://notes.toolworks.dev">
-    <link rel="alternate" href="https://notes.toolworks.dev" hreflang="x-default">
-    <link rel="alternate" href="https://notes.toolworks.dev" hreflang="en">
-    <link rel="alternate" href="https://notes.toolworks.dev/app" type="application/json">
-    
-    <!-- Enhanced Structured Data -->
+    <!-- Charset and Viewport -->
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+
+    <!-- Title and Meta Description -->
+    <title>Trusty Notes: Secure, Open-Source Note-Taking with Cloud Sync</title>
+    <meta
+      name="description"
+      content="Trusty Notes is a secure, open-source note-taking app featuring end-to-end encryption, Markdown editing, cloud synchronization, and cross-platform compatibility."
+    />
+
+    <!-- Favicon and Web Manifest -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png" />
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png" />
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="theme-color" content="#1e1e1e" />
+
+    <!-- Open Graph Meta Tags -->
+    <meta property="og:title" content="Trusty Notes: Secure Note-Taking App" />
+    <meta
+      property="og:description"
+      content="Take notes securely with Trusty Notes. End-to-end encrypted, Markdown editor, automatic cloud sync, and cross-platform accessibility."
+    />
+    <meta property="og:url" content="https://notes.toolworks.dev" />
+    <meta
+      property="og:image"
+      content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
+    />
+    <meta property="og:type" content="website" />
+
+    <!-- Twitter Card Meta Tags -->
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Trusty Notes: Secure Note-Taking App" />
+    <meta
+      name="twitter:description"
+      content="Trusty Notes offers end-to-end encrypted note-taking with Markdown support, cloud sync, and cross-platform compatibility."
+    />
+    <meta
+      name="twitter:image"
+      content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
+    />
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://notes.toolworks.dev" />
+
+    <!-- Structured Data (Schema Markup) -->
     <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "SoftwareApplication",
-      "name": "TrustyNotes",
-      "alternateName": "TrustyNotes App",
-      "description": "TrustyNotes is a secure, open-source note-taking app with end-to-end encryption, Markdown editing, cloud sync, and cross-platform compatibility.",
-      "operatingSystem": ["Windows", "macOS", "Linux", "iOS", "Android"],
-      "applicationCategory": ["ProductivityApplication", "UtilitiesApplication"],
-      "url": "https://notes.toolworks.dev",
-      "image": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png",
-      "screenshot": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png",
-      "downloadUrl": "https://notes.toolworks.dev/",
-      "softwareVersion": "1.0.0",
-      "releaseNotes": "Initial release with Markdown editor, encrypted cloud sync, and cross-platform support.",
-      "keywords": "secure notes, encrypted notes, markdown editor, note-taking app",
-      "offers": {
-        "@type": "Offer",
-        "price": "0.00",
-        "priceCurrency": "USD",
-        "availability": "https://schema.org/InStock"
-      },
-      "author": {
-        "@type": "Organization",
-        "name": "ToolWorks Dev",
-        "url": "https://toolworks.dev",
-        "logo": "https://toolworks.dev/logo.png"
-      },
-      "publisher": {
-        "@type": "Organization",
-        "name": "ToolWorks Dev",
-        "url": "https://toolworks.dev"
-      },
-      "applicationSubCategory": "Productivity Software",
-      "isAccessibleForFree": true,
-      "license": "https://opensource.org/licenses/MIT",
-      "aggregateRating": {
-        "@type": "AggregateRating",
-        "ratingValue": "4.8",
-        "ratingCount": "156",
-        "bestRating": "5",
-        "worstRating": "1"
-      },
-      "review": {
-        "@type": "Review",
-        "reviewRating": {
-          "@type": "Rating",
-          "ratingValue": "5",
-          "bestRating": "5"
-        },
-        "author": {
-          "@type": "Person",
-          "name": "Tech Review Weekly"
-        },
-        "reviewBody": "TrustyNotes provides an excellent balance of security and usability for note-taking."
+      {
+        "@context": "https://schema.org",
+        "@type": "SoftwareApplication",
+        "name": "Trusty Notes",
+        "operatingSystem": "Cross-Platform",
+        "applicationCategory": "Utility",
+        "description": "Trusty Notes is a secure, open-source note-taking app featuring end-to-end encryption, Markdown editing, cloud synchronization, and cross-platform compatibility.",
+        "url": "https://notes.toolworks.dev",
+        "screenshot": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png",
+        "offers": {
+          "@type": "Offer",
+          "price": "0.00",
+          "priceCurrency": "USD"
+        }
       }
-    }
     </script>
-    
-    <!-- Enhanced Analytics -->
-    <script async defer 
-            data-domain="notes.toolworks.dev" 
-            src="https://plausible.toolworks.dev/js/script.js"
-            data-api="/api/event"
-            integrity="sha384-HASH"
-            crossorigin="anonymous"></script>
-    
-    <!-- Main Application -->
-    <script type="module" src="/src/main.tsx" defer fetchpriority="high"></script>
+
+    <!-- Analytics -->
+    <script
+      defer
+      data-domain="notes.toolworks.dev"
+      src="https://plausible.toolworks.dev/js/script.js"
+    ></script>
+
+    <!-- Main App Script -->
+    <script defer type="module" src="/src/main.tsx"></script>
   </head>
-  
-  <body itemscope itemtype="https://schema.org/WebApplication">
-    <!-- Skip Navigation -->
-    <a href="#root" 
-       class="skip-nav" 
-       tabindex="0"
-       role="button"
-       aria-label="Skip to main content">
-      Skip to main content
-    </a>
-    
-    <!-- Application Header -->
-    <header class="app-header" role="banner">
-      <h1 itemprop="name">TrustyNotes: Secure Notes with Markdown and Sync</h1>
-      <meta itemprop="description" content="A secure note-taking application with end-to-end encryption and Markdown support.">
-    </header>
-    
-    <!-- Main Application Container -->
-    <main id="root" 
-          role="main" 
-          aria-label="TrustyNotes Application"
-          aria-describedby="app-description">
-      <div id="app-description" class="sr-only">
-        <p>A secure note-taking application with end-to-end encryption and Markdown support. 
-           Create, edit, and sync your notes across devices with complete privacy.</p>
-      </div>
-    </main>
-    
-    <!-- No JavaScript Fallback -->
+
+  <body>
+    <!-- Root Div for React App -->
+    <div id="root"></div>
+
+    <!-- No-JS Fallback -->
     <noscript>
-      <div class="no-js-message" 
-           role="alert"
-           aria-live="assertive">
-        <h2>JavaScript Required</h2>
-        <p>
-          TrustyNotes requires JavaScript to run. Please enable JavaScript in your browser or 
-          <a href="https://notes.toolworks.dev/download" 
-             rel="noopener"
-             class="download-link"
-             aria-label="Download TrustyNotes desktop application">
-            download our desktop app
-          </a> 
-          for a native experience.
-        </p>
-      </div>
+      <p>
+        Trusty Notes requires JavaScript to run. Please enable JavaScript in your browser to use this
+        application.
+      </p>
     </noscript>
-    
-    <!-- Enhanced Error Boundary -->
-    <div id="error-root" role="alert" aria-live="assertive" hidden></div>
   </body>
 </html>
