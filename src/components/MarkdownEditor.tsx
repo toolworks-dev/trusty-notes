@@ -37,7 +37,13 @@ function WordCount({ content }: { content: string }) {
   );
 }
 
-export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edit', editorType: initialEditorType = 'markdown' }: MarkdownEditorProps) {
+export function MarkdownEditor({ 
+  content, 
+  onChange, 
+  isMobile = false,
+  defaultView = 'edit', 
+  editorType: initialEditorType = 'markdown' 
+}: MarkdownEditorProps) {
   const [view, setView] = useState<'edit' | 'preview' | 'split'>(isMobile ? 'edit' : defaultView);
   const [editorType, setEditorType] = useState(initialEditorType);
 
@@ -45,7 +51,8 @@ export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edi
     editorType === 'richtext' ? (
       <RichTextEditor 
         content={content} 
-        onChange={onChange} 
+        onChange={onChange}
+        isMobile={!!isMobile}
       />
     ) : (
       <Textarea

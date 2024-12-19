@@ -3,6 +3,7 @@
     min-height: 0;
     outline: none;
     overflow-y: auto;
+    height: 100%;
 }
 
 .ProseMirror p {
@@ -44,31 +45,17 @@
   padding: 0.2em 0.4em;
 } 
 
+.rich-text-table-container {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+}
+
 .rich-text-table-container .ProseMirror {
-  table {
-    border-collapse: collapse;
-    table-layout: fixed;
-    width: 100%;
-    margin: 0;
-    overflow: hidden;
-  }
-  
-  td, th {
-    min-width: 1em;
-    border: 2px solid var(--mantine-color-gray-3);
-    padding: 0.75rem;
-    vertical-align: top;
-    box-sizing: border-box;
-    position: relative;
-    
-    > * {
-      margin: 0;
-    }
-    
-    &:hover {
-      background-color: var(--mantine-color-gray-0);
-    }
-  }
+  padding: 8px;
+  overflow-y: auto;
+  -webkit-overflow-scrolling: touch;
 }
 
 [data-mantine-color-scheme="dark"] .rich-text-table-container .ProseMirror {
@@ -150,6 +137,39 @@
   .mobile-editor .tiptap-dropdown-content {
     min-width: 160px;
   }
+
+  .mobile-toolbar {
+    display: flex;
+    padding: 4px;
+    overflow-x: auto;
+    overflow-y: hidden;
+    -webkit-overflow-scrolling: touch;
+    white-space: nowrap;
+    gap: 4px;
+    background: var(--mantine-color-body);
+    border-bottom: 1px solid var(--mantine-color-gray-3);
+  }
+
+  .mobile-toolbar::-webkit-scrollbar {
+    display: none; /* Hide scrollbar for cleaner look */
+  }
+
+  /* Adjust button sizes for mobile */
+  .mobile-toolbar .mantine-ActionIcon-root {
+    width: 32px;
+    height: 32px;
+    padding: 6px;
+  }
+
+  .mobile-toolbar .mantine-ActionIcon-root svg {
+    width: 16px;
+    height: 16px;
+  }
+
+  /* Prevent zoom on iOS */
+  .ProseMirror {
+    font-size: 16px !important;
+  }
 }
 
 /* Prevent body scroll when editor is focused */
@@ -158,4 +178,17 @@ body.editor-focused {
   position: fixed;
   width: 100%;
   height: 100%;
+}
+
+/* Desktop toolbar styles */
+.desktop-toolbar {
+  display: flex;
+  padding: 8px;
+  background: var(--mantine-color-body);
+  border-bottom: 1px solid var(--mantine-color-gray-3);
+}
+
+.desktop-toolbar .mantine-ActionIcon-root {
+  width: 32px;
+  height: 32px;
 }

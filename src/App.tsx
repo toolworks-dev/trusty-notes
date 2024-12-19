@@ -31,6 +31,7 @@ import {
   IconCloud,
   IconBrandGithub,
   IconCheckbox,
+  IconCheck,
 } from '@tabler/icons-react';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MarkdownEditor } from './components/MarkdownEditor';
@@ -71,6 +72,7 @@ function App() {
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isNewNote, setIsNewNote] = useState(false);
   const [ignoreNextSave, setIgnoreNextSave] = useState(false);
+  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
 
 
 
@@ -172,7 +174,10 @@ function App() {
 
     if (title.trim() === '' && content.trim() === '') return;
     try {
+      setSaveStatus('saving');
       await handleSave();
+      setSaveStatus('saved');
+      setTimeout(() => setSaveStatus('saved'), 2000);
     } catch (error) {
       console.error('Save failed:', error);
     }
@@ -215,6 +220,7 @@ function App() {
     setTitle('');
     setContent('');
     setIsNewNote(true);
+    setSaveStatus('saved');
   }
   
   useEffect(() => {
@@ -249,6 +255,7 @@ async function handleSave() {
     
     if (recentNote) {
       console.debug('Preventing duplicate save');
+      setSaveStatus('saved');
       return;
     }
     
@@ -270,9 +277,11 @@ async function handleSave() {
     }
     
     await loadNotes();
+    setSaveStatus('saved');
   } catch (error) {
     console.error('Failed to save note:', error);
     alert(`Failed to save note: ${error}`);
+    setSaveStatus('saved');
   }
 }
 
@@ -589,17 +598,17 @@ async function deleteNote(noteId: number) {
   
       <AppShell.Main>
         <Stack h="100vh" gap={0} style={{ overflow: 'hidden' }}>
-          {isMobile && (
-            <Box 
-              p="xs" 
-              style={{ 
-                borderBottom: '1px solid var(--mantine-color-gray-3)',
-                position: 'sticky',
-                top: 0,
-                zIndex: 100,
-                backgroundColor: 'var(--mantine-color-body)'
-              }}
-            >
+          <Box 
+            p={isMobile ? "xs" : "md"} 
+            style={{ 
+              borderBottom: '1px solid var(--mantine-color-gray-3)',
+              position: 'sticky',
+              top: 0,
+              zIndex: 100,
+              backgroundColor: 'var(--mantine-color-body)'
+            }}
+          >
+            {isMobile ? (
               <TextInput
                 placeholder="Note title"
                 value={title}
@@ -607,8 +616,31 @@ async function deleteNote(noteId: number) {
                 size="sm"
                 style={{ flex: 1 }}
               />
-            </Box>
-          )}
+            ) : (
+              <Group justify="space-between" align="center">
+                <TextInput
+                  placeholder="Note title"
+                  value={title}
+                  onChange={(e) => setTitle(e.currentTarget.value)}
+                  size="lg"
+                  style={{ flex: 1 }}
+                />
+                <Group>
+                  {saveStatus && (
+                    <Group gap="xs">
+                      <IconCheck size={16} style={{ color: 'var(--mantine-color-green-6)' }} />
+                      <Text size="sm" c="dimmed">
+                        {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
+                      </Text>
+                    </Group>
+                  )}
+                  <Button variant="light" onClick={clearForm}>
+                    New Note
+                  </Button>
+                </Group>
+              </Group>
+            )}
+          </Box>
           <Box 
             style={{ 
               flex: 1, 
