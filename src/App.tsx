@@ -22,7 +22,6 @@ import {
   IconSun, 
   IconMoon, 
   IconPlus, 
-  IconCheck, 
   IconSearch,
   IconChevronLeft,
   IconChevronRight,
@@ -61,7 +60,6 @@ function App() {
   const [selectedNote, setSelectedNote] = useState<Note | null>(null);
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
-  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>(null);
   const { colorScheme, toggleColorScheme } = useMantineColorScheme();
   const [searchQuery, setSearchQuery] = useState('');
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
@@ -72,6 +70,7 @@ function App() {
   const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [isNewNote, setIsNewNote] = useState(false);
+  const [ignoreNextSave, setIgnoreNextSave] = useState(false);
 
 
 
@@ -166,13 +165,16 @@ function App() {
   };
 
   const debouncedSave = useDebouncedCallback(async () => {
+    if (ignoreNextSave) {
+      setIgnoreNextSave(false);
+      return;
+    }
+
     if (title.trim() === '' && content.trim() === '') return;
-    setSaveStatus('saving');
     try {
       await handleSave();
     } catch (error) {
       console.error('Save failed:', error);
-      setSaveStatus(null);
     }
   }, 1000);
 
@@ -182,12 +184,30 @@ function App() {
     }
   }, [title, content]);
 
+  useEffect(() => {
+    if (!isMobile) return;
+
+    const handleKeyboardEvent = (event: KeyboardEvent) => {
+      if (
+        event.key === 'ArrowUp' || 
+        event.key === 'ArrowDown' || 
+        event.key === 'ArrowLeft' || 
+        event.key === 'ArrowRight' ||
+        event.key === 'Enter'
+      ) {
+        setIgnoreNextSave(true);
+      }
+    };
+
+    window.addEventListener('keydown', handleKeyboardEvent);
+    return () => window.removeEventListener('keydown', handleKeyboardEvent);
+  }, [isMobile]);
+
   function selectNote(note: Note) {
     setSelectedNote(note);
     setTitle(note.title);
     setContent(note.content);
     setIsNewNote(false);
-    setSaveStatus(null);
   }
 
   function clearForm() {
@@ -195,7 +215,6 @@ function App() {
     setTitle('');
     setContent('');
     setIsNewNote(true);
-    setSaveStatus(null);
   }
   
   useEffect(() => {
@@ -222,6 +241,17 @@ async function handleSave() {
   try {
     const now = Date.now();
     
+    const recentNote = notes.find(note => 
+      note.title === title && 
+      note.content === content && 
+      now - note.updated_at < 2000
+    );
+    
+    if (recentNote) {
+      console.debug('Preventing duplicate save');
+      return;
+    }
+    
     const noteId = selectedNote?.id || (isNewNote ? now : undefined);
     
     const note: Note = {
@@ -240,11 +270,8 @@ async function handleSave() {
     }
     
     await loadNotes();
-    setSaveStatus('saved');
-    setTimeout(() => setSaveStatus(null), 2000);
   } catch (error) {
     console.error('Failed to save note:', error);
-    setSaveStatus(null);
     alert(`Failed to save note: ${error}`);
   }
 }
@@ -409,6 +436,17 @@ async function deleteNote(noteId: number) {
                   </ActionIcon>
                 </Anchor>
               </Tooltip>
+              <Tooltip label="Privacy Policy">
+                <Anchor 
+                  href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" 
+                  target="_blank" 
+                  rel="noreferrer"
+                  size="sm"
+                  c="dimmed"
+                >
+                  Privacy Policy
+                </Anchor>
+              </Tooltip>
             </Group>
             <Group>
               {!sidebarCollapsed && (
@@ -550,40 +588,33 @@ async function deleteNote(noteId: number) {
       )}
   
       <AppShell.Main>
-        <Stack h="100vh" gap={0}>
-          {!isMobile && (
-            <Box p="md" style={{ borderBottom: '1px solid var(--mantine-color-gray-3)' }}>
-              <Group justify="space-between" align="center">
-                <TextInput
-                  placeholder="Note title"
-                  value={title}
-                  onChange={(e) => setTitle(e.currentTarget.value)}
-                  size="lg"
-                  style={{ flex: 1 }}
-                />
-                <Group>
-                  {saveStatus && (
-                    <Group gap="xs">
-                      <IconCheck size={16} style={{ color: 'var(--mantine-color-green-6)' }} />
-                      <Text size="sm" c="dimmed">
-                        {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
-                      </Text>
-                    </Group>
-                  )}
-                  <Button variant="light" onClick={clearForm}>
-                    New Note
-                  </Button>
-                </Group>
-              </Group>
+        <Stack h="100vh" gap={0} style={{ overflow: 'hidden' }}>
+          {isMobile && (
+            <Box 
+              p="xs" 
+              style={{ 
+                borderBottom: '1px solid var(--mantine-color-gray-3)',
+                position: 'sticky',
+                top: 0,
+                zIndex: 100,
+                backgroundColor: 'var(--mantine-color-body)'
+              }}
+            >
+              <TextInput
+                placeholder="Note title"
+                value={title}
+                onChange={(e) => setTitle(e.currentTarget.value)}
+                size="sm"
+                style={{ flex: 1 }}
+              />
             </Box>
           )}
           <Box 
             style={{ 
               flex: 1, 
               position: 'relative', 
-              minHeight: 0, 
-              padding: isMobile ? '0.5rem' : '1rem',
-              paddingTop: isMobile ? '0.5rem' : '1rem'
+              height: isMobile ? 'calc(100vh - 60px)' : '100%',
+              overflow: 'hidden'
             }}
           >
             <MarkdownEditor

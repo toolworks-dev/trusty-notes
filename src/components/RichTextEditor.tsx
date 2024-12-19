@@ -11,20 +11,6 @@ import TableHeader from '@tiptap/extension-table-header';
 import TextAlign from '@tiptap/extension-text-align';
 import { Group, ActionIcon, Tooltip, Box } from '@mantine/core';
 import {
-  IconBold,
-  IconItalic,
-  IconList,
-  IconListNumbers,
-  IconQuote,
-  IconCode,
-  IconH1,
-  IconH2,
-  IconH3,
-  IconClearFormatting,
-  IconTable,
-  IconAlignLeft,
-  IconAlignCenter,
-  IconAlignRight,
   IconRowInsertBottom,
   IconColumnInsertRight,
   IconTrash,
@@ -173,130 +159,39 @@ export function RichTextEditor({ content, onChange }: RichTextEditorProps) {
     callback(editorInstance.chain().focus());
   };
 
-  const handleAlignment = (align: 'left' | 'center' | 'right') => {
-    runCommand(chain => chain.setTextAlign(align).run());
-  };
-
   const isTableSelected = () => {
     return editorInstance.isActive('table');
   };  
 
+  const isMobile = false; // Replace with actual mobile detection logic
+
+  const ToolbarWrapper = isMobile ? (
+    <Box 
+      style={{ 
+        overflowX: 'auto',
+        overflowY: 'hidden',
+        WebkitOverflowScrolling: 'touch',
+        position: 'sticky',
+        top: 0,
+        backgroundColor: 'var(--mantine-color-body)',
+        zIndex: 10,
+        borderBottom: '1px solid var(--mantine-color-gray-3)',
+        padding: '4px'
+      }}
+    >
+      <Group gap="xs" wrap="nowrap" style={{ minWidth: 'max-content' }}>
+        {/* Toolbar content */}
+      </Group>
+    </Box>
+  ) : (
+    <Group gap="xs">
+      {/* Toolbar content */}
+    </Group>
+  );
+
   return (
     <Box style={{ display: 'flex', flexDirection: 'column', height: '100%' }}>
-      <Group mb="xs" wrap="nowrap">
-        <Tooltip label="Bold">
-          <ActionIcon
-            variant={editorInstance.isActive('bold') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleBold().run())}
-          >
-            <IconBold size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Italic">
-          <ActionIcon
-            variant={editor.isActive('italic') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleItalic().run())}
-          >
-            <IconItalic size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Heading 1">
-          <ActionIcon
-            variant={editor.isActive('heading', { level: 1 }) ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleHeading({ level: 1 }).run())}
-          >
-            <IconH1 size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Heading 2">
-          <ActionIcon
-            variant={editor.isActive('heading', { level: 2 }) ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleHeading({ level: 2 }).run())}
-          >
-            <IconH2 size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Heading 3">
-          <ActionIcon
-            variant={editor.isActive('heading', { level: 3 }) ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleHeading({ level: 3 }).run())}
-          >
-            <IconH3 size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Bullet List">
-          <ActionIcon
-            variant={editor.isActive('bulletList') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleBulletList().run())}
-          >
-            <IconList size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Numbered List">
-          <ActionIcon
-            variant={editor.isActive('orderedList') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleOrderedList().run())}
-          >
-            <IconListNumbers size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Blockquote">
-          <ActionIcon
-            variant={editor.isActive('blockquote') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleBlockquote().run())}
-          >
-            <IconQuote size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Code Block">
-          <ActionIcon
-            variant={editor.isActive('codeBlock') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.toggleCodeBlock().run())}
-          >
-            <IconCode size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Insert Table">
-          <ActionIcon
-            variant={editor.isActive('table') ? 'filled' : 'subtle'}
-            onClick={() => runCommand(chain => chain.insertTable({ rows: 3, cols: 3 }).run())}
-          >
-            <IconTable size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Align Left">
-          <ActionIcon
-            variant={editor.isActive({ textAlign: 'left' }) ? 'filled' : 'subtle'}
-            onClick={() => handleAlignment('left')}
-          >
-            <IconAlignLeft size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Align Center">
-          <ActionIcon
-            variant={editor.isActive({ textAlign: 'center' }) ? 'filled' : 'subtle'}
-            onClick={() => handleAlignment('center')}
-          >
-            <IconAlignCenter size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Align Right">
-          <ActionIcon
-            variant={editor.isActive({ textAlign: 'right' }) ? 'filled' : 'subtle'}
-            onClick={() => handleAlignment('right')}
-          >
-            <IconAlignRight size={16} />
-          </ActionIcon>
-        </Tooltip>
-        <Tooltip label="Clear Formatting">
-          <ActionIcon
-            variant="subtle"
-            onClick={() => runCommand(chain => chain.clearNodes().unsetAllMarks().run())}
-          >
-            <IconClearFormatting size={16} />
-          </ActionIcon>
-        </Tooltip>
-      </Group>
+      {ToolbarWrapper}
       {isTableSelected() && (
         <Group mb="xs" wrap="nowrap">
           <Tooltip label="Add Row">

@@ -107,7 +107,14 @@ export function MarkdownEditor({ content, onChange, isMobile, defaultView = 'edi
   };
 
   return (
-    <Box style={{ height: '100%', display: 'flex', flexDirection: 'column' }}>
+    <Box 
+      className={`editor-container ${isMobile ? 'mobile-editor' : ''}`}
+      style={{ 
+        height: '100%',
+        display: 'flex',
+        flexDirection: 'column'
+      }}
+    >
       <Group justify="space-between" mb="xs">
         <WordCount content={content} />
         <Group>

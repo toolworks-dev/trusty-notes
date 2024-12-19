@@ -1,4 +1,4 @@
-import { Group, ActionIcon, Drawer, Stack, Button, TextInput, Box, Text, Paper, Image, MantineColorScheme } from '@mantine/core';
+import { Group, ActionIcon, Drawer, Stack, Button, TextInput, Box, Text, Paper, Image, MantineColorScheme, Anchor } from '@mantine/core';
 import { 
   IconPlus, 
   IconSearch,
@@ -179,6 +179,17 @@ export function MobileNav({
           >
             GitHub
           </Button>
+
+          <Anchor 
+            href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md"
+            target="_blank"
+            rel="noreferrer"
+            size="sm"
+            c="dimmed"
+            style={{ textAlign: 'center' }}
+          >
+            Privacy Policy
+          </Anchor>
         </Stack>
       </Stack>
     </Drawer>
