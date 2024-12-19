@@ -34,10 +34,12 @@ https://notes.toolworks.dev
 - Docker
 - Docker Compose
 
-### Setup
-1. Clone the repository
-2. Run `docker compose up --build` inside the root directory to build and start the client.
-
+### Setup & Run
+```
+git clone https://github.com/toolworks/trusty-notes.git
+cd trusty-notes
+docker compose up --build -d
+```
 
 ## Server Self-Hosting
 
@@ -46,7 +48,21 @@ https://notes.toolworks.dev
 - Docker Compose
 
 ### Setup
-1. Clone the repository
-2. Run `docker compose up --build` inside the server directory to build and start the server.
+```
+git clone https://github.com/toolworks/trusty-notes.git
+cd trusty-notes/server
+```
 
+### Database
+```
+vim .env
+
+MONGO_USERNAME=
+MONGO_PASSWORD=
+```
+
+### Run
+```
+docker compose up --build -d
+```
 

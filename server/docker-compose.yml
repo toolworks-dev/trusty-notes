@@ -5,11 +5,12 @@ services:
       - "3222:3222"
     environment:
       - NODE_ENV=production
-      - MONGODB_URI=mongodb://mongodbf:27018/notes-sync
+      - MONGODB_URI=mongodb://${MONGO_USERNAME}:${MONGO_PASSWORD}@mongodbf:27018/notes-sync?authSource=admin
       - PORT=3222
       - ALLOWED_ORIGINS=http://localhost:3222
     depends_on:
-      - mongodbf
+      mongodbf:
+        condition: service_healthy
     restart: unless-stopped
     networks:
       - notes-network
@@ -21,22 +22,24 @@ services:
       - "27018:27018"
     volumes:
       - ./db:/data/db
+      - ./mongo-init.js:/docker-entrypoint-initdb.d/mongo-init.js:ro
     networks:
       - notes-network
-    command: mongod --port 27018 --bind_ip_all
+    command: mongod --port 27018 --bind_ip_all --auth
     healthcheck:
-      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
-      interval: 10s
-      timeout: 10s
-      retries: 5
-      start_period: 40s
+      test: mongosh --port 27018 --eval "db.adminCommand('ping')"
+      interval: 5s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
     environment:
-      - MONGO_INITDB_ROOT_USERNAME=root
-      - MONGO_INITDB_ROOT_PASSWORD=gdsfsadgjkhsdagh
+      - MONGO_INITDB_ROOT_USERNAME=${MONGO_USERNAME}
+      - MONGO_INITDB_ROOT_PASSWORD=${MONGO_PASSWORD}
+      - MONGO_INITDB_DATABASE=notes-sync
     entrypoint: >
       bash -c "chown -R 1001:1001 /data/db &&
       chmod -R 775 /data/db &&
-      mongod --port 27018 --bind_ip_all"
+      docker-entrypoint.sh mongod --port 27018 --bind_ip_all --auth"
 
 networks:
   notes-network:
