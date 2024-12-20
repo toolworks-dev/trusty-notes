@@ -1,4 +1,3 @@
-// CryptoService implementation
 class CryptoService {
   constructor(key) {
     this.key = key;
@@ -54,6 +53,9 @@ class CryptoService {
 }
 
 let cryptoService = null;
+let webappTabCheckInterval = null;
+let lastSyncTime = 0;
+const SYNC_COOLDOWN = 2000;
 
 async function encryptAndStoreNotes(notes) {
   try {
@@ -76,16 +78,173 @@ async function encryptAndStoreNotes(notes) {
   }
 }
 
+async function checkForPendingSync() {
+  try {
+    const now = Date.now();
+    if (now - lastSyncTime < SYNC_COOLDOWN) {
+      return;
+    }
+
+    const result = await chrome.storage.local.get(['encrypted_notes', 'seed_phrase', 'lastUpdated']);
+    if (!result.encrypted_notes) return;
+
+    if (result.lastUpdated && now - result.lastUpdated < SYNC_COOLDOWN) {
+      return;
+    }
+
+    if (!cryptoService && result.seed_phrase) {
+      cryptoService = await CryptoService.new(result.seed_phrase);
+    }
+    if (!cryptoService) return;
+
+    let notes = await cryptoService.decrypt(result.encrypted_notes);
+    const pendingNotes = notes.filter(note => note.pending_sync);
+    
+    if (pendingNotes.length > 0 || now - lastSyncTime > 10000) {
+      const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
+      if (tabs.length > 0) {
+        const tab = tabs[0];
+        
+        const success = await chrome.scripting.executeScript({
+          target: { tabId: tab.id },
+          func: (extensionNotes, lastSync) => {
+            return new Promise((resolve) => {
+              const checkAndSync = () => {
+                try {
+                  const notesJson = localStorage.getItem('notes');
+                  if (!notesJson) {
+                    setTimeout(checkAndSync, 500);
+                    return;
+                  }
+                  
+                  let webappNotes = JSON.parse(notesJson);
+                  
+                  const lastWebappUpdate = Math.max(...webappNotes.map(n => n.updated_at));
+                  if (lastWebappUpdate > lastSync && Date.now() - lastWebappUpdate < 2000) {
+                    resolve({
+                      success: true,
+                      notes: extensionNotes,
+                      hasChanges: false
+                    });
+                    return;
+                  }
+
+                  const webappNotesMap = new Map(
+                    webappNotes.map(note => [note.id, note])
+                  );
+                  const extensionNotesMap = new Map(
+                    extensionNotes.map(note => [note.id, note])
+                  );
+                  
+                  let hasChanges = false;
+                  const allNoteIds = new Set([
+                    ...webappNotesMap.keys(),
+                    ...extensionNotesMap.keys()
+                  ]);
+                  
+                  const finalNotesMap = new Map();
+                  
+                  allNoteIds.forEach(id => {
+                    const webappNote = webappNotesMap.get(id);
+                    const extensionNote = extensionNotesMap.get(id);
+                    
+                    if (!webappNote) {
+                      hasChanges = true;
+                    } else if (!extensionNote) {
+                      hasChanges = true;
+                      finalNotesMap.set(id, webappNote);
+                    } else if (extensionNote.pending_sync) {
+                      hasChanges = true;
+                      finalNotesMap.set(id, {
+                        ...extensionNote,
+                        pending_sync: false
+                      });
+                    } else if (webappNote.updated_at > extensionNote.updated_at) {
+                      hasChanges = true;
+                      finalNotesMap.set(id, webappNote);
+                    } else {
+                      finalNotesMap.set(id, extensionNote);
+                    }
+                  });
+                  
+                  if (!hasChanges) {
+                    resolve({
+                      success: true,
+                      notes: extensionNotes,
+                      hasChanges: false
+                    });
+                    return;
+                  }
+                  
+                  const mergedNotes = Array.from(finalNotesMap.values());
+                  
+                  localStorage.setItem('notes', JSON.stringify(mergedNotes));
+                  
+                  window.dispatchEvent(new StorageEvent('storage', {
+                    key: 'notes',
+                    oldValue: notesJson,
+                    newValue: JSON.stringify(mergedNotes)
+                  }));
+                  
+                  resolve({
+                    success: true,
+                    notes: mergedNotes,
+                    hasChanges: true
+                  });
+                } catch (error) {
+                  console.error('Sync attempt failed:', error);
+                  setTimeout(checkAndSync, 500);
+                }
+              };
+              
+              checkAndSync();
+            });
+          },
+          args: [notes, lastSyncTime]
+        });
+
+        if (success && success[0]?.result?.success) {
+          if (success[0].result.hasChanges) {
+            notes = success[0].result.notes;
+            await encryptAndStoreNotes(notes);
+            await chrome.tabs.reload(tab.id);
+          }
+          lastSyncTime = Date.now();
+        }
+      }
+    }
+  } catch (error) {
+    console.error('Error checking for pending sync:', error);
+  }
+}
+
+function startPeriodicCheck() {
+  if (webappTabCheckInterval) {
+    clearInterval(webappTabCheckInterval);
+  }
+  webappTabCheckInterval = setInterval(checkForPendingSync, 2000);
+}
+
+startPeriodicCheck();
+
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
   if (message.type === 'NOTES_UPDATED' && message.notes) {
+    lastSyncTime = Date.now();
     encryptAndStoreNotes(message.notes);
   }
   return true;
 });
 
-// For Chrome compatibility, keep the service worker alive
+chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
+  if (changeInfo.status === 'complete' && 
+      tab.url && 
+      tab.url.startsWith('https://notes.toolworks.dev')) {
+    checkForPendingSync();
+  }
+});
+
 chrome.runtime.onConnect.addListener(function(port) {
   port.onDisconnect.addListener(function() {
-    // Reconnect or perform cleanup if needed
+    startPeriodicCheck();
   });
 }); 

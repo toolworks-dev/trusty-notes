@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Trusty Notes",
-    "version": "0.1.4",
+    "version": "0.1.5",
     "description": "Quick access to your encrypted notes",
     "externally_connectable": {
       "matches": ["https://notes.toolworks.dev/*"]
@@ -18,14 +18,17 @@
       "scripting"
     ],
     "web_accessible_resources": [{
-      "resources": ["content.js", "scripts/getStorageData.js"],
+      "resources": [
+        "content.js",
+        "scripts/getStorageData.js"
+      ],
       "matches": ["https://notes.toolworks.dev/*"]
     }],
     "host_permissions": [
       "https://notes.toolworks.dev/*"
     ],
     "action": {
-      "default_icon": "icons/icon-96.png",
+      "default_icon": "icons/icon-128.png",
       "default_title": "Trusty Notes",
       "default_popup": "popup/popup.html"
     },
@@ -41,5 +44,8 @@
       "gecko": {
         "id": "trustynotes@toolworks.dev"
       }
+    },
+    "content_security_policy": {
+      "extension_pages": "script-src 'self' 'wasm-unsafe-eval'; object-src 'self'"
     }
 } 

@@ -125,4 +125,114 @@ body {
   
   .error-message button:hover {
     background-color: #c82333;
+  }
+  
+  #editor {
+    padding: 16px 0;
+  }
+  
+  #titleInput {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  #contentInput {
+    width: 100%;
+    height: 200px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  
+  .editor-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    #titleInput,
+    #contentInput {
+      background-color: #3f3f3f;
+      border-color: #444;
+      color: #f6f6f6;
+    }
+  }
+  
+  .editor-toolbar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 8px;
+  }
+  
+  .editor-toolbar button {
+    padding: 4px 8px;
+    font-size: 14px;
+    min-width: 30px;
+  }
+  
+  #contentInput {
+    margin-bottom: 8px;
+  }
+  
+  #editor {
+    padding: 16px 0;
+  }
+  
+  #titleInput {
+    width: 100%;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+  }
+  
+  #contentInput {
+    width: 100%;
+    height: 200px;
+    padding: 8px;
+    margin-bottom: 8px;
+    border: 1px solid #ddd;
+    border-radius: 4px;
+    box-sizing: border-box;
+    resize: vertical;
+  }
+  
+  .editor-buttons {
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    #titleInput,
+    #contentInput {
+      background-color: #3f3f3f;
+      border-color: #444;
+      color: #f6f6f6;
+    }
+  }
+  
+  .success-message {
+    padding: 16px;
+    text-align: center;
+    color: #198754;
+    background-color: #d1e7dd;
+    border-radius: 4px;
+    margin: 8px 0;
+  }
+  
+  @media (prefers-color-scheme: dark) {
+    .success-message {
+      background-color: #051b11;
+      color: #75b798;
+    }
   } 
