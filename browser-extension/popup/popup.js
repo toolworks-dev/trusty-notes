@@ -192,9 +192,8 @@ document.addEventListener('DOMContentLoaded', async () => {
   const notesList = document.getElementById('notesList');
   const newNoteButton = document.getElementById('newNote');
   const openWebappButton = document.getElementById('openWebapp');
-  const setupButton = document.getElementById('setupButton');
 
-  if (!searchInput || !notesList || !newNoteButton || !openWebappButton || !setupButton) {
+  if (!searchInput || !notesList || !newNoteButton || !openWebappButton) {
     console.error('Required elements not found');
     return;
   }
@@ -206,12 +205,11 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (result.encrypted_notes) {
         notes = await cryptoService.decrypt(result.encrypted_notes);
         renderNotes(notes);
-        setupButton.style.display = 'none';
       } else {
-        setupButton.style.display = 'block';
+        // setupButton.style.display = 'block';
       }
     } else {
-      setupButton.style.display = 'block';
+      // setupButton.style.display = 'block';
     }
   } catch (error) {
     console.error('Error loading notes:', error);
@@ -220,36 +218,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         Please set up the extension in the web app first
       </div>
     `;
-    setupButton.style.display = 'block';
   }
-
-  setupButton.addEventListener('click', async () => {
-    try {
-      const tab = await chrome.tabs.create({
-        url: 'https://notes.toolworks.dev/?openSync=true'
-      });
-      
-      chrome.runtime.onMessage.addListener(async function settingsListener(message) {
-        if (message.type === 'SYNC_SETTINGS_UPDATED' && message.settings?.seed_phrase) {
-          try {
-            cryptoService = await CryptoService.new(message.settings.seed_phrase);
-            
-            await chrome.storage.local.set({
-              seed_phrase: message.settings.seed_phrase
-            });
-
-            chrome.runtime.onMessage.removeListener(settingsListener);
-          } catch (error) {
-            console.error('Failed to process settings update:', error);
-          }
-        }
-      });
-
-      window.close();
-    } catch (error) {
-      console.error('Failed to open settings:', error);
-    }
-  });
 
   searchInput.addEventListener('input', (e) => {
     const searchTerm = e.target.value.toLowerCase();
