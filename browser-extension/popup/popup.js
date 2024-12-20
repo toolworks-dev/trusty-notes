@@ -153,14 +153,18 @@ function renderNotes(notesToRender) {
     `;
 
     noteElement.addEventListener('click', async () => {
-      const url = new URL('https://notes.toolworks.dev');
-      url.searchParams.set('loadNote', JSON.stringify({
+      const noteData = {
         id: note.id,
         title: note.title,
         content: note.content,
         created_at: note.created_at,
         updated_at: note.updated_at
-      }));
+      };
+
+      const url = new URL('https://notes.toolworks.dev');
+      
+      const encodedNoteData = encodeURIComponent(JSON.stringify(noteData));
+      url.searchParams.set('loadNote', encodedNoteData);
       url.searchParams.set('autoload', 'true');
       
       chrome.tabs.create({ url: url.toString() });

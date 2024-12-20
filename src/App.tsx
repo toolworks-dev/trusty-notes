@@ -105,7 +105,8 @@ function App() {
     
     if (loadNoteParam && autoload === 'true') {
       try {
-        const noteToLoad = JSON.parse(loadNoteParam);
+        const decodedNote = decodeURIComponent(loadNoteParam);
+        const noteToLoad = JSON.parse(decodedNote);
         setSelectedNote(noteToLoad);
         setTitle(noteToLoad.title);
         setContent(noteToLoad.content);
