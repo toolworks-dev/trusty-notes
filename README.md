@@ -71,3 +71,16 @@ MONGO_PASSWORD=
 docker compose up --build -d
 ```
 
+## Build Browser Extension
+
+### Requires
+- Bun (https://bun.sh)
+
+### Build
+
+```
+bun install
+./build-extension.sh
+```
+
+This Builds the Chrome and Firefox extensions and places them in the `browser-extension/web-ext-artifacts` directory.

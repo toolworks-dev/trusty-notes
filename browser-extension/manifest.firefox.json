@@ -39,7 +39,7 @@
     }],
     "browser_specific_settings": {
       "gecko": {
-        "id": "trusty-notes@toolworks.dev"
+        "id": "trustynotes@toolworks.dev"
       }
     }
 } 
