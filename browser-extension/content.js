@@ -43,105 +43,13 @@ window.addEventListener('storage', async (event) => {
   if (event.key === 'notes' && event.newValue) {
     try {
       const notes = JSON.parse(event.newValue);
-      await Promise.all([
-        chrome.runtime.sendMessage({
-          type: 'NOTES_UPDATED',
-          notes: notes
-        }),
-        chrome.runtime.sendMessage({
-          type: 'NOTES_UPDATED_IN_STORAGE',
-          notes: notes
-        })
-      ]).catch(error => {
-        console.debug('Extension communication failed:', error);
+      await chrome.runtime.sendMessage({
+        type: 'NOTES_UPDATED',
+        notes: notes
       });
     } catch (error) {
       console.error('Failed to process notes update:', error);
     }
   }
-  
-  if (event.key === 'sync_settings' && event.newValue) {
-    try {
-      const settings = JSON.parse(event.newValue);
-      if (settings.seed_phrase) {
-        await Promise.all([
-          chrome.runtime.sendMessage({
-            type: 'SYNC_SETTINGS_UPDATED',
-            settings: settings
-          }),
-          chrome.runtime.sendMessage({
-            type: 'NOTES_UPDATED_IN_STORAGE',
-            notes: JSON.parse(localStorage.getItem('notes') || '[]')
-          })
-        ]).catch(error => {
-          console.debug('Extension communication failed:', error);
-        });
-      }
-    } catch (error) {
-      console.error('Failed to process settings update:', error);
-    }
-  }
 });
-
-const observer = new MutationObserver(async (mutations) => {
-  for (const mutation of mutations) {
-    if (mutation.type === 'childList') {
-      const notifications = document.querySelectorAll('.mantine-Notification-root');
-      for (const notification of notifications) {
-        if (notification.textContent.includes('saved') || 
-            notification.textContent.includes('synced') ||
-            notification.textContent.includes('updated')) {
-          const notes = localStorage.getItem('notes');
-          if (notes) {
-            try {
-              const parsedNotes = JSON.parse(notes);
-              await Promise.all([
-                chrome.runtime.sendMessage({
-                  type: 'NOTES_UPDATED',
-                  notes: parsedNotes
-                }),
-                chrome.runtime.sendMessage({
-                  type: 'NOTES_UPDATED_IN_STORAGE',
-                  notes: parsedNotes
-                })
-              ]).catch(error => {
-                console.debug('Extension communication failed:', error);
-              });
-            } catch (error) {
-              console.error('Failed to process notes update:', error);
-            }
-          }
-          break;
-        }
-      }
-    }
-  }
-});
-
-observer.observe(document.body, { childList: true, subtree: true });
-
-setInterval(async () => {
-  if (!chrome.runtime) return;
-  
-  const notes = localStorage.getItem('notes');
-  if (notes) {
-    try {
-      const parsedNotes = JSON.parse(notes);
-      await Promise.all([
-        chrome.runtime.sendMessage({
-          type: 'NOTES_UPDATED',
-          notes: parsedNotes
-        }),
-        chrome.runtime.sendMessage({
-          type: 'NOTES_UPDATED_IN_STORAGE',
-          notes: parsedNotes
-        })
-      ]).catch(error => {
-        console.debug('Periodic update failed:', error);
-      });
-    } catch (error) {
-      console.error('Failed to process periodic update:', error);
-    }
-  }
-}, 1000);
   

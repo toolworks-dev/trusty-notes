@@ -71,73 +71,21 @@ async function encryptAndStoreNotes(notes) {
       encrypted_notes: encrypted,
       lastUpdated: Date.now()
     });
-
-    chrome.runtime.sendMessage({
-      type: 'NOTES_UPDATED_IN_STORAGE',
-      notes: notes
-    });
   } catch (error) {
     console.error('Error encrypting and storing notes:', error);
   }
 }
 
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
-  if (message.type === 'NOTES_UPDATED') {
-    encryptAndStoreNotes(message.notes)
-      .catch(error => console.error('Failed to process notes update:', error));
-  } else if (message.type === 'SYNC_SETTINGS_UPDATED') {
-    (async () => {
-      try {
-        await chrome.storage.local.set({
-          seed_phrase: message.settings.seed_phrase
-        });
-        cryptoService = await CryptoService.new(message.settings.seed_phrase);
-
-        if (message.notes?.length > 0) {
-          await encryptAndStoreNotes(message.notes);
-        }
-      } catch (error) {
-        console.error('Error storing sync settings:', error);
-      }
-    })();
+  if (message.type === 'NOTES_UPDATED' && message.notes) {
+    encryptAndStoreNotes(message.notes);
   }
-  return true; // Keep messaging channel open for async operations
+  return true;
 });
 
-chrome.runtime.onMessageExternal.addListener(
-  (message, sender, sendResponse) => {
-    if (sender.origin === "https://notes.toolworks.dev") {
-      if (message.type === 'SYNC_SETTINGS_UPDATED') {
-        (async () => {
-          try {
-            await chrome.storage.local.set({
-              seed_phrase: message.settings.seed_phrase
-            });
-            cryptoService = await CryptoService.new(message.settings.seed_phrase);
-            
-            if (message.notes?.length > 0) {
-              await encryptAndStoreNotes(message.notes);
-            }
-            
-            sendResponse({ success: true });
-          } catch (error) {
-            console.error('Error storing sync settings:', error);
-            sendResponse({ success: false, error: error.message });
-          }
-        })();
-        return true; // Keep messaging channel open
-      }
-    }
-    return false;
-  }
-);
-
-chrome.runtime.onInstalled.addListener((details) => {
-  if (details.reason === "install") {
-    chrome.storage.local.set({ 
-      encrypted_notes: null,
-      lastUpdated: null,
-      seed_phrase: null
-    });
-  }
+// For Chrome compatibility, keep the service worker alive
+chrome.runtime.onConnect.addListener(function(port) {
+  port.onDisconnect.addListener(function() {
+    // Reconnect or perform cleanup if needed
+  });
 }); 

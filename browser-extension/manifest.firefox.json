@@ -1,7 +1,7 @@
 {
     "manifest_version": 3,
     "name": "Trusty Notes",
-    "version": "0.1.3",
+    "version": "0.1.4",
     "description": "Quick access to your encrypted notes",
     "externally_connectable": {
       "matches": ["https://notes.toolworks.dev/*"]
@@ -26,7 +26,7 @@
       "https://notes-sync.toolworks.dev/*"
     ],
     "action": {
-      "default_icon": "icons/icon-48.png",
+      "default_icon": "icons/icon-96.png",
       "default_title": "Trusty Notes",
       "default_popup": "popup/popup.html"
     },

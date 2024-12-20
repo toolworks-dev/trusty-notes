@@ -59,7 +59,11 @@ async function getWebAppSettings() {
   try {
     const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
     if (tabs.length === 0) {
-      console.debug('Web app tab not found');
+      const result = await chrome.storage.local.get(['encrypted_notes']);
+      if (result.encrypted_notes && cryptoService) {
+        const decryptedNotes = await cryptoService.decrypt(result.encrypted_notes);
+        return { notes: decryptedNotes };
+      }
       return null;
     }
 
