@@ -4,8 +4,13 @@ A secure cross-platform note-taking application. Features end-to-end encryption 
 
 https://notes.toolworks.dev
 
-![image](trusty-notes.png)
+<p align="center">
+<a href="https://addons.mozilla.org/en-US/firefox/addon/trustynotes/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png"></a>
+<a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei?authuser=1&hl=en"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br>
+</p>
 
+
+![image](trusty-notes.png)
 
 ## Features
 
