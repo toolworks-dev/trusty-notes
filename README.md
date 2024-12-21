@@ -6,9 +6,8 @@ https://notes.toolworks.dev
 
 <p align="center">
 <a href="https://addons.mozilla.org/en-US/firefox/addon/trustynotes/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png"></a>
-<a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei?authuser=1&hl=en"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br>
+<a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br>
 </p>
-
 
 ![image](trusty-notes.png)
 
@@ -27,10 +26,8 @@ https://notes.toolworks.dev
 ## To-Do
 - [x] Improved Sync
 - [x] Rich Text
+- [x] Browser Extension
 - [ ] Attachments/Files
-- [x] Android App
-- [ ] iOS App
-- [ ] Desktop Clients
 - [ ] Add Alternative to Seedphrase
 
 ## Client Self-Hosting
@@ -83,4 +80,4 @@ bun install
 ./build-extension.sh
 ```
 
-This Builds the Chrome and Firefox extensions and places them in the `browser-extension/web-ext-artifacts` directory.
+This Builds the Chrome and Firefox extensions and places them in the `browser-extension/web-ext-artifacts` directory. You can install the extension directly from the .zip in firefox, you must extract the .zip for chrome/chromium browsers and load the unpacked folder.
