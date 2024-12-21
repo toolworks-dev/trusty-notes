@@ -101,7 +101,7 @@ async function checkForPendingSync() {
     const pendingNotes = notes.filter(note => note.pending_sync);
     
     if (pendingNotes.length > 0 || now - lastSyncTime > 10000) {
-      const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
+      const tabs = await chrome.tabs.query({ url: 'https://trustynotes.app/*' });
       if (tabs.length > 0) {
         const tab = tabs[0];
         
@@ -238,7 +238,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 chrome.tabs.onUpdated.addListener((tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && 
       tab.url && 
-      tab.url.startsWith('https://notes.toolworks.dev')) {
+      tab.url.startsWith('https://trustynotes.app')) {
     checkForPendingSync();
   }
 });

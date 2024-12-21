@@ -10,7 +10,7 @@
     notes: EncryptedNote[];
   }
   
-  //const DEFAULT_SERVER = 'https://notes-sync.toolworks.dev';
+  //const DEFAULT_SERVER = 'https://sync.trustynotes.app';
   
   export class ApiService {
     private static getEndpoint(serverUrl: string, path: string): string {
@@ -62,7 +62,7 @@
           body: JSON.stringify({
             public_key: publicKey,
             notes: encryptedNotes,
-            client_version: '0.1.5'
+            client_version: '0.1.6'
           }),
         });
     

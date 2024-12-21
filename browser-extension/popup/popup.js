@@ -61,7 +61,7 @@ let webappTabCheckInterval = null;
 
 async function getWebAppSettings() {
   try {
-    const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
+    const tabs = await chrome.tabs.query({ url: 'https://trustynotes.app/*' });
     if (tabs.length === 0) {
       const result = await chrome.storage.local.get(['encrypted_notes']);
       if (result.encrypted_notes && cryptoService) {
@@ -265,7 +265,7 @@ async function syncPendingNotes() {
     }
     
     console.log(`Found ${pendingNotes.length} notes to sync`);
-    const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
+    const tabs = await chrome.tabs.query({ url: 'https://trustynotes.app/*' });
     if (tabs.length > 0) {
       const tab = tabs[0];
       console.log('Found webapp tab, attempting to sync...');
@@ -445,7 +445,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
   openWebappButton.addEventListener('click', () => {
     chrome.tabs.create({
-      url: 'https://notes.toolworks.dev'
+      url: 'https://trustynotes.app'
     });
     window.close();
   });
@@ -505,7 +505,7 @@ chrome.runtime.onMessage.addListener(async (message, sender, sendResponse) => {
 chrome.tabs.onUpdated.addListener(async (tabId, changeInfo, tab) => {
   if (changeInfo.status === 'complete' && 
       tab.url && 
-      tab.url.startsWith('https://notes.toolworks.dev')) {
+      tab.url.startsWith('https://trustynotes.app')) {
     
     console.log('Webapp tab detected, preparing to sync...');
     if (syncAttemptTimeout) {
@@ -576,7 +576,7 @@ chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
 });
 
 async function checkForWebappTab() {
-  const tabs = await chrome.tabs.query({ url: 'https://notes.toolworks.dev/*' });
+  const tabs = await chrome.tabs.query({ url: 'https://trustynotes.app/*' });
   if (tabs.length > 0) {
     console.log('Found webapp tab, attempting sync...');
     await syncPendingNotes();

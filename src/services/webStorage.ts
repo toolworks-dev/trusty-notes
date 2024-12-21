@@ -95,7 +95,7 @@ export class WebStorageService {
     return settingsJson ? JSON.parse(settingsJson) : {
       auto_sync: false,
       sync_interval: 300,
-      server_url: 'https://notes-sync.toolworks.dev',
+      server_url: 'https://sync.trustynotes.app',
       custom_servers: [],
       seed_phrase: null
     };

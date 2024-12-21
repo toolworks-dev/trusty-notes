@@ -1,10 +1,10 @@
 {
     "manifest_version": 3,
     "name": "Trusty Notes",
-    "version": "0.1.5",
+    "version": "0.1.6",
     "description": "Quick access to your encrypted notes",
     "externally_connectable": {
-      "matches": ["https://notes.toolworks.dev/*"]
+      "matches": ["https://trustynotes.app/*"]
     },
     "icons": {
       "48": "icons/icon-48.png",
@@ -19,10 +19,10 @@
     ],
     "web_accessible_resources": [{
       "resources": ["content.js", "scripts/getStorageData.js"],
-      "matches": ["https://notes.toolworks.dev/*"]
+      "matches": ["https://trustynotes.app/*"]
     }],
     "host_permissions": [
-      "https://notes.toolworks.dev/*"
+      "https://trustynotes.app/*"
     ],
     "action": {
       "default_icon": "icons/icon-128.png",
@@ -34,7 +34,7 @@
       "type": "module"
     },
     "content_scripts": [{
-      "matches": ["https://notes.toolworks.dev/*"],
+      "matches": ["https://trustynotes.app/*"],
       "js": ["content.js"],
       "run_at": "document_idle"
     }],

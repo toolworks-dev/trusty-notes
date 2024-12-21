@@ -24,10 +24,10 @@ export function SyncSetup({ onSync }: SyncSetupProps) {
     try {
       setStatus('syncing');
       await WebStorageService.initializeCrypto(seedPhrase);
-      await WebStorageService.syncWithServer('https://notes-sync.toolworks.dev');
+      await WebStorageService.syncWithServer('https://sync.trustynotes.app');
       await WebStorageService.saveSyncSettings({ 
         seed_phrase: seedPhrase,
-        server_url: 'https://notes-sync.toolworks.dev',
+        server_url: 'https://sync.trustynotes.app',
         auto_sync: false,
         sync_interval: 5,
         custom_servers: []

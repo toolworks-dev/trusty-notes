@@ -22,7 +22,7 @@ import { ApiService } from '../services/apiService';
 //import { NumberInput } from '@mantine/core';
 
 const DEFAULT_SERVERS = [
-  { label: 'Official Server', value: 'https://notes-sync.toolworks.dev' },
+  { label: 'Official Server', value: 'https://sync.trustynotes.app' },
   { label: 'Local Server', value: 'http://localhost:3222' },
 ];
 

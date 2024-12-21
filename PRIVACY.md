@@ -40,7 +40,7 @@ We do not share your data with third parties. Your encrypted notes are only:
 
 ## Browser Extension
 The TrustyNotes browser extension:
-- Accesses only the notes.toolworks.dev domain
+- Accesses only the trustynotes.app domain
 - Stores encrypted notes locally
 - Communicates with the web application for synchronization
 - Requires explicit user permission for storage and tab access
