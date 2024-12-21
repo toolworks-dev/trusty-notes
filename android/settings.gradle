@@ -1,3 +1,0 @@
-include ':app'
-include ':capacitor-cordova-android-plugins'
-apply from: 'capacitor.settings.gradle'

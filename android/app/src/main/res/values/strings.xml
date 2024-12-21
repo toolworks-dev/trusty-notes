@@ -1,7 +1,0 @@
-<?xml version="1.0" encoding="utf-8"?>
-<resources>
-    <string name="app_name">Trusty Notes</string>
-    <string name="title_activity_main">Trusty Notes</string>
-    <string name="package_name">dev.toolworks.trustynotes</string>
-    <string name="custom_url_scheme">dev.toolworks.trustynotes</string>
-</resources>
