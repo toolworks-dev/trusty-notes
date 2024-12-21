@@ -9,7 +9,7 @@ Now: https://trustynotes.app
 <a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br>
 </p>
 
-![image](trusty-notes.png)
+![image](https://github.com/user-attachments/assets/f63a297a-3122-47c4-a57b-9042f3461c80)
 
 ## Features
 
