@@ -79,7 +79,39 @@
 /* Mobile-specific styles for rich text editor */
 @media (max-width: 768px) {
   .mobile-editor {
-    height: calc(100vh - 60px) !important; /* Adjust for mobile header */
+    height: calc(100vh - 120px) !important; /* Adjust for mobile header + toolbar */
+  }
+
+  .mobile-editor .ProseMirror {
+    padding: 8px;
+    font-size: 16px !important;
+    height: calc(100vh - 180px) !important; /* Adjust for mobile header + toolbar + padding */
+    min-height: 0;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  /* Improve container sizing */
+  .rich-text-table-container {
+    height: 100% !important;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
+  }
+
+  /* Adjust editor container padding and borders */
+  .mobile-editor.rich-text-table-container {
+    padding: 8px !important;
+    border-width: 0 !important;
+    border-radius: 0 !important;
+  }
+
+  /* Ensure proper sizing of the editor wrapper */
+  .mobile-editor .ProseMirror-wrapper {
+    flex: 1;
+    min-height: 0;
+    display: flex;
+    flex-direction: column;
   }
 
   .mobile-editor .tiptap-toolbar {

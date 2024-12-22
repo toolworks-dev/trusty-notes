@@ -656,8 +656,10 @@ async function deleteNote(noteId: number) {
             style={{ 
               flex: 1, 
               position: 'relative', 
-              height: isMobile ? 'calc(100vh - 60px)' : '100%',
-              overflow: 'hidden'
+              height: isMobile ? 'calc(100vh - 120px)' : '100%',
+              overflow: 'hidden',
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
             <MarkdownEditor
