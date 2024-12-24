@@ -70,3 +70,48 @@
       font-size: 16px !important;
     }
   }
+
+  .mobile-editor {
+    border-radius: 0.75rem;
+    overflow: hidden;
+    box-shadow: var(--shadow-lg);
+    background: var(--surface);
+  }
+
+  .mobile-toolbar {
+    padding: 0.75rem;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 0.5rem;
+    overflow-x: auto;
+    scrollbar-width: none;
+    -webkit-overflow-scrolling: touch;
+  }
+
+  .mobile-toolbar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .mobile-toolbar .mantine-ActionIcon-root {
+    width: 2.5rem;
+    height: 2.5rem;
+    border-radius: 0.5rem;
+    transition: var(--transition);
+  }
+
+  .mobile-toolbar .mantine-ActionIcon-root:active {
+    transform: scale(0.95);
+  }
+
+  /* Improved mobile spacing */
+  @media (max-width: 768px) {
+    .mantine-AppShell-main {
+      padding: 0.75rem !important;
+    }
+
+    .mobile-editor {
+      margin: 0 -0.75rem;
+      border-radius: 0;
+    }
+  }
