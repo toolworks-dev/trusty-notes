@@ -7,7 +7,6 @@ Now: https://trustynotes.app
 <p align="center">
 <a href="https://addons.mozilla.org/en-US/firefox/addon/trustynotes/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png"></a>
 <a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br><br>
-Please Note: The Chrome Extension on the WebStore is out of date, and is out of my hands until Chrome accepts the new update revision. You can grab the latest extension version from <a href="https://github.com/toolworks-dev/trusty-notes/releases">Releases</a> and load the unpacked folder
 </p>
 
 ![image](https://github.com/user-attachments/assets/f63a297a-3122-47c4-a57b-9042f3461c80)
