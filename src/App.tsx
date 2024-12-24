@@ -41,6 +41,8 @@ import { SyncSettings as SyncSettingsType } from './types/sync';
 import { WebStorageService } from './services/webStorage';
 import './styles/richtext.css';
 import { MobileNav } from './components/MobileNav';
+import { notifications } from '@mantine/notifications';
+import { InstallPrompt } from './components/InstallPrompt';
 
 interface Note {
   id?: number;
@@ -373,6 +375,26 @@ async function deleteNote(noteId: number) {
     }
   }
 
+  useEffect(() => {
+    WebStorageService.initializeOfflineSupport();
+    
+    window.addEventListener('online', () => {
+      notifications.show({
+        title: 'Back Online',
+        message: 'Your changes will be synced automatically.',
+        color: 'green'
+      });
+    });
+
+    window.addEventListener('offline', () => {
+      notifications.show({
+        title: 'Offline Mode',
+        message: 'Changes will be saved locally and synced when online.',
+        color: 'yellow'
+      });
+    });
+  }, []);
+
   return (
     <AppShell
       header={isMobile ? { height: 60 } : undefined}
@@ -609,6 +631,7 @@ async function deleteNote(noteId: number) {
   
       <AppShell.Main>
         <Stack h="100vh" gap={0} style={{ overflow: 'hidden' }}>
+          {isMobile && <InstallPrompt />}
           <Box 
             p={isMobile ? "xs" : "md"} 
             style={{ 

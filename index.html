@@ -83,6 +83,33 @@
 
     <!-- Main App Script -->
     <script defer type="module" src="/src/main.tsx"></script>
+
+    <!-- PWA Meta Tags -->
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black">
+    <meta name="apple-mobile-web-app-title" content="TrustyNotes">
+    
+    <!-- PWA Icons -->
+    <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+    <link rel="icon" type="image/png" sizes="32x32" href="/favicon-32x32.png">
+    <link rel="icon" type="image/png" sizes="16x16" href="/favicon-16x16.png">
+    <link rel="manifest" href="/site.webmanifest">
+    <meta name="theme-color" content="#1e1e1e">
+
+    <!-- Register Service Worker -->
+    <script>
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/service-worker.js')
+            .then(registration => {
+              console.log('ServiceWorker registration successful');
+            })
+            .catch(err => {
+              console.log('ServiceWorker registration failed: ', err);
+            });
+        });
+      }
+    </script>
   </head>
 
   <body>

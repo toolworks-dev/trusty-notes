@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TrustyNotes - Offline</title>
+    <style>
+        body {
+            font-family: Inter, system-ui, -apple-system, sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            text-align: center;
+            background: var(--background, #ffffff);
+            color: var(--text, #1e293b);
+        }
+        .container {
+            max-width: 500px;
+        }
+        .icon {
+            font-size: 48px;
+            margin-bottom: 20px;
+        }
+        h1 {
+            margin-bottom: 16px;
+        }
+        p {
+            margin-bottom: 24px;
+            color: var(--text-secondary, #64748b);
+        }
+        button {
+            padding: 8px 16px;
+            border-radius: 8px;
+            border: none;
+            background: var(--primary-color, #3b82f6);
+            color: white;
+            cursor: pointer;
+        }
+        @media (prefers-color-scheme: dark) {
+            body {
+                --background: #1e1e1e;
+                --text: #ffffff;
+                --text-secondary: #a1a1aa;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="icon">📱</div>
+        <h1>You're Offline</h1>
+        <p>Don't worry! Your notes are safely stored and will sync when you're back online.</p>
+        <button onclick="window.location.reload()">Try Again</button>
+    </div>
+</body>
+</html> 

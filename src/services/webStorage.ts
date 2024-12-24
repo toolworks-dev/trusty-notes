@@ -108,6 +108,11 @@ export class WebStorageService {
   }
 
   static async syncWithServer(serverUrl: string, retries = 3): Promise<void> {
+    if (!navigator.onLine) {
+      console.log('Device is offline, skipping sync');
+      return;
+    }
+  
     if (!this.crypto) {
       throw new Error('Crypto not initialized');
     }
@@ -231,4 +236,49 @@ export class WebStorageService {
     localStorage.setItem(this.NOTES_KEY, JSON.stringify(filteredNotes));
   }
 
+  static async isOnline(): Promise<boolean> {
+    return navigator.onLine;
+  }
+
+  static async saveNoteWithOfflineSupport(note: Partial<Note>): Promise<void> {
+    await this.saveNote(note);
+    
+    if (!navigator.onLine) {
+      const offlinePendingSync = JSON.parse(
+        localStorage.getItem('offline_pending_sync') || '[]'
+      );
+      offlinePendingSync.push(note.id);
+      localStorage.setItem('offline_pending_sync', JSON.stringify(offlinePendingSync));
+    }
+  }
+
+  static async syncOfflineChanges(): Promise<void> {
+    if (!navigator.onLine) return;
+
+    const pendingSync = JSON.parse(
+      localStorage.getItem('offline_pending_sync') || '[]'
+    );
+
+    if (pendingSync.length === 0) return;
+
+    const settings = await this.getSyncSettings();
+    if (settings?.auto_sync && settings?.seed_phrase) {
+      try {
+        await this.syncWithServer(settings.server_url);
+        localStorage.setItem('offline_pending_sync', '[]');
+      } catch (error) {
+        console.error('Failed to sync offline changes:', error);
+      }
+    }
+  }
+
+  static initializeOfflineSupport(): void {
+    window.addEventListener('online', () => {
+      this.syncOfflineChanges();
+    });
+
+    window.addEventListener('offline', () => {
+      console.log('App is offline. Changes will be synced when online.');
+    });
+  }
 }

@@ -1,4 +1,18 @@
-import { Group, ActionIcon, Drawer, Stack, Button, TextInput, Box, Text, Paper, Image, MantineColorScheme, Anchor } from '@mantine/core';
+import { useState, useEffect } from 'react';
+import { 
+  Group, 
+  ActionIcon, 
+  Drawer, 
+  Stack, 
+  Button, 
+  TextInput, 
+  Box, 
+  Text, 
+  Paper, 
+  Image, 
+  MantineColorScheme, 
+  Anchor 
+} from '@mantine/core';
 import { 
   IconPlus, 
   IconSearch,
@@ -8,7 +22,8 @@ import {
   IconDownload,
   IconUpload,
   IconBrandGithub,
-  IconTrash
+  IconTrash,
+  IconWifiOff
 } from '@tabler/icons-react';
 import { format } from 'date-fns';
 
@@ -53,64 +68,93 @@ export function MobileNav({
   onSelectNote,
   onDeleteNote
 }: MobileNavProps) {
-  const isDark = colorScheme === 'dark' || (colorScheme === 'auto' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  const [isOnline, setIsOnline] = useState(navigator.onLine);
+
+  useEffect(() => {
+    const handleOnline = () => setIsOnline(true);
+    const handleOffline = () => setIsOnline(false);
+
+    window.addEventListener('online', handleOnline);
+    window.addEventListener('offline', handleOffline);
+
+    return () => {
+      window.removeEventListener('online', handleOnline);
+      window.removeEventListener('offline', handleOffline);
+    };
+  }, []);
+
+  const handleNoteSelect = (note: Note) => {
+    onSelectNote(note);
+    onClose();
+  };
 
   return (
     <Drawer
       opened={opened}
       onClose={onClose}
       size="100%"
-      padding="md"
-      title={
-        <Group>
-          <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
-          <Text size="lg" fw={500}>TrustyNotes</Text>
-        </Group>
-      }
+      position="left"
+      withCloseButton={false}
     >
-      <Stack h="100%" gap="md">
+      <Stack h="100%" p="md">
+        <Group justify="space-between" mb="md">
+          <Group>
+            <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
+            <Text size="lg" fw={500}>TrustyNotes</Text>
+          </Group>
+          <ActionIcon variant="subtle" onClick={onClose}>×</ActionIcon>
+        </Group>
+
+        <Group>
+          <Button
+            leftSection={<IconPlus size={16} />}
+            variant="light"
+            onClick={() => {
+              onNewNote();
+              onClose();
+            }}
+            style={{ flex: 1 }}
+          >
+            New Note
+          </Button>
+        </Group>
+
         <TextInput
           placeholder="Search notes..."
-          leftSection={<IconSearch size={16} />}
           value={searchQuery}
           onChange={(e) => onSearch(e.currentTarget.value)}
+          leftSection={<IconSearch size={16} />}
         />
 
-        <Button
-          variant="light"
-          leftSection={<IconPlus size={16} />}
-          onClick={() => {
-            onNewNote();
-            onClose();
-          }}
-          fullWidth
-        >
-          New Note
-        </Button>
-
         <Box style={{ flex: 1, overflowY: 'auto' }}>
+          {!isOnline && (
+            <Paper p="xs" mb="md" bg="yellow.1">
+              <Group>
+                <IconWifiOff size={16} />
+                <Text size="sm">Offline Mode - Changes will sync when online</Text>
+              </Group>
+            </Paper>
+          )}
+          
           <Stack gap="xs">
             {notes.map((note) => (
               <Paper
                 key={note.id}
                 shadow="xs"
                 p="md"
-                onClick={() => {
-                  onSelectNote(note);
-                  onClose();
-                }}
+                onClick={() => handleNoteSelect(note)}
                 style={{
                   cursor: 'pointer',
                   backgroundColor: selectedNote?.id === note.id ? 
-                    'var(--mantine-color-blue-light)' : undefined,
+                    'var(--mantine-color-blue-light)' : undefined
                 }}
               >
                 <Group justify="space-between" wrap="nowrap">
-                  <Box style={{ flex: 1 }}>
+                  <Box style={{ flex: 1, minWidth: 0 }}>
                     <Text fw={500} truncate="end">
                       {note.title || 'Untitled'}
                     </Text>
-                    <Text size="xs" c="dimmed">
+                    <Text size="xs" c="dimmed" truncate="end">
                       {format(note.updated_at, 'MMM d, yyyy HH:mm')}
                     </Text>
                   </Box>
@@ -131,54 +175,53 @@ export function MobileNav({
         </Box>
 
         <Stack gap="xs">
-          <Button
-            variant="light"
-            leftSection={isDark ? <IconSun size={16} /> : <IconMoon size={16} />}
-            onClick={onToggleTheme}
-            fullWidth
-          >
-            {isDark ? 'Light Mode' : 'Dark Mode'}
-          </Button>
-
-          <Button
-            variant="light"
-            leftSection={<IconCloud size={16} />}
-            onClick={() => {
-              onShowSyncSettings();
-              onClose();
-            }}
-            fullWidth
-          >
-            Sync Settings
-          </Button>
-
-          <Group grow>
-            <Button
-              variant="light"
-              leftSection={<IconDownload size={16} />}
-              onClick={onExport}
+          <Group>
+            <ActionIcon 
+              variant="default" 
+              onClick={onToggleTheme} 
+              size={36}
+              style={{ flex: 1 }}
             >
-              Export
-            </Button>
-            <Button
-              variant="light"
-              leftSection={<IconUpload size={16} />}
-              onClick={onImport}
+              {colorScheme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
+            </ActionIcon>
+            <ActionIcon 
+              variant="default" 
+              onClick={onShowSyncSettings} 
+              size={36}
+              style={{ flex: 1 }}
+              disabled={!isOnline}
             >
-              Import
-            </Button>
+              <IconCloud size={16} />
+            </ActionIcon>
+            <ActionIcon 
+              variant="default" 
+              onClick={onExport} 
+              size={36}
+              style={{ flex: 1 }}
+            >
+              <IconDownload size={16} />
+            </ActionIcon>
+            <ActionIcon 
+              variant="default" 
+              onClick={onImport} 
+              size={36}
+              style={{ flex: 1 }}
+            >
+              <IconUpload size={16} />
+            </ActionIcon>
           </Group>
 
-          <Button
-            variant="subtle"
-            leftSection={<IconBrandGithub size={16} />}
-            component="a"
-            href="https://github.com/toolworks-dev/trusty-notes"
-            target="_blank"
-            fullWidth
-          >
-            GitHub
-          </Button>
+          <Group justify="center">
+            <Anchor 
+              href="https://github.com/toolworks-dev/trusty-notes" 
+              target="_blank" 
+              rel="noreferrer"
+            >
+              <ActionIcon variant="subtle">
+                <IconBrandGithub size={20} />
+              </ActionIcon>
+            </Anchor>
+          </Group>
 
           <Anchor 
             href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md"
