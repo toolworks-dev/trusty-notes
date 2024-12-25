@@ -1,0 +1,20 @@
+# robots.txt for TrustyNotes
+User-agent: *
+Allow: /
+Allow: /index.html
+Allow: /offline.html
+Allow: /site.webmanifest
+Allow: /screenshots/
+Allow: /icons/
+Allow: /android-chrome-192x192.png
+Allow: /android-chrome-512x512.png
+Allow: /apple-touch-icon.png
+Allow: /favicon-16x16.png
+Allow: /favicon-32x32.png
+
+# Disallow API endpoints and sensitive routes
+Disallow: /api/
+Disallow: /sync/
+
+# Sitemap
+Sitemap: https://trustynotes.app/sitemap.xml 
