@@ -1,3 +1,13 @@
+export interface Attachment {
+  id: string;
+  name: string;
+  type: string;
+  size: number;
+  data: string;
+  nonce: string;
+  timestamp: number;
+}
+
 export interface Note {
   id?: number;
   title: string;
@@ -5,6 +15,8 @@ export interface Note {
   created_at: number;
   updated_at: number;
   deleted?: boolean;
+  attachments?: Attachment[];
+  pending_sync?: boolean;
 }
 
 export interface EncryptedNote {
@@ -14,6 +26,7 @@ export interface EncryptedNote {
   timestamp: number;
   signature: string;
   deleted?: boolean;
+  attachments?: Attachment[];
 }
 
 export interface SyncSettings {

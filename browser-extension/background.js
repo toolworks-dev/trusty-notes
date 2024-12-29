@@ -68,7 +68,26 @@ async function encryptAndStoreNotes(notes) {
       cryptoService = await CryptoService.new(settings.seed_phrase);
     }
 
-    const encrypted = await cryptoService.encrypt(notes);
+    // Filter out attachment data to save storage space in extension
+    const notesWithoutAttachments = notes.map(note => ({
+      id: note.id,
+      title: note.title,
+      content: note.content,
+      created_at: note.created_at,
+      updated_at: note.updated_at,
+      deleted: note.deleted,
+      pending_sync: note.pending_sync,
+      // Keep minimal attachment metadata
+      attachments: note.attachments?.map(att => ({
+        id: att.id,
+        name: att.name,
+        type: att.type,
+        size: att.size,
+        timestamp: att.timestamp
+      })) || []
+    }));
+
+    const encrypted = await cryptoService.encrypt(notesWithoutAttachments);
     await chrome.storage.local.set({ 
       encrypted_notes: encrypted,
       lastUpdated: Date.now()

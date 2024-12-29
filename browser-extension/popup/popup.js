@@ -140,30 +140,37 @@ async function initializeCrypto() {
   }
 }
 
-function renderNotes(notesToRender) {
+function renderNotes(notes) {
+  console.log('Rendering notes:', notes);
+  
   const notesList = document.getElementById('notesList');
-  notesList.innerHTML = '';
-
-  notesToRender.forEach(note => {
-    const noteElement = document.createElement('div');
-    noteElement.className = 'note-item';
-    noteElement.innerHTML = `
-      <div class="note-title">${note.title || 'Untitled'}</div>
-      <div class="note-preview">${note.content.substring(0, 100)}...</div>
-    `;
-
-    noteElement.addEventListener('click', (e) => {
-      e.preventDefault();
-      e.stopPropagation();
-      showEditor(note);
-    });
-
-    notesList.appendChild(noteElement);
-  });
-
-  if (notesToRender.length === 0) {
+  if (!notes || notes.length === 0) {
     notesList.innerHTML = '<div class="no-notes">No notes found</div>';
+    return;
   }
+
+  notesList.innerHTML = notes
+    .sort((a, b) => b.updated_at - a.updated_at)
+    .map(note => `
+      <div class="note-item" data-id="${note.id}">
+        <div class="note-title">
+          ${note.title || 'Untitled'}
+        </div>
+        <div class="note-preview">${note.content ? note.content.substring(0, 100) : ''}</div>
+      </div>
+    `)
+    .join('');
+
+  document.querySelectorAll('.note-item').forEach(noteElement => {
+    noteElement.addEventListener('click', () => {
+      const noteId = parseInt(noteElement.dataset.id);
+      const note = notes.find(n => n.id === noteId);
+      console.log('Note clicked:', note);
+      if (note) {
+        showEditor(note);
+      }
+    });
+  });
 }
 
 async function handleNotesUpdate(notes) {
@@ -183,6 +190,8 @@ async function handleNotesUpdate(notes) {
 }
 
 function showEditor(note = null) {
+  console.log('Opening editor with note:', note);
+
   document.getElementById('mainView').style.display = 'none';
   document.getElementById('editor').style.display = 'block';
   
@@ -190,56 +199,66 @@ function showEditor(note = null) {
   const contentInput = document.getElementById('contentInput');
   
   if (note) {
-    currentEditingNote = note;
-    titleInput.value = note.title || '';
+    currentEditingNote = {
+      id: note.id,
+      title: note.title || '',
+      content: note.content || '',
+      created_at: note.created_at,
+      updated_at: note.updated_at,
+      attachments: note.attachments || []
+    };
+
+    console.log('Current editing note:', currentEditingNote);
+    
+    titleInput.value = currentEditingNote.title;
+    contentInput.innerHTML = currentEditingNote.content || '';
+    contentInput.contentEditable = 'true';
+
+    Object.assign(contentInput.style, {
+      backgroundColor: '#ffffff',
+      color: '#000000',
+      minHeight: '200px',
+      padding: '8px',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      overflow: 'auto',
+      display: 'block',
+      width: '100%',
+      boxSizing: 'border-box'
+    });
+
+    if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+      Object.assign(contentInput.style, {
+        backgroundColor: '#3f3f3f',
+        color: '#f6f6f6',
+        borderColor: '#444'
+      });
+    }
+
+    console.log('Content input styles:', contentInput.style.cssText);
   } else {
     currentEditingNote = null;
     titleInput.value = '';
+    contentInput.innerHTML = '';
+    contentInput.contentEditable = 'true';
+    
+    Object.assign(contentInput.style, {
+      backgroundColor: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#3f3f3f' : '#ffffff',
+      color: window.matchMedia('(prefers-color-scheme: dark)').matches ? '#f6f6f6' : '#000000',
+      minHeight: '200px',
+      padding: '8px',
+      border: '1px solid #ddd',
+      borderRadius: '4px',
+      overflow: 'auto',
+      display: 'block',
+      width: '100%',
+      boxSizing: 'border-box'
+    });
   }
 
-  const initializeEditor = () => {
-    if (typeof window.tiptap === 'undefined') {
-      console.log('Editor not loaded yet, waiting...');
-      window.addEventListener('tiptap-ready', initializeEditor, { once: true });
-      return;
-    }
-    
-    try {
-      if (editor) {
-        editor.destroy();
-        editor = null;
-      }
-      
-      contentInput.innerHTML = '';
-      
-      editor = new window.tiptap.Editor({
-        element: contentInput,
-        extensions: [window.tiptap.StarterKit],
-        content: note ? note.content : '',
-        editable: true,
-        autofocus: 'end',
-        editorProps: {
-          attributes: {
-            class: 'ProseMirror',
-          }
-        }
-      });
-
-      setTimeout(() => {
-        if (editor) {
-          editor.setEditable(true);
-          editor.commands.focus('end');
-        }
-      }, 50);
-
-    } catch (error) {
-      console.error('Failed to initialize editor:', error);
-      contentInput.contentEditable = true;
-      contentInput.innerHTML = note ? note.content : '';
-    }
-  };
-
-  initializeEditor();
+  contentInput.style.display = 'none';
+  contentInput.offsetHeight;
+  contentInput.style.display = 'block';
 }
 
 function hideEditor() {
@@ -347,21 +366,15 @@ async function saveNote() {
   const titleInput = document.getElementById('titleInput');
   const contentInput = document.getElementById('contentInput');
   
-  let content = '';
-  if (editor && editor.isEditable) {
-    content = editor.getHTML();
-  } else {
-    content = contentInput.innerHTML;
-  }
-  
   const now = Date.now();
   const noteData = {
     id: currentEditingNote?.id || now,
     title: titleInput.value,
-    content: content || '',
+    content: contentInput.innerHTML || '',
     created_at: currentEditingNote?.created_at || now,
     updated_at: now,
-    pending_sync: true
+    pending_sync: true,
+    attachments: currentEditingNote?.attachments || []
   };
 
   try {
@@ -400,14 +413,21 @@ async function saveNote() {
 }
 
 document.addEventListener('DOMContentLoaded', async () => {
+  document.documentElement.style.setProperty('--surface', '#ffffff');
+  document.documentElement.style.setProperty('--text', '#000000');
+  
+  if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+    document.documentElement.style.setProperty('--surface', '#3f3f3f');
+    document.documentElement.style.setProperty('--text', '#f6f6f6');
+  }
+
   const searchInput = document.getElementById('searchInput');
   const notesList = document.getElementById('notesList');
-  const newNoteButton = document.getElementById('newNote');
-  const openWebappButton = document.getElementById('openWebapp');
-  const saveNoteButton = document.getElementById('saveNote');
-  const cancelEditButton = document.getElementById('cancelEdit');
+  const newNoteBtn = document.getElementById('newNoteBtn');
+  const saveNoteBtn = document.getElementById('saveNoteBtn');
+  const cancelEditBtn = document.getElementById('cancelEditBtn');
 
-  if (!searchInput || !notesList || !newNoteButton || !openWebappButton || !saveNoteButton || !cancelEditButton) {
+  if (!searchInput || !notesList || !newNoteBtn || !saveNoteBtn || !cancelEditBtn) {
     console.error('Required elements not found');
     return;
   }
@@ -419,11 +439,6 @@ document.addEventListener('DOMContentLoaded', async () => {
       if (result.encrypted_notes) {
         notes = await cryptoService.decrypt(result.encrypted_notes);
         renderNotes(notes);
-        
-        if (webappTabCheckInterval) {
-          clearInterval(webappTabCheckInterval);
-        }
-        webappTabCheckInterval = setInterval(checkForWebappTab, 2000);
       }
     }
   } catch (error) {
@@ -439,54 +454,20 @@ document.addEventListener('DOMContentLoaded', async () => {
     renderNotes(filteredNotes);
   });
 
-  newNoteButton.addEventListener('click', () => {
+  newNoteBtn.addEventListener('click', () => {
     showEditor();
   });
 
-  openWebappButton.addEventListener('click', () => {
-    chrome.tabs.create({
-      url: 'https://trustynotes.app'
-    });
-    window.close();
-  });
-
-  const boldButton = document.getElementById('boldButton');
-  const italicButton = document.getElementById('italicButton');
-  const bulletListButton = document.getElementById('bulletListButton');
-
-  boldButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!editor) return;
-    editor.chain().focus().toggleBold().run();
-  });
-
-  italicButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!editor) return;
-    editor.chain().focus().toggleItalic().run();
-  });
-
-  bulletListButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    if (!editor) return;
-    editor.chain().focus().toggleBulletList().run();
-  });
-
-  cancelEditButton.addEventListener('click', (e) => {
-    e.preventDefault();
-    e.stopPropagation();
-    requestAnimationFrame(() => {
-      hideEditor();
-    });
-  });
-
-  saveNoteButton.addEventListener('click', (e) => {
+  saveNoteBtn.addEventListener('click', (e) => {
     e.preventDefault();
     e.stopPropagation();
     saveNote();
+  });
+
+  cancelEditBtn.addEventListener('click', (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+    hideEditor();
   });
 });
 

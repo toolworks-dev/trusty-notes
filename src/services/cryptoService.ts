@@ -1,5 +1,6 @@
 import { Buffer } from 'buffer/';
 import { mnemonicToSeedSync, wordlists } from 'bip39';
+import { Note, Attachment } from '../types/sync';
 const WORDLIST = wordlists.english;
 
 interface EncryptedNote {
@@ -9,16 +10,8 @@ interface EncryptedNote {
   timestamp: number;
   signature: string;
   deleted?: boolean;
+  attachments?: Attachment[];
 }
-
-  interface Note {
-    id?: number;
-    title: string;
-    content: string;
-    created_at: number;
-    updated_at: number;
-    deleted?: boolean;
-  }
 
 export class CryptoService {
   private encryptionKey: Uint8Array;
@@ -98,7 +91,8 @@ export class CryptoService {
       content: note.content,
       created_at: note.created_at,
       updated_at: note.updated_at,
-      deleted: note.deleted
+      deleted: note.deleted,
+      attachments: note.attachments
     });
     
     const key = await crypto.subtle.importKey(
@@ -169,5 +163,61 @@ export class CryptoService {
   async getPublicKeyBase64(): Promise<string> {
     const keyData = await crypto.subtle.exportKey('raw', this.verifyingKey!);
     return Buffer.from(keyData).toString('base64');
+  }
+
+  async encryptFile(file: File): Promise<Attachment> {
+    const arrayBuffer = await file.arrayBuffer();
+    const nonceBytes = crypto.getRandomValues(new Uint8Array(12));
+    
+    const key = await crypto.subtle.importKey(
+      'raw',
+      this.encryptionKey,
+      { name: 'AES-GCM' },
+      false,
+      ['encrypt']
+    );
+
+    const encryptedData = await crypto.subtle.encrypt(
+      {
+        name: 'AES-GCM',
+        iv: nonceBytes
+      },
+      key,
+      arrayBuffer
+    );
+
+    return {
+      id: crypto.randomUUID(),
+      name: file.name,
+      type: file.type,
+      size: file.size,
+      data: Buffer.from(encryptedData).toString('base64'),
+      nonce: Buffer.from(nonceBytes).toString('base64'),
+      timestamp: Date.now()
+    };
+  }
+
+  async decryptFile(attachment: Attachment): Promise<Blob> {
+    const encryptedData = Buffer.from(attachment.data, 'base64');
+    const nonce = Buffer.from(attachment.nonce, 'base64');
+
+    const key = await crypto.subtle.importKey(
+      'raw',
+      this.encryptionKey,
+      { name: 'AES-GCM' },
+      false,
+      ['decrypt']
+    );
+
+    const decryptedData = await crypto.subtle.decrypt(
+      {
+        name: 'AES-GCM',
+        iv: nonce
+      },
+      key,
+      encryptedData
+    );
+
+    return new Blob([decryptedData], { type: attachment.type });
   }
 }

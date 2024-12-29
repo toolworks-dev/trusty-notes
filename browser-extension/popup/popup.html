@@ -1,78 +1,29 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <meta charset="UTF-8">
   <link rel="stylesheet" href="popup.css">
-  <style>
-    .ProseMirror {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      min-height: 200px;
-      max-height: 400px;
-      overflow-y: auto;
-      background-color: white;
-    }
-    
-    .ProseMirror:focus {
-      outline: none;
-      border-color: #0d6efd;
-    }
-
-    #contentInput {
-      padding: 8px;
-      border: 1px solid #ddd;
-      border-radius: 4px;
-      min-height: 200px;
-      max-height: 400px;
-      overflow-y: auto;
-      background-color: white;
-    }
-
-    #contentInput:focus {
-      outline: none;
-      border-color: #0d6efd;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .ProseMirror,
-      #contentInput {
-        background-color: #3f3f3f;
-        border-color: #444;
-        color: #f6f6f6;
-      }
-    }
-  </style>
-  <script src="lib/tiptap-bundle.js"></script>
 </head>
 <body>
   <div class="container">
-    <div class="header">
-      <h1>TrustyNotes</h1>
-      <button id="newNote">New Note</button>
-    </div>
-    <div id="editor" style="display: none;">
-      <input type="text" id="titleInput" placeholder="Note title...">
-      <div class="editor-toolbar">
-        <button id="boldButton" title="Bold">B</button>
-        <button id="italicButton" title="Italic">I</button>
-        <button id="bulletListButton" title="Bullet List">•</button>
-      </div>
-      <div id="contentInput" class="ProseMirror"></div>
-      <div class="editor-buttons">
-        <button id="saveNote">Save</button>
-        <button id="cancelEdit">Cancel</button>
-      </div>
-    </div>
     <div id="mainView">
+      <div class="header">
+        <h1>TrustyNotes</h1>
+        <button id="newNoteBtn">New Note</button>
+      </div>
       <div class="search">
         <input type="text" id="searchInput" placeholder="Search notes...">
       </div>
       <div id="notesList" class="notes-list">
-        <!-- Notes will be inserted here -->
+        <!-- Notes will be rendered here -->
       </div>
-      <div class="footer">
-        <button id="openWebapp">Open Web App</button>
+    </div>
+    
+    <div id="editor" style="display: none;">
+      <input type="text" id="titleInput" placeholder="Note title">
+      <div id="contentInput" class="content-input" style="min-height: 200px; border: 1px solid #ddd; padding: 8px; margin: 8px 0; border-radius: 4px;"></div>
+      <div class="editor-buttons">
+        <button id="cancelEditBtn">Cancel</button>
+        <button id="saveNoteBtn">Save</button>
       </div>
     </div>
   </div>

@@ -37,20 +37,13 @@ import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MarkdownEditor } from './components/MarkdownEditor';
 import { SyncSettings } from './components/SyncSettings';
 import { useAutoSync } from './hooks/useAutoSync';
-import { SyncSettings as SyncSettingsType } from './types/sync';
+import { SyncSettings as SyncSettingsType, Note } from './types/sync';
 import { WebStorageService } from './services/webStorage';
 import './styles/richtext.css';
 import { MobileNav } from './components/MobileNav';
 import { notifications } from '@mantine/notifications';
 import { InstallPrompt } from './components/InstallPrompt';
-
-interface Note {
-  id?: number;
-  title: string;
-  content: string;
-  created_at: number;
-  updated_at: number;
-}
+import { NoteEditor } from './components/NoteEditor';
 
 function isBrowserExtensionEnvironment(): boolean {
   return typeof chrome !== 'undefined' && 
@@ -692,6 +685,15 @@ async function deleteNote(noteId: number) {
               defaultView="edit"
               editorType="richtext"
             />
+            
+            {selectedNote && (
+              <Box p="md">
+                <NoteEditor 
+                  note={selectedNote}
+                  loadNotes={loadNotes}
+                />
+              </Box>
+            )}
           </Box>
         </Stack>
       </AppShell.Main>

@@ -11,9 +11,8 @@ const app = express();
 let client;
 let db;
 
-// Body parsing middleware
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ limit: '50mb', extended: true }));
 
 app.use(helmet());
 app.use(cors({
@@ -42,6 +41,9 @@ app.use((req, res, next) => {
   }
   next();
 });
+
+const MAX_FILE_SIZE = 10 * 1024 * 1024;
+const MAX_TOTAL_ATTACHMENTS_SIZE = 50 * 1024 * 1024;
 
 async function setupDatabase() {
   try {
@@ -103,8 +105,36 @@ app.post('/api/sync', async (req, res) => {
     });
   }
 
+  for (const note of notes) {
+    if (note.attachments) {
+      let totalSize = 0;
+      for (const attachment of note.attachments) {
+        const fileSize = Buffer.from(attachment.data, 'base64').length;
+        if (fileSize > MAX_FILE_SIZE) {
+          return res.status(400).json({ 
+            error: 'File size exceeds limit',
+            details: {
+              fileName: attachment.name,
+              size: fileSize,
+              limit: MAX_FILE_SIZE
+            }
+          });
+        }
+        totalSize += fileSize;
+      }
+      if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
+        return res.status(400).json({ 
+          error: 'Total attachments size exceeds limit',
+          details: {
+            totalSize,
+            limit: MAX_TOTAL_ATTACHMENTS_SIZE
+          }
+        });
+      }
+    }
+  }
+
   try {
-    // Update user's last sync time
     await db.collection('users').updateOne(
       { public_key },
       { 
@@ -116,7 +146,6 @@ app.post('/api/sync', async (req, res) => {
 
     const results = await processNotes(public_key, notes);
     
-    // Log the response we're about to send
     console.log('Sending sync response:', {
       notesCount: results.notes.length,
       updatedIds: results.updated,
@@ -182,7 +211,8 @@ async function processNotes(public_key, incoming_notes) {
                 timestamp: note.timestamp,
                 signature: note.signature,
                 public_key,
-                deleted: note.deleted
+                deleted: note.deleted,
+                attachments: note.attachments
               } 
             },
             { upsert: true }
@@ -214,7 +244,8 @@ async function processNotes(public_key, incoming_notes) {
       data: note.data,
       nonce: note.nonce,
       timestamp: note.timestamp,
-      signature: note.signature
+      signature: note.signature,
+      attachments: note.attachments
     }));
 
       return results;
@@ -246,7 +277,6 @@ app.get('/api/health', async (req, res) => {
   }
 });
 
-// Global error handler
 app.use((err, req, res, next) => {
   console.error('Unhandled error:', {
     error: err.message,

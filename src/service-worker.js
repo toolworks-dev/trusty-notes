@@ -1,4 +1,4 @@
-const CACHE_NAME = 'trustynotes-cache-v0.1.6';
+const CACHE_NAME = 'trustynotes-cache-v0.2.0';
 const ASSETS_TO_CACHE = [
   '/',
   '/index.html',

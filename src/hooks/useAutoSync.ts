@@ -32,7 +32,7 @@ export function useAutoSync(auto_sync: boolean, sync_interval: number) {
           body: JSON.stringify({
             public_key: await cryptoService.getPublicKeyBase64(),
             notes: encryptedNotes,
-            client_version: '0.1.6'
+            client_version: '0.2.0'
           }),
         });
     
