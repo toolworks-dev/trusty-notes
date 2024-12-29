@@ -43,7 +43,7 @@ export class CryptoService {
       return words.join(' ');
     } catch (error) {
       console.error('Failed to generate mnemonic:', error);
-      throw new Error('Failed to generate seed phrase');
+      throw new Error('Failed to generate sync code');
     }
   }
 

@@ -39,3 +39,5 @@ android/build
 android/capacitor-cordova-android-plugins/build
 
 browser-extension/web-ext-artifacts
+
+server/symlink.sh

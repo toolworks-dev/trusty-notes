@@ -10,7 +10,7 @@ TrustyNotes is committed to protecting your privacy. This Privacy Policy explain
 
 ### Notes and Content
 - All notes and content you create are encrypted end-to-end using AES-GCM encryption
-- Encryption keys are derived from your seed phrase, which is never transmitted to our servers
+- Encryption keys are derived from your sync code, which is never transmitted to our servers
 - Notes are stored locally in your browser and optionally synchronized with our servers in encrypted form
 - We cannot access, read, or decrypt your notes as we don't have access to your encryption keys
 
@@ -23,7 +23,7 @@ TrustyNotes is committed to protecting your privacy. This Privacy Policy explain
 ### Data Storage
 - Notes are stored locally in your browser's storage
 - If sync is enabled, encrypted notes are stored on our servers
-- Your seed phrase is stored locally and optionally in the browser extension storage
+- Your sync code is stored locally and optionally in the browser extension storage
 - We use MongoDB for server-side storage of encrypted data
 
 ## Data Security
@@ -36,7 +36,7 @@ TrustyNotes is committed to protecting your privacy. This Privacy Policy explain
 We do not share your data with third parties. Your encrypted notes are only:
 - Stored locally on your devices
 - Transmitted to our servers for sync purposes (if enabled)
-- Accessible only with your seed phrase
+- Accessible only with your sync code
 
 ## Browser Extension
 The TrustyNotes browser extension:
@@ -51,7 +51,7 @@ You have the right to:
 - Delete your notes locally and from our servers
 - Choose whether to enable synchronization
 - Control which servers you sync with
-- Generate new seed phrases
+- Generate new sync codes
 
 ## Data Retention
 - Deleted notes are permanently removed after 24 hours

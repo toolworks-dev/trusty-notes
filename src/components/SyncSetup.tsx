@@ -15,7 +15,7 @@ export function SyncSetup({ onSync }: SyncSetupProps) {
     if (!seedPhrase) {
       notifications.show({
         title: 'Error',
-        message: 'Please enter a seed phrase',
+        message: 'Please enter a sync code',
         color: 'red',
       });
       return;
@@ -57,11 +57,11 @@ export function SyncSetup({ onSync }: SyncSetupProps) {
 
   return (
     <Stack>
-      <Text>Enter your seed phrase to sync across devices:</Text>
+      <Text>Enter your sync code to sync across devices:</Text>
       <PasswordInput
         value={seedPhrase}
         onChange={(e) => setSeedPhrase(e.currentTarget.value)}
-        placeholder="Enter seed phrase"
+        placeholder="Enter sync code"
         description="This phrase is used to encrypt your notes. Keep it safe!"
       />
       <Button 

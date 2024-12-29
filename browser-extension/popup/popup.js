@@ -127,7 +127,7 @@ async function initializeCrypto() {
     if (!settings.seed_phrase) {
       const webAppSettings = await getWebAppSettings();
       if (!webAppSettings?.seed_phrase) {
-        throw new Error('No seed phrase set');
+        throw new Error('No sync code set');
       }
       settings = { seed_phrase: webAppSettings.seed_phrase };
     }

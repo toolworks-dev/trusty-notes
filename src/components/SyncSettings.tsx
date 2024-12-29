@@ -165,7 +165,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
     if (!seedPhrase) {
       notifications.show({
         title: 'Error',
-        message: 'Please enter a seed phrase',
+        message: 'Please enter a sync code',
         color: 'red',
       });
       return;
@@ -223,10 +223,10 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
       await saveSettings({ seed_phrase: mnemonic });
       setShowNewSeedPhrase(true);
     } catch (error) {
-      console.error('Failed to generate seed phrase:', error);
+      console.error('Failed to generate sync code:', error);
       notifications.show({
         title: 'Error',
-        message: 'Failed to generate seed phrase',
+        message: 'Failed to generate sync code',
         color: 'red',
       });
     }
@@ -275,8 +275,8 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
           </Group>
           
           <PasswordInput
-            label="Seed Phrase"
-            description="Enter your seed phrase to sync across devices"
+            label="Sync Code"
+            description="Enter your sync code to sync across devices! This can be generated automatically or you can enter your own!"
             value={seedPhrase}
             onChange={(e) => {
               setSeedPhrase(e.currentTarget.value);
@@ -295,7 +295,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
               variant="light"
               onClick={generateNewSeedPhrase}
             >
-              Generate New Seed Phrase
+              Generate New Sync Code
             </Button>
           </Group>
 
@@ -364,7 +364,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
       <Modal
         opened={showNewSeedPhrase}
         onClose={() => setShowNewSeedPhrase(false)}
-        title="Your New Seed Phrase"
+        title="Your New Sync Code"
       >
         <Stack>
           <Text fw={500} c="red">

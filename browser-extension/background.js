@@ -62,7 +62,7 @@ async function encryptAndStoreNotes(notes) {
     if (!cryptoService) {
       const settings = await chrome.storage.local.get(['seed_phrase']);
       if (!settings.seed_phrase) {
-        console.error('No seed phrase set');
+        console.error('No sync code set');
         return;
       }
       cryptoService = await CryptoService.new(settings.seed_phrase);

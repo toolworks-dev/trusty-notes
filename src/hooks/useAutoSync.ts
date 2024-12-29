@@ -15,7 +15,7 @@ export function useAutoSync(auto_sync: boolean, sync_interval: number) {
         isSyncingRef.current = true;
         const settings = await WebStorageService.getSyncSettings();
         if (!settings.seed_phrase) {
-          throw new Error('No seed phrase configured');
+          throw new Error('No sync code configured');
         }
     
         const cryptoService = await CryptoService.new(settings.seed_phrase);
