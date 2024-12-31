@@ -27,8 +27,8 @@ Now: https://trustynotes.app
 - [x] Improved Sync
 - [x] Rich Text
 - [x] Browser Extension
-- [ ] Attachments/Files
-- [ ] Add Alternative to Seedphrase
+- [x] Attachments/Files (In Progress but working)
+- [ ] Native Desktop/Mobile Applications
 
 ## Client Self-Hosting
 
