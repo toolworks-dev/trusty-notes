@@ -10,6 +10,7 @@ dotenv.config();
 const app = express();
 let client;
 let db;
+let isConnected = false;
 
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ limit: '50mb', extended: true }));
@@ -45,14 +46,35 @@ app.use((req, res, next) => {
 const MAX_FILE_SIZE = 10 * 1024 * 1024;
 const MAX_TOTAL_ATTACHMENTS_SIZE = 50 * 1024 * 1024;
 
+async function connectToDatabase() {
+  try {
+    if (!client) {
+      client = new MongoClient(process.env.MONGODB_URI, {
+        serverApi: ServerApiVersion.v1,
+        maxPoolSize: 50,
+        connectTimeoutMS: 5000,
+        socketTimeoutMS: 45000,
+        retryWrites: true,
+        retryReads: true
+      });
+    }
+
+    if (!isConnected) {
+      await client.connect();
+      db = client.db('notes-sync');
+      isConnected = true;
+      console.log('Connected to MongoDB');
+    }
+  } catch (error) {
+    isConnected = false;
+    console.error('MongoDB connection failed:', error);
+    throw error;
+  }
+}
+
 async function setupDatabase() {
   try {
-    client = new MongoClient(process.env.MONGODB_URI, {
-      serverApi: ServerApiVersion.v1,
-    });
-
-    await client.connect();
-    db = client.db('notes-sync');
+    await connectToDatabase();
     
     await db.collection('notes').createIndexes([
       { key: { public_key: 1 } },
@@ -65,76 +87,83 @@ async function setupDatabase() {
       { expireAfterSeconds: 180 * 24 * 60 * 60 }
     );
 
-    console.log('Connected to MongoDB');
   } catch (error) {
     console.error('Database setup failed:', error);
     process.exit(1);
   }
 }
 
+async function ensureConnection() {
+  if (!isConnected) {
+    await connectToDatabase();
+  }
+}
+
 app.post('/api/sync', async (req, res) => {
-  console.log('Received sync request:', {
-    hasPublicKey: !!req.body.public_key,
-    notesCount: req.body.notes?.length,
-    clientVersion: req.body.client_version,
-    contentType: req.headers['content-type']
-  });
-
-  const { public_key, notes, client_version } = req.body;
-
-  if (!public_key || !Array.isArray(notes)) {
-    console.log('Invalid request format:', { 
-      hasPublicKey: !!public_key, 
-      hasNotes: !!notes,
-      isNotesArray: Array.isArray(notes)
+  try {
+    await ensureConnection();
+    
+    console.log('Received sync request:', {
+      hasPublicKey: !!req.body.public_key,
+      notesCount: req.body.notes?.length,
+      clientVersion: req.body.client_version,
+      contentType: req.headers['content-type']
     });
-    return res.status(400).json({ 
-      error: 'Invalid request format',
-      details: {
-        hasPublicKey: !!public_key,
+
+    const { public_key, notes, client_version } = req.body;
+
+    if (!public_key || !Array.isArray(notes)) {
+      console.log('Invalid request format:', { 
+        hasPublicKey: !!public_key, 
         hasNotes: !!notes,
         isNotesArray: Array.isArray(notes)
-      }
-    });
-  }
+      });
+      return res.status(400).json({ 
+        error: 'Invalid request format',
+        details: {
+          hasPublicKey: !!public_key,
+          hasNotes: !!notes,
+          isNotesArray: Array.isArray(notes)
+        }
+      });
+    }
 
-  const MIN_CLIENT_VERSION = '0.1.0';
-  if (client_version < MIN_CLIENT_VERSION) {
-    return res.status(400).json({ 
-      error: 'Please update your client to the latest version' 
-    });
-  }
+    const MIN_CLIENT_VERSION = '0.1.0';
+    if (client_version < MIN_CLIENT_VERSION) {
+      return res.status(400).json({ 
+        error: 'Please update your client to the latest version' 
+      });
+    }
 
-  for (const note of notes) {
-    if (note.attachments) {
-      let totalSize = 0;
-      for (const attachment of note.attachments) {
-        const fileSize = Buffer.from(attachment.data, 'base64').length;
-        if (fileSize > MAX_FILE_SIZE) {
+    for (const note of notes) {
+      if (note.attachments) {
+        let totalSize = 0;
+        for (const attachment of note.attachments) {
+          const fileSize = Buffer.from(attachment.data, 'base64').length;
+          if (fileSize > MAX_FILE_SIZE) {
+            return res.status(400).json({ 
+              error: 'File size exceeds limit',
+              details: {
+                fileName: attachment.name,
+                size: fileSize,
+                limit: MAX_FILE_SIZE
+              }
+            });
+          }
+          totalSize += fileSize;
+        }
+        if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
           return res.status(400).json({ 
-            error: 'File size exceeds limit',
+            error: 'Total attachments size exceeds limit',
             details: {
-              fileName: attachment.name,
-              size: fileSize,
-              limit: MAX_FILE_SIZE
+              totalSize,
+              limit: MAX_TOTAL_ATTACHMENTS_SIZE
             }
           });
         }
-        totalSize += fileSize;
-      }
-      if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
-        return res.status(400).json({ 
-          error: 'Total attachments size exceeds limit',
-          details: {
-            totalSize,
-            limit: MAX_TOTAL_ATTACHMENTS_SIZE
-          }
-        });
       }
     }
-  }
 
-  try {
     await db.collection('users').updateOne(
       { public_key },
       { 
@@ -167,13 +196,14 @@ app.post('/api/sync', async (req, res) => {
     res.json(results);
   } catch (error) {
     console.error('Sync error:', error);
+    isConnected = false;
     
     await db.collection('error_logs').insertOne({
-      public_key,
+      public_key: req.body?.public_key,
       timestamp: new Date(),
       error: error instanceof Error ? error.message : 'Unknown error',
       stack: error instanceof Error ? error.stack : undefined,
-    });
+    }).catch(console.error);
 
     res.status(500).json({ 
       error: 'Internal server error',
@@ -259,6 +289,7 @@ async function processNotes(public_key, incoming_notes) {
 
 app.get('/api/health', async (req, res) => {
   try {
+    await ensureConnection();
     await db.command({ ping: 1 });
     res.json({ 
       status: 'healthy',
@@ -267,6 +298,7 @@ app.get('/api/health', async (req, res) => {
       timestamp: new Date().toISOString()
     });
   } catch (error) {
+    isConnected = false;
     console.error('Health check failed:', error);
     res.status(500).json({ 
       status: 'unhealthy',
@@ -316,4 +348,34 @@ process.on('SIGINT', async () => {
     console.error('Error during shutdown:', error);
     process.exit(1);
   }
+});
+
+client.on('connectionClosed', () => {
+  console.log('MongoDB connection closed');
+  isConnected = false;
+});
+
+client.on('error', (error) => {
+  console.error('MongoDB error:', error);
+  isConnected = false;
+});
+
+process.on('uncaughtException', async (error) => {
+  console.error('Uncaught exception:', error);
+  try {
+    await client?.close();
+  } catch (err) {
+    console.error('Error while closing MongoDB connection:', err);
+  }
+  process.exit(1);
+});
+
+process.on('unhandledRejection', async (reason, promise) => {
+  console.error('Unhandled Rejection at:', promise, 'reason:', reason);
+  try {
+    await client?.close();
+  } catch (err) {
+    console.error('Error while closing MongoDB connection:', err);
+  }
+  process.exit(1);
 });

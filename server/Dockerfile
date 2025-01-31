@@ -11,4 +11,4 @@ COPY . .
 
 EXPOSE 3222
 
-CMD ["node", "src/index.js"]
+CMD ["bun", "src/index.js"]
