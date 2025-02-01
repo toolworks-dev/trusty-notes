@@ -240,6 +240,41 @@ function App() {
     syncSettings?.sync_interval ?? 5
   );
 
+  useEffect(() => {
+    if (window.electron?.updates) {
+      console.log('Setting up update listener in App.tsx');
+      window.electron.updates.onUpdateAvailable((info) => {
+        console.log('Received update notification in App.tsx:', info);
+        notifications.show({
+          id: 'update-notification',
+          title: 'Update Available',
+          message: `Version ${info.version} is available. Click to download.`,
+          color: 'blue',
+          autoClose: false,
+          withCloseButton: true,
+          withBorder: true,
+          radius: "md",
+          icon: '🔄',
+          styles: {
+            root: {
+              backgroundColor: 'var(--mantine-color-blue-light)',
+              borderColor: 'var(--mantine-color-blue-filled)',
+            },
+            title: {
+              fontWeight: 600,
+            },
+          },
+          onClick: () => {
+            console.log('Opening release URL:', info.releaseUrl);
+            window.electron?.updates.openReleasePage(info.releaseUrl);
+          }
+        });
+      });
+    } else {
+      console.log('Electron updates API not available');
+    }
+  }, []);
+
 async function handleSave() {
   try {
     const now = Date.now();

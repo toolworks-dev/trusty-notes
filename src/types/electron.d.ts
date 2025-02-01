@@ -6,6 +6,15 @@ interface ElectronAPI {
     electron: string;
   };
   minimizeToTray: () => void;
+  updates: {
+    onUpdateAvailable: (callback: (info: UpdateInfo) => void) => void;
+    openReleasePage: (url: string) => void;
+  }
+}
+
+interface UpdateInfo {
+  version: string;
+  releaseUrl: string;
 }
 
 declare global {

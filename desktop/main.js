@@ -1,7 +1,9 @@
-const { app, BrowserWindow, protocol, Tray, Menu } = require('electron')
+const { app, BrowserWindow, protocol, Tray, Menu, shell, Notification } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const url = require('url')
+const windowStateKeeper = require('electron-window-state')
+const https = require('https')
 
 let tray = null
 let win = null
@@ -32,9 +34,16 @@ function createTray() {
 }
 
 function createWindow() {
+  let mainWindowState = windowStateKeeper({
+    defaultWidth: 1280,
+    defaultHeight: 720
+  })
+
   win = new BrowserWindow({
-    width: 1280,
-    height: 720,
+    x: mainWindowState.x,
+    y: mainWindowState.y,
+    width: mainWindowState.width,
+    height: mainWindowState.height,
     icon: path.join(__dirname, 'icon.png'),
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
@@ -44,6 +53,8 @@ function createWindow() {
       sandbox: false
     }
   })
+
+  mainWindowState.manage(win)
 
   win.on('minimize', (event) => {
     event.preventDefault()
@@ -101,6 +112,162 @@ function createWindow() {
   win.webContents.on('did-finish-load', () => {
     console.log('Page loaded successfully')
   })
+
+  if (process.env.NODE_ENV === 'development') {
+    win.webContents.openDevTools()
+  }
+}
+
+function compareVersions(v1, v2) {
+  const normalize = v => v.split('.').map(Number)
+  const a = normalize(v1)
+  const b = normalize(v2)
+  
+  for (let i = 0; i < Math.max(a.length, b.length); i++) {
+    const x = a[i] || 0
+    const y = b[i] || 0
+    if (x < y) return -1
+    if (x > y) return 1
+  }
+  return 0
+}
+
+function checkForUpdates() {
+  const currentVersion = app.getVersion()
+  console.log('Checking for updates. Current version:', currentVersion)
+  
+  const options = {
+    hostname: 'api.github.com',
+    path: '/repos/toolworks-dev/trusty-notes/releases/latest',
+    headers: {
+      'User-Agent': 'TrustyNotes',
+      'Accept': 'application/vnd.github.v3+json'
+    }
+  }
+
+  https.get(options, (res) => {
+    let data = ''
+    
+    res.on('data', (chunk) => {
+      data += chunk
+    })
+
+    res.on('end', () => {
+      try {
+        const release = JSON.parse(data)
+        console.log('GitHub response:', release)
+        
+        if (res.statusCode === 200 && release.tag_name) {
+          const latestVersion = release.tag_name.replace('v', '')
+          console.log('Latest version from GitHub:', latestVersion)
+          
+          if (compareVersions(currentVersion, latestVersion) < 0) {
+            console.log('Update available, showing system notification')
+            const notification = new Notification({
+              title: 'TrustyNotes Update Available',
+              body: `Version ${latestVersion} is available. Click to download.`,
+              icon: path.join(__dirname, 'icon.png')
+            })
+
+            notification.on('click', () => {
+              shell.openExternal(release.html_url)
+            })
+
+            notification.show()
+          } else {
+            console.log('No update needed')
+          }
+        } else {
+          console.error('Invalid GitHub response:', res.statusCode, release)
+        }
+      } catch (error) {
+        console.error('Failed to parse release info:', error)
+        console.error('Response data:', data)
+      }
+    })
+  }).on('error', (error) => {
+    console.error('Failed to check for updates:', error)
+  })
+}
+
+function setupUpdateChecker() {
+  console.log('Setting up update checker')
+  
+  // Check immediately
+  checkForUpdates()
+  
+  // Then check every hour
+  const interval = setInterval(checkForUpdates, 60 * 60 * 1000)
+  
+  // Clean up interval on window close
+  win.on('closed', () => clearInterval(interval))
+}
+
+function createAppMenu() {
+  const isMac = process.platform === 'darwin'
+  
+  const template = [
+    ...(isMac ? [{
+      label: app.name,
+      submenu: [
+        { role: 'about' },
+        { type: 'separator' },
+        { role: 'services' },
+        { type: 'separator' },
+        { role: 'hide' },
+        { role: 'hideOthers' },
+        { role: 'unhide' },
+        { type: 'separator' },
+        { role: 'quit' }
+      ]
+    }] : []),
+    {
+      label: 'File',
+      submenu: [
+        {
+          label: 'New Note',
+          accelerator: 'CmdOrCtrl+N',
+          click: () => win.webContents.send('new-note')
+        },
+        { type: 'separator' },
+        isMac ? { role: 'close' } : { role: 'quit' }
+      ]
+    },
+    {
+      label: 'Edit',
+      submenu: [
+        { role: 'undo' },
+        { role: 'redo' },
+        { type: 'separator' },
+        { role: 'cut' },
+        { role: 'copy' },
+        { role: 'paste' }
+      ]
+    },
+    {
+      label: 'View',
+      submenu: [
+        { role: 'reload' },
+        { role: 'forceReload' },
+        { type: 'separator' },
+        { role: 'resetZoom' },
+        { role: 'zoomIn' },
+        { role: 'zoomOut' },
+        { type: 'separator' },
+        { role: 'togglefullscreen' }
+      ]
+    }
+  ]
+
+  Menu.setApplicationMenu(Menu.buildFromTemplate(template))
+}
+
+async function handleAppQuit() {
+  win.webContents.send('app-quitting')
+  
+  await new Promise(resolve => setTimeout(resolve, 500))
+  
+  app.quit()
 }
 
 app.whenReady().then(() => {
@@ -124,6 +291,24 @@ app.whenReady().then(() => {
   
   createWindow()
   createTray()
+  setupUpdateChecker()
+  createAppMenu()
+
+  if (process.defaultApp) {
+    if (process.argv.length >= 2) {
+      app.setAsDefaultProtocolClient('trustynotes', process.execPath, [path.resolve(process.argv[1])])
+    }
+  } else {
+    app.setAsDefaultProtocolClient('trustynotes')
+  }
+
+  app.on('open-url', (event, url) => {
+    event.preventDefault()
+    const noteId = new URL(url).searchParams.get('note')
+    if (noteId) {
+      win.webContents.send('open-note', noteId)
+    }
+  })
 }).catch(err => {
   console.error('Failed to initialize app:', err)
 })
