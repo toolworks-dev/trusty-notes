@@ -23,6 +23,11 @@ dist-ssr
 *.sln
 *.sw?
 
+desktop/dist/*
+!desktop/dist/.gitkeep
+desktop/icon.png
+desktop/dist-electron/
+
 src-tauri/target
 
 server/node_modules

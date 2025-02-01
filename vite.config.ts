@@ -1,12 +1,17 @@
 import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
+import { resolve } from 'path';
 
 export default defineConfig({
   plugins: [react()],
+  base: './',
   define: {
     global: {},
   },
   build: {
+    outDir: 'dist',
+    emptyOutDir: true,
+    assetsDir: 'assets',
     rollupOptions: {
       output: {
         manualChunks: {
@@ -15,6 +20,7 @@ export default defineConfig({
       }
     }
   },
+  publicDir: 'public',
   resolve: {
     alias: {
       buffer: 'buffer/',

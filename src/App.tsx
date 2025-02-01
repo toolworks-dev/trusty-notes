@@ -45,6 +45,9 @@ import { notifications } from '@mantine/notifications';
 import { InstallPrompt } from './components/InstallPrompt';
 import { NoteEditor } from './components/NoteEditor';
 
+const isElectron = !!window.electron;
+const logoPath = isElectron ? './trusty.jpg' : '/trusty.jpg';
+
 function isBrowserExtensionEnvironment(): boolean {
   return typeof chrome !== 'undefined' && 
          typeof chrome.runtime !== 'undefined' && 
@@ -68,8 +71,6 @@ function App() {
   const [isNewNote, setIsNewNote] = useState(false);
   const [ignoreNextSave, setIgnoreNextSave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
-
-
 
   useEffect(() => {
     loadNotes();
@@ -408,7 +409,7 @@ async function deleteNote(noteId: number) {
                 hiddenFrom="sm"
                 size="sm"
               />
-              <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
+              <Image src={logoPath} alt="Logo" w={30} h={30} />
             </Group>
             <TextInput
               placeholder="Note title"
@@ -459,7 +460,7 @@ async function deleteNote(noteId: number) {
           >
             <Group justify="space-between">
               <Group>
-                <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
+                <Image src={logoPath} alt="Logo" w={30} h={30} />
                 <Text size="lg" fw={500}>TrustyNotes</Text>
                 <Tooltip label="GitHub">
                   <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">

@@ -1,0 +1,40 @@
+{
+    "name": "trusty-notes-electron",
+    "version": "0.2.0",
+    "main": "main.js",
+    "type": "commonjs",
+    "description": "TrustyNotes is a simple, secure, and reliable note-taking app",
+    "author": "Toolworks.dev",
+    "scripts": {
+        "start": "electron .",
+        "build:linux": "electron-builder --linux",
+        "build:windows": "electron-builder --windows",
+        "build:all": "electron-builder -l -w"
+    },
+    "build": {
+        "appId": "dev.toolworks.trustynotes",
+        "productName": "TrustyNotes",
+        "directories": {
+            "output": "dist-electron"
+        },
+        "files": [
+            "dist/**/*",
+            "main.js",
+            "preload.js",
+            "icon.png"
+        ],
+        "linux": {
+            "target": ["AppImage"],
+            "category": "Office",
+            "icon": "icon.png"
+        },
+        "win": {
+            "target": ["nsis", "portable"],
+            "icon": "icon.png"
+        }
+    },
+    "devDependencies": {
+        "electron": "^34.0.2",
+        "electron-builder": "^25.1.8"
+    }
+}

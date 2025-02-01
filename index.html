@@ -75,11 +75,16 @@
     </script>
 
     <!-- Analytics -->
-    <script
-      defer
-      data-domain="trustynotes.app"
-      src="https://plausible.toolworks.dev/js/script.js"
-    ></script>
+    <script>
+      // Only load analytics in web mode, not in electron
+      if (!window.electron) {
+        const script = document.createElement('script');
+        script.defer = true;
+        script.dataset.domain = "trustynotes.app";
+        script.src = "https://plausible.toolworks.dev/js/script.js";
+        document.head.appendChild(script);
+      }
+    </script>
 
     <!-- Main App Script -->
     <script defer type="module" src="/src/main.tsx"></script>
@@ -110,6 +115,7 @@
         });
       }
     </script>
+
   </head>
 
   <body>
