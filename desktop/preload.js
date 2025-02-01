@@ -6,6 +6,10 @@ contextBridge.exposeInMainWorld('electron', {
   versions: {
     node: process.versions.node,
     electron: process.versions.electron
+  },
+  minimizeToTray: () => {
+    const window = require('@electron/remote').getCurrentWindow()
+    window.minimize()
   }
 })
 

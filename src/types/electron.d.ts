@@ -5,6 +5,7 @@ interface ElectronAPI {
     node: string;
     electron: string;
   };
+  minimizeToTray: () => void;
 }
 
 declare global {

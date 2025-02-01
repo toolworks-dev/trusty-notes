@@ -1,10 +1,38 @@
-const { app, BrowserWindow, protocol } = require('electron')
+const { app, BrowserWindow, protocol, Tray, Menu } = require('electron')
 const path = require('path')
 const fs = require('fs')
 const url = require('url')
 
+let tray = null
+let win = null
+
+function createTray() {
+  tray = new Tray(path.join(__dirname, 'icon.png'))
+  const contextMenu = Menu.buildFromTemplate([
+    {
+      label: 'Show',
+      click: () => {
+        win.show()
+      }
+    },
+    {
+      label: 'Quit',
+      click: () => {
+        app.quit()
+      }
+    }
+  ])
+  
+  tray.setToolTip('TrustyNotes')
+  tray.setContextMenu(contextMenu)
+  
+  tray.on('click', () => {
+    win.show()
+  })
+}
+
 function createWindow() {
-  const win = new BrowserWindow({
+  win = new BrowserWindow({
     width: 1280,
     height: 720,
     icon: path.join(__dirname, 'icon.png'),
@@ -15,6 +43,20 @@ function createWindow() {
       webSecurity: true,
       sandbox: false
     }
+  })
+
+  win.on('minimize', (event) => {
+    event.preventDefault()
+    win.hide()
+  })
+
+  win.on('close', (event) => {
+    if (!app.isQuitting) {
+      event.preventDefault()
+      win.hide()
+      return false
+    }
+    return true
   })
 
   win.webContents.session.webRequest.onHeadersReceived((details, callback) => {
@@ -81,6 +123,7 @@ app.whenReady().then(() => {
   })
   
   createWindow()
+  createTray()
 }).catch(err => {
   console.error('Failed to initialize app:', err)
 })
@@ -89,6 +132,10 @@ app.on('window-all-closed', () => {
   if (process.platform !== 'darwin') {
     app.quit()
   }
+})
+
+app.on('before-quit', () => {
+  app.isQuitting = true
 })
 
 app.on('activate', () => {
