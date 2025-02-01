@@ -28,7 +28,8 @@ Now: https://trustynotes.app
 - [x] Rich Text
 - [x] Browser Extension
 - [x] Attachments/Files (In Progress but working)
-- [ ] Native Desktop/Mobile Applications
+- [x] Desktop Application
+- [ ] Mobile Application
 
 ## Client Self-Hosting
 
@@ -81,3 +82,22 @@ bun install
 ```
 
 This Builds the Chrome and Firefox extensions and places them in the `browser-extension/web-ext-artifacts` directory. You can install the extension directly from the .zip in firefox, you must extract the .zip for chrome/chromium browsers and load the unpacked folder.
+
+## Build Desktop Application
+
+### Requires
+- Bun (https://bun.sh)
+
+### Build
+
+```
+bun install
+cd desktop
+bun install
+cd ..
+bun run dist:linux // for linux
+bun run dist:windows // for windows
+bun run dist:all // for both
+```
+
+Builds are in ```desktop/dist-electron```
