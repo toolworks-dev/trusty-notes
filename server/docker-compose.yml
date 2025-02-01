@@ -18,6 +18,7 @@ services:
   mongodbf:
     image: mongo:latest
     user: root
+    restart: unless-stopped
     ports:
       - "27018:27018"
     volumes:
