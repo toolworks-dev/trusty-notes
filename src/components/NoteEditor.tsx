@@ -98,6 +98,11 @@ export function NoteEditor({ note, loadNotes }: NoteEditorProps) {
 
     try {
       setIsSyncing(true);
+      
+      if (file.size > 10 * 1024 * 1024) {
+        throw new Error('File size exceeds 10MB limit');
+      }
+
       const settings = await WebStorageService.getSyncSettings();
       if (settings.server_url) {
         await WebStorageService.syncWithServer(settings.server_url);

@@ -42,7 +42,8 @@ android/.gradle
 android/app/build
 android/build
 android/capacitor-cordova-android-plugins/build
-
+android/app/signing.properties
+android/app/release-key.jks
 browser-extension/web-ext-artifacts
 
 server/symlink.sh

@@ -227,8 +227,13 @@ function App() {
   useEffect(() => {
     const initMobile = async () => {
       if (isMobile) {
-        const { initializeMobileApp } = await import('./services/mobileInit');
-        await initializeMobileApp();
+        if (/android/i.test(navigator.userAgent)) {
+          const { initializeAndroidApp } = await import('./services/androidInit');
+          await initializeAndroidApp();
+        } else {
+          const { initializeMobileApp } = await import('./services/mobileInit');
+          await initializeMobileApp();
+        }
       }
     };
     

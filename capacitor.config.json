@@ -1,0 +1,30 @@
+{
+  "appId": "dev.toolworks.trustynotes",
+  "appName": "TrustyNotes",
+  "webDir": "dist",
+  "bundledWebRuntime": false,
+  "plugins": {
+    "SplashScreen": {
+      "launchShowDuration": 2000,
+      "backgroundColor": "#1A1B1E",
+      "androidSplashResourceName": "splash",
+      "androidScaleType": "CENTER_CROP",
+      "showSpinner": false,
+      "splashFullScreen": true,
+      "splashImmersive": true
+    },
+    "Keyboard": {
+      "resize": "body",
+      "style": "dark",
+      "resizeOnFullScreen": true
+    },
+    "StatusBar": {
+      "style": "dark",
+      "backgroundColor": "#1A1B1E",
+      "overlaysWebView": false
+    }
+  },
+  "server": {
+    "androidScheme": "https"
+  }
+} 

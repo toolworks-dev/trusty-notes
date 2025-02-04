@@ -4,7 +4,7 @@ import { WebStorageService } from '../services/webStorage';
 import { CryptoService } from '../services/cryptoService';
 
 export function useAutoSync(auto_sync: boolean, sync_interval: number) {
-  const syncTimeoutRef = useRef<number>();
+  const syncTimeoutRef = useRef<number | null>(null);
   const isSyncingRef = useRef(false);
 
   useEffect(() => {
