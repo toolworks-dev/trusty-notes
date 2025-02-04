@@ -29,7 +29,7 @@ Now: https://trustynotes.app
 - [x] Browser Extension
 - [x] Attachments/Files (In Progress but working)
 - [x] Desktop Application
-- [ ] Mobile Application
+- [x] Mobile Application
 
 ## Client Self-Hosting
 
