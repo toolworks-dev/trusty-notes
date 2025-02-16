@@ -1,5 +1,5 @@
 services:
-  rusty-notes-webapp:
+  trustynotes:
     build: .
     ports:
       - "8590:80"

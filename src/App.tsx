@@ -68,7 +68,6 @@ function App() {
   const [mobileNavOpened, setMobileNavOpened] = useState(false);
   const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
-  const [isNewNote, setIsNewNote] = useState(false);
   const [ignoreNextSave, setIgnoreNextSave] = useState(false);
   const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
 
@@ -163,6 +162,15 @@ function App() {
     }
   };
 
+  useEffect(() => {
+    if (selectedNote) {
+      setSelectedNote({
+        ...selectedNote,
+        title: title.trim() === '' ? 'Untitled' : title
+      });
+    }
+  }, [title]);
+
   const debouncedSave = useDebouncedCallback(async () => {
     if (ignoreNextSave) {
       setIgnoreNextSave(false);
@@ -209,14 +217,19 @@ function App() {
     setSelectedNote(note);
     setTitle(note.title);
     setContent(note.content);
-    setIsNewNote(false);
   }
 
   function clearForm() {
-    setSelectedNote(null);
-    setTitle('');
+    const newNoteId = Date.now();
+    setSelectedNote({ 
+      id: newNoteId,
+      title: 'Untitled',
+      content: '',
+      created_at: newNoteId,
+      updated_at: newNoteId
+    });
+    setTitle('Untitled');
     setContent('');
-    setIsNewNote(true);
     setSaveStatus('saved');
   }
   
@@ -280,61 +293,57 @@ function App() {
     }
   }, []);
 
-async function handleSave() {
-  try {
-    const now = Date.now();
-    
-    const recentNote = notes.find(note => 
-      note.title === title && 
-      note.content === content && 
-      now - note.updated_at < 2000
-    );
-    
-    if (recentNote) {
-      console.debug('Preventing duplicate save');
-      setSaveStatus('saved');
-      return;
-    }
-    
-    const noteId = selectedNote?.id || (isNewNote ? now : undefined);
-    
-    const note: Note = {
-      id: noteId,
-      title: title.trim() === '' ? 'Untitled' : title,
-      content,
-      created_at: selectedNote?.created_at || now,
-      updated_at: now,
-    };
+  async function handleSave() {
+    try {
+      const now = Date.now();
+      
+      const recentNote = notes.find(note => 
+        note.title === title && 
+        note.content === content && 
+        now - note.updated_at < 2000
+      );
+      
+      if (recentNote) {
+        console.debug('Preventing duplicate save');
+        setSaveStatus('saved');
+        return;
+      }
+      
+      const note: Note = {
+        id: selectedNote?.id || now,
+        title: title.trim() === '' ? 'Untitled' : title,
+        content,
+        created_at: selectedNote?.created_at || now,
+        updated_at: now,
+      };
 
-    await WebStorageService.saveNote(note);
-    
-    if (isNewNote) {
+      await WebStorageService.saveNote(note);
+      await loadNotes();
+      
+      // Always select the saved note to prevent duplicate creation
       setSelectedNote(note);
-      setIsNewNote(false);
+      
+      setSaveStatus('saved');
+    } catch (error) {
+      console.error('Failed to save note:', error);
+      alert(`Failed to save note: ${error}`);
+      setSaveStatus('saved');
     }
-    
-    await loadNotes();
-    setSaveStatus('saved');
-  } catch (error) {
-    console.error('Failed to save note:', error);
-    alert(`Failed to save note: ${error}`);
-    setSaveStatus('saved');
   }
-}
 
-async function deleteNote(noteId: number) {
-  if (!window.confirm('Are you sure you want to delete this note?')) return;
-  try {
-    await WebStorageService.deleteNote(noteId);
-    if (selectedNote?.id === noteId) {
-      clearForm();
+  async function deleteNote(noteId: number) {
+    if (!window.confirm('Are you sure you want to delete this note?')) return;
+    try {
+      await WebStorageService.deleteNote(noteId);
+      if (selectedNote?.id === noteId) {
+        clearForm();
+      }
+      await loadNotes();
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      alert('Failed to delete note');
     }
-    await loadNotes();
-  } catch (error) {
-    console.error('Failed to delete note:', error);
-    alert('Failed to delete note');
   }
-}
 
   async function exportNotes() {
     const notes = await WebStorageService.getNotes();
