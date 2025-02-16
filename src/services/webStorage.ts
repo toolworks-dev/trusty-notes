@@ -26,10 +26,12 @@ export class WebStorageService {
     const existingNote = notes.find(n => n.id === note.id);
     
     const updatedNote = {
+      ...existingNote,
       ...note,
       updated_at: now,
-      created_at: note.created_at || now,
+      created_at: note.created_at || existingNote?.created_at || now,
       attachments: existingNote?.attachments || note.attachments || [],
+      pending_sync: note.pending_sync || existingNote?.pending_sync || false
     } as Note;
 
     if (!updatedNote.id) {
@@ -280,6 +282,12 @@ export class WebStorageService {
       throw new Error(`File size exceeds limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
     }
 
+    const estimatedSize = file.size * 1.37;
+    const availableSpace = this.getAvailableStorageSpace();
+    if (estimatedSize > availableSpace) {
+      throw new Error(`Not enough storage space. Need ${Math.ceil(estimatedSize / (1024 * 1024))}MB but only ${Math.ceil(availableSpace / (1024 * 1024))}MB available.`);
+    }
+
     const notesJson = localStorage.getItem(this.NOTES_KEY);
     const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
     const note = notes.find(n => n.id === noteId);
@@ -311,7 +319,14 @@ export class WebStorageService {
       notes[index] = note;
     }
     
-    localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    try {
+      localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    } catch (error: unknown) {
+      if (error instanceof Error && error.name === 'QuotaExceededError') {
+        throw new Error(`Storage quota exceeded. Try removing some attachments first.`);
+      }
+      throw error;
+    }
     return note;
   }
 
@@ -373,6 +388,22 @@ export class WebStorageService {
     } catch (error) {
       console.error('Failed to decrypt attachment:', error);
       throw new Error('Failed to decrypt attachment');
+    }
+  }
+
+  private static getAvailableStorageSpace(): number {
+    let total = 0;
+    try {
+      for (let key in localStorage) {
+        if (localStorage.hasOwnProperty(key)) {
+          total += localStorage[key].length * 2; 
+        }
+      }
+      const maxSpace = 5 * 1024 * 1024;
+      return maxSpace - total;
+    } catch (e) {
+      console.error('Failed to calculate storage space:', e);
+      return 0;
     }
   }
 }
