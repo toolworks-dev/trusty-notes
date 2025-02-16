@@ -2,7 +2,9 @@
 
 A secure cross-platform note-taking application. Features end-to-end encryption for cloud sync and a modern React frontend.
 
-Now: https://trustynotes.app
+WebApp: https://trustynotes.app
+
+Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
 
 <p align="center">
 <a href="https://addons.mozilla.org/en-US/firefox/addon/trustynotes/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png"></a>
@@ -29,7 +31,7 @@ Now: https://trustynotes.app
 - [x] Browser Extension
 - [x] Attachments/Files (In Progress but working)
 - [x] Desktop Application
-- [ ] Mobile Application
+- [x] Mobile Application
 
 ## Client Self-Hosting
 
