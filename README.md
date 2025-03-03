@@ -29,7 +29,7 @@ Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/rele
 - [x] Improved Sync
 - [x] Rich Text
 - [x] Browser Extension
-- [x] Attachments/Files (In Progress but working)
+- [ ] Attachments/Files
 - [x] Desktop Application
 - [x] Mobile Application
 

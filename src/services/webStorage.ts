@@ -30,7 +30,6 @@ export class WebStorageService {
       ...note,
       updated_at: now,
       created_at: note.created_at || existingNote?.created_at || now,
-      attachments: existingNote?.attachments || note.attachments || [],
       pending_sync: note.pending_sync || existingNote?.pending_sync || false
     } as Note;
 
@@ -134,8 +133,6 @@ export class WebStorageService {
 
         console.log('Encrypted notes:', encryptedNotes);
         
-        //const publicKey = await this.crypto.getPublicKeyBase64();
-
         const userId = localStorage.getItem('user_id');
         if (!userId) {
           throw new Error('User ID not found');
@@ -270,141 +267,6 @@ export class WebStorageService {
     window.addEventListener('offline', () => {
       console.log('App is offline. Changes will be synced when online.');
     });
-  }
-
-  static async addAttachment(noteId: number, file: File): Promise<Note> {
-    if (!this.crypto) {
-      throw new Error('Crypto not initialized');
-    }
-
-    const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
-    if (file.size > MAX_FILE_SIZE) {
-      throw new Error(`File size exceeds limit of ${MAX_FILE_SIZE / (1024 * 1024)}MB`);
-    }
-
-    const estimatedSize = file.size * 1.37;
-    const availableSpace = this.getAvailableStorageSpace();
-    if (estimatedSize > availableSpace) {
-      throw new Error(`Not enough storage space. Need ${Math.ceil(estimatedSize / (1024 * 1024))}MB but only ${Math.ceil(availableSpace / (1024 * 1024))}MB available.`);
-    }
-
-    const notesJson = localStorage.getItem(this.NOTES_KEY);
-    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
-    const note = notes.find(n => n.id === noteId);
-    
-    if (!note) {
-      throw new Error('Note not found');
-    }
-
-    const MAX_TOTAL_ATTACHMENTS_SIZE = 50 * 1024 * 1024; // 50MB
-    let totalSize = file.size;
-    if (note.attachments) {
-      for (const attachment of note.attachments) {
-        totalSize += Buffer.from(attachment.data, 'base64').length;
-      }
-    }
-    if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
-      throw new Error(`Total attachments size would exceed limit of ${MAX_TOTAL_ATTACHMENTS_SIZE / (1024 * 1024)}MB`);
-    }
-
-    const attachment = await this.crypto.encryptFile(file);
-    
-    note.attachments = note.attachments || [];
-    note.attachments.push(attachment);
-    note.updated_at = Date.now();
-    note.pending_sync = true;
-
-    const index = notes.findIndex(n => n.id === noteId);
-    if (index !== -1) {
-      notes[index] = note;
-    }
-    
-    try {
-      localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
-    } catch (error: unknown) {
-      if (error instanceof Error && error.name === 'QuotaExceededError') {
-        throw new Error(`Storage quota exceeded. Try removing some attachments first.`);
-      }
-      throw error;
-    }
-    return note;
-  }
-
-  static async removeAttachment(noteId: number, attachmentId: string): Promise<void> {
-    if (!this.crypto) {
-      throw new Error('Crypto not initialized');
-    }
-
-    const notesJson = localStorage.getItem(this.NOTES_KEY);
-    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
-    const note = notes.find(n => n.id === noteId);
-    
-    if (!note || !note.attachments) {
-      throw new Error('Note not found');
-    }
-
-    note.attachments = note.attachments.filter(a => a.id !== attachmentId);
-    note.updated_at = Date.now();
-    note.pending_sync = true;
-
-    const index = notes.findIndex(n => n.id === noteId);
-    if (index !== -1) {
-      notes[index] = note;
-    }
-    
-    localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
-  }
-
-  static async downloadAttachment(noteId: number, attachmentId: string): Promise<void> {
-    if (!this.crypto) {
-      throw new Error('Crypto not initialized');
-    }
-
-    const notesJson = localStorage.getItem(this.NOTES_KEY);
-    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
-    const note = notes.find(n => n.id === noteId);
-    
-    if (!note || !note.attachments) {
-      throw new Error('Note not found');
-    }
-
-    const attachment = note.attachments.find(a => a.id === attachmentId);
-    if (!attachment) {
-      throw new Error('Attachment not found');
-    }
-
-    try {
-      const decryptedBlob = await this.crypto.decryptFile(attachment);
-      
-      // Create download link
-      const url = URL.createObjectURL(decryptedBlob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = attachment.name;
-      document.body.appendChild(a);
-      a.click();
-      document.body.removeChild(a);
-      URL.revokeObjectURL(url);
-    } catch (error) {
-      console.error('Failed to decrypt attachment:', error);
-      throw new Error('Failed to decrypt attachment');
-    }
-  }
-
-  private static getAvailableStorageSpace(): number {
-    let total = 0;
-    try {
-      for (let key in localStorage) {
-        if (localStorage.hasOwnProperty(key)) {
-          total += localStorage[key].length * 2; 
-        }
-      }
-      const maxSpace = 5 * 1024 * 1024;
-      return maxSpace - total;
-    } catch (e) {
-      console.error('Failed to calculate storage space:', e);
-      return 0;
-    }
   }
 
   static async getNote(id: number): Promise<Note | undefined> {

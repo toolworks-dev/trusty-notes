@@ -373,8 +373,7 @@ async function saveNote() {
     content: contentInput.innerHTML || '',
     created_at: currentEditingNote?.created_at || now,
     updated_at: now,
-    pending_sync: true,
-    attachments: currentEditingNote?.attachments || []
+    pending_sync: true
   };
 
   try {

@@ -314,39 +314,34 @@ function App() {
     }
   }, []);
 
-  async function handleSave() {
+  const handleSave = async () => {
     try {
       const now = Date.now();
-      
-      const recentNote = notes.find(note => 
-        note.title === title && 
-        note.content === content && 
-        now - note.updated_at < 2000
-      );
-      
-      if (recentNote) {
-        console.debug('Preventing duplicate save');
-        return;
-      }
-      
-      const note: Note = {
-        id: selectedNote?.id || now,
+      const noteToSave = {
+        id: selectedNote?.id,
         title: title.trim() === '' ? 'Untitled' : title,
         content,
         created_at: selectedNote?.created_at || now,
-        updated_at: now,
+        updated_at: now
       };
 
-      await WebStorageService.saveNote(note);
+      await WebStorageService.saveNote(noteToSave);
       await loadNotes();
       
-      // Always select the saved note to prevent duplicate creation
-      setSelectedNote(note);
+      if (!selectedNote) {
+        const updatedNotes = await WebStorageService.getNotes();
+        const newNote = updatedNotes.find(note => 
+          note.title === noteToSave.title && 
+          note.content === noteToSave.content
+        );
+        if (newNote) {
+          setSelectedNote(newNote);
+        }
+      }
     } catch (error) {
       console.error('Failed to save note:', error);
-      alert(`Failed to save note: ${error}`);
     }
-  }
+  };
 
   async function deleteNote(noteId: number) {
     if (!window.confirm('Are you sure you want to delete this note?')) return;

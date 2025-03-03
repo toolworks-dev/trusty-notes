@@ -1,6 +1,5 @@
 import { useState, useEffect } from 'react';
 import { 
-  Stack, 
   Text,
   Button, 
   Group,
@@ -9,70 +8,25 @@ import {
   Box,
   TextInput
 } from '@mantine/core';
-import { notifications } from '@mantine/notifications';
-import { IconTrash, IconChevronLeft, IconPaperclip, IconDownload } from '@tabler/icons-react';
+import { IconTrash, IconChevronLeft } from '@tabler/icons-react';
 import { WebStorageService } from '../services/webStorage';
 import { Note } from '../types/sync';
 import { MarkdownEditor } from './MarkdownEditor';
 
-interface AttachmentsListProps {
-  note: Note;
-  onRemove: (attachmentId: string) => void;
-  onDownload: (attachmentId: string) => void;
-  isSyncing: boolean;
-}
-
-function AttachmentsList({ note, onRemove, onDownload, isSyncing }: AttachmentsListProps) {
-  if (!note.attachments?.length) return null;
-
-  return (
-    <Stack gap="xs" mt="md">
-      <Text fw={500} size="sm">Attachments</Text>
-      {note.attachments.map(attachment => (
-        <Group key={attachment.id} justify="space-between">
-          <Text size="sm">{attachment.name}</Text>
-          <Group gap="xs">
-            <ActionIcon 
-              variant="subtle"
-              size="sm"
-              onClick={() => onDownload(attachment.id)}
-              disabled={isSyncing}
-            >
-              <IconDownload size={16} />
-            </ActionIcon>
-            <ActionIcon 
-              color="red" 
-              variant="subtle"
-              size="sm"
-              onClick={() => onRemove(attachment.id)}
-              disabled={isSyncing}
-            >
-              <IconTrash size={16} />
-            </ActionIcon>
-          </Group>
-        </Group>
-      ))}
-    </Stack>
-  );
-}
-
-interface NoteEditorProps {
+export interface NoteEditorProps {
   note: Note;
   isMobile?: boolean;
   isKeyboardVisible?: boolean;
   onBack?: () => void;
-  loadNotes: () => void;
+  loadNotes: () => Promise<void>;
 }
 
 export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, onBack, loadNotes }: NoteEditorProps) {
-  const [currentNote, setCurrentNote] = useState(note);
   const [title, setTitle] = useState(note.title || 'Untitled');
   const [content, setContent] = useState(note.content || '');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>('saved');
-  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
-    setCurrentNote(note);
     setTitle(note.title || 'Untitled');
     setContent(note.content || '');
   }, [note]);
@@ -109,88 +63,14 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
     }
   }, [isMobile]);
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
-    const file = event.target.files?.[0];
-    if (!file || !currentNote?.id) return;
-
-    try {
-      setIsSyncing(true);
-      
-      if (file.size > 10 * 1024 * 1024) {
-        throw new Error('File size exceeds 10MB limit');
-      }
-
-      const updatedNote = await WebStorageService.addAttachment(currentNote.id, file);
-      setCurrentNote(updatedNote);
-      await loadNotes();
-      
-      notifications.show({
-        title: 'Success',
-        message: 'File attached successfully',
-        color: 'green',
-      });
-    } catch (error) {
-      console.error('Failed to attach file:', error);
-      notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to attach file',
-        color: 'red',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleDownload = async (attachmentId: string) => {
-    try {
-      setIsSyncing(true);
-      await WebStorageService.downloadAttachment(note.id!, attachmentId);
-    } catch (error) {
-      console.error('Failed to download file:', error);
-      notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to download file',
-        color: 'red',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
-  const handleRemoveAttachment = async (attachmentId: string) => {
-    if (!confirm('Are you sure you want to remove this attachment?')) return;
-    
-    try {
-      setIsSyncing(true);
-      await WebStorageService.removeAttachment(note.id!, attachmentId);
-      
-      // Get the updated note after attachment removal
-      const notes = await WebStorageService.getNotes();
-      const updated = notes.find(n => n.id === note.id);
-      if (updated) {
-        setCurrentNote(updated);
-      }
-      
-      await loadNotes();
-    } catch (error) {
-      console.error('Failed to remove attachment:', error);
-      notifications.show({
-        title: 'Error',
-        message: error instanceof Error ? error.message : 'Failed to remove attachment',
-        color: 'red',
-      });
-    } finally {
-      setIsSyncing(false);
-    }
-  };
-
   const saveNote = async () => {
     setSaveStatus('saving');
     const updatedNote = {
       ...note,
       title,
       content,
-      updated_at: Date.now()
+      updated_at: Date.now(),
+      pending_sync: true
     };
     
     await WebStorageService.saveNote(updatedNote);
@@ -250,18 +130,6 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
                 size="md"
                 onBlur={saveNote}
               />
-              <label htmlFor="file-upload">
-                <ActionIcon component="span" variant="subtle" radius="xl">
-                  <IconPaperclip size={20} />
-                </ActionIcon>
-              </label>
-              <input
-                id="file-upload"
-                type="file"
-                onChange={handleFileUpload}
-                style={{ display: 'none' }}
-                disabled={isSyncing}
-              />
             </Group>
           </Paper>
           
@@ -281,17 +149,6 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
               editorType="richtext"
             />
           </Box>
-          
-          {currentNote.attachments && currentNote.attachments.length > 0 && (
-            <Paper p="md" mb="md" withBorder>
-              <AttachmentsList
-                note={currentNote}
-                onRemove={handleRemoveAttachment}
-                onDownload={handleDownload}
-                isSyncing={isSyncing}
-              />
-            </Paper>
-          )}
           
           <Paper className="mobile-fixed-bottom" style={{ 
             position: 'fixed', 

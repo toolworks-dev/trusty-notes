@@ -15,7 +15,6 @@ export interface Note {
   created_at: number;
   updated_at: number;
   deleted?: boolean;
-  attachments?: Attachment[];
   pending_sync?: boolean;
 }
 
@@ -26,7 +25,6 @@ export interface EncryptedNote {
   timestamp: number;
   signature: string;
   deleted?: boolean;
-  attachments?: Attachment[];
 }
 
 export interface SyncSettings {
