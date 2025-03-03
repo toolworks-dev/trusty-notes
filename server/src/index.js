@@ -135,35 +135,6 @@ app.post('/api/sync', async (req, res) => {
       });
     }
 
-    for (const note of notes) {
-      if (note.attachments) {
-        let totalSize = 0;
-        for (const attachment of note.attachments) {
-          const fileSize = Buffer.from(attachment.data, 'base64').length;
-          if (fileSize > MAX_FILE_SIZE) {
-            return res.status(400).json({ 
-              error: 'File size exceeds limit',
-              details: {
-                fileName: attachment.name,
-                size: fileSize,
-                limit: MAX_FILE_SIZE
-              }
-            });
-          }
-          totalSize += fileSize;
-        }
-        if (totalSize > MAX_TOTAL_ATTACHMENTS_SIZE) {
-          return res.status(400).json({ 
-            error: 'Total attachments size exceeds limit',
-            details: {
-              totalSize,
-              limit: MAX_TOTAL_ATTACHMENTS_SIZE
-            }
-          });
-        }
-      }
-    }
-
     await db.collection('users').updateOne(
       { public_key },
       { 
@@ -241,8 +212,7 @@ async function processNotes(public_key, incoming_notes) {
                 timestamp: note.timestamp,
                 signature: note.signature,
                 public_key,
-                deleted: note.deleted,
-                attachments: note.attachments
+                deleted: note.deleted
               } 
             },
             { upsert: true }
@@ -269,14 +239,13 @@ async function processNotes(public_key, incoming_notes) {
       })
       .toArray();
     
-    results.notes = allNotes.map(note => ({
-      id: note.id,
-      data: note.data,
-      nonce: note.nonce,
-      timestamp: note.timestamp,
-      signature: note.signature,
-      attachments: note.attachments
-    }));
+      results.notes = allNotes.map(note => ({
+        id: note.id,
+        data: note.data,
+        nonce: note.nonce,
+        timestamp: note.timestamp,
+        signature: note.signature
+      }));
 
       return results;
     });
