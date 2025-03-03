@@ -1,39 +1,37 @@
 import { useState, useEffect } from 'react';
+import { format } from 'date-fns';
 import { 
-  Group, 
-  ActionIcon, 
   Drawer, 
   Stack, 
-  Button, 
+  Group, 
+  Text, 
+  ActionIcon, 
   TextInput, 
   Box, 
-  Text, 
-  Paper, 
-  Image, 
-  MantineColorScheme, 
-  Anchor 
+  Paper,
+  Avatar,
+  Anchor,
+  Divider,
+  useMantineTheme,
+  Button
 } from '@mantine/core';
 import { 
   IconPlus, 
-  IconSearch,
-  IconSun,
-  IconMoon,
-  IconCloud,
-  IconDownload,
-  IconUpload,
-  IconBrandGithub,
+  IconSearch, 
+  IconMoon, 
+  IconSun, 
   IconTrash,
-  IconWifiOff
+  IconCloud, 
+  IconDownload, 
+  IconUpload, 
+  IconBrandGithub,
+  IconWifiOff,
+  IconX,
+  IconNotes,
+  IconChevronRight,
+  IconCheck
 } from '@tabler/icons-react';
-import { format } from 'date-fns';
-
-interface Note {
-  id?: number;
-  title: string;
-  content: string;
-  created_at: number;
-  updated_at: number;
-}
+import { Note } from '../types/sync';
 
 interface MobileNavProps {
   opened: boolean;
@@ -42,14 +40,19 @@ interface MobileNavProps {
   onSearch: (query: string) => void;
   searchQuery: string;
   onToggleTheme: () => void;
-  colorScheme: MantineColorScheme;
+  colorScheme: string;
   onShowSyncSettings: () => void;
   onExport: () => void;
   onImport: () => void;
-  selectedNote: Note | null;
+  selectedNote?: Note;
   notes: Note[];
   onSelectNote: (note: Note) => void;
   onDeleteNote: (id: number) => void;
+  isSelectionMode: boolean;
+  selectedNotes: Set<number>;
+  onToggleSelectionMode: () => void;
+  onToggleNoteSelection: (noteId: number, event: React.MouseEvent) => void;
+  onDeleteSelectedNotes: () => void;
 }
 
 export function MobileNav({
@@ -66,9 +69,15 @@ export function MobileNav({
   selectedNote,
   notes,
   onSelectNote,
-  onDeleteNote
+  onDeleteNote,
+  isSelectionMode,
+  selectedNotes,
+  onToggleSelectionMode,
+  onToggleNoteSelection,
+  onDeleteSelectedNotes
 }: MobileNavProps) {
   const [isOnline, setIsOnline] = useState(navigator.onLine);
+  const theme = useMantineTheme();
 
   useEffect(() => {
     const handleOnline = () => setIsOnline(true);
@@ -88,6 +97,16 @@ export function MobileNav({
     onClose();
   };
 
+  const handleShowSyncSettings = () => {
+    onClose();
+    onShowSyncSettings();
+  };
+
+  const formatNoteDatetime = (timestamp: number) => {
+    const date = new Date(timestamp);
+    return format(date, 'MMM d, yyyy • HH:mm');
+  };
+
   return (
     <Drawer
       opened={opened}
@@ -95,145 +114,230 @@ export function MobileNav({
       size="100%"
       position="left"
       withCloseButton={false}
+      classNames={{
+        content: 'mobile-drawer-content'
+      }}
+      styles={{
+        content: {
+          border: 'none',
+          borderTop: 'none',
+          borderRadius: 0
+        }
+      }}
     >
-      <Stack h="100%" p="md">
-        <Group justify="space-between" mb="md">
+      <Stack h="100%" gap={0}>
+        <Group p="md" className="mobile-nav-header">
           <Group>
-            <Image src="/trusty.jpg" alt="Logo" w={30} h={30} />
-            <Text size="lg" fw={500}>TrustyNotes</Text>
+            <Avatar radius="xl" src="/trusty.jpg" alt="TrustyNotes Logo" />
+            <div>
+              <Text size="lg" fw={600}>TrustyNotes</Text>
+              <Text size="xs" c="dimmed">Secure your thoughts</Text>
+            </div>
           </Group>
-          <ActionIcon variant="subtle" onClick={onClose}>×</ActionIcon>
+          <Group>
+            {notes.length > 0 && (
+              <ActionIcon 
+                variant={isSelectionMode ? "filled" : "subtle"} 
+                color={isSelectionMode ? "blue" : "gray"}
+                onClick={onToggleSelectionMode}
+                radius="xl"
+              >
+                <IconCheck size={18} />
+              </ActionIcon>
+            )}
+            <ActionIcon variant="subtle" onClick={onClose} radius="xl">
+              <IconX size={18} />
+            </ActionIcon>
+          </Group>
         </Group>
 
-        <Group>
+        <Box p="md">
           <Button
             leftSection={<IconPlus size={16} />}
-            variant="light"
+            fullWidth
+            radius="md"
             onClick={() => {
               onNewNote();
               onClose();
             }}
-            style={{ flex: 1 }}
           >
             New Note
           </Button>
-        </Group>
+        </Box>
 
-        <TextInput
-          placeholder="Search notes..."
-          value={searchQuery}
-          onChange={(e) => onSearch(e.currentTarget.value)}
-          leftSection={<IconSearch size={16} />}
-        />
+        <Box px="md">
+          <TextInput
+            placeholder="Search notes..."
+            value={searchQuery}
+            onChange={(e) => onSearch(e.currentTarget.value)}
+            leftSection={<IconSearch size={16} />}
+            radius="md"
+            size="md"
+          />
+        </Box>
 
-        <Box style={{ flex: 1, overflowY: 'auto' }}>
-          {!isOnline && (
-            <Paper p="xs" mb="md" bg="yellow.1">
-              <Group>
-                <IconWifiOff size={16} />
-                <Text size="sm">Offline Mode - Changes will sync when online</Text>
-              </Group>
-            </Paper>
-          )}
-          
+        {!isOnline && (
+          <Paper p="xs" mx="md" mt="md" withBorder radius="md" bg="yellow.0">
+            <Group>
+              <IconWifiOff size={16} color={theme.colors.yellow[7]} />
+              <Text size="sm" c="yellow.7">
+                Offline Mode
+              </Text>
+            </Group>
+          </Paper>
+        )}
+
+        {isSelectionMode && selectedNotes.size > 0 && (
+          <Box p="md">
+            <Button
+              leftSection={<IconTrash size={16} />}
+              fullWidth
+              radius="md"
+              color="red"
+              onClick={onDeleteSelectedNotes}
+            >
+              Delete Selected ({selectedNotes.size})
+            </Button>
+          </Box>
+        )}
+
+        <Box style={{ flex: 1, overflowY: 'auto' }} p="md">          
           <Stack gap="xs">
-            {notes.map((note) => (
-              <Paper
-                key={note.id}
-                shadow="xs"
-                p="md"
-                onClick={() => handleNoteSelect(note)}
-                style={{
-                  cursor: 'pointer',
-                  backgroundColor: selectedNote?.id === note.id ? 
-                    'var(--mantine-color-blue-light)' : undefined
-                }}
-              >
-                <Group justify="space-between" wrap="nowrap">
-                  <Box style={{ flex: 1, minWidth: 0 }}>
-                    <Text fw={500} truncate="end">
-                      {note.title || 'Untitled'}
-                    </Text>
-                    <Text size="xs" c="dimmed" truncate="end">
-                      {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                    </Text>
-                  </Box>
-                  <ActionIcon
-                    variant="subtle"
-                    color="red"
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onDeleteNote(note.id!);
-                    }}
-                  >
-                    <IconTrash size={16} />
-                  </ActionIcon>
-                </Group>
-              </Paper>
-            ))}
+            {notes.length > 0 ? (
+              notes.map((note) => (
+                <Paper
+                  key={note.id}
+                  shadow="sm"
+                  p="md"
+                  onClick={() => handleNoteSelect(note)}
+                  className="mobile-note-item"
+                  withBorder
+                  style={{
+                    borderLeft: selectedNote?.id === note.id ? 
+                      `4px solid ${theme.colors.blue[6]}` : undefined
+                  }}
+                >
+                  <Group justify="space-between" wrap="nowrap">
+                    <Box style={{ flex: 1, minWidth: 0 }}>
+                      <Text fw={500} truncate="end">
+                        {note.title || 'Untitled'}
+                      </Text>
+                      <Text size="xs" c="dimmed" truncate="end">
+                        {formatNoteDatetime(note.updated_at)}
+                      </Text>
+                    </Box>
+                    <Group gap="xs">
+                      {isSelectionMode ? (
+                        <ActionIcon
+                          variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
+                          color="blue"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onToggleNoteSelection(note.id!, e);
+                          }}
+                          radius="xl"
+                        >
+                          {selectedNotes.has(note.id!) && <IconCheck size={16} />}
+                        </ActionIcon>
+                      ) : (
+                        <ActionIcon
+                          variant="subtle"
+                          color="red"
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            onDeleteNote(note.id!);
+                          }}
+                          radius="xl"
+                        >
+                          <IconTrash size={16} />
+                        </ActionIcon>
+                      )}
+                      <IconChevronRight size={16} color={theme.colors.gray[5]} />
+                    </Group>
+                  </Group>
+                </Paper>
+              ))
+            ) : (
+              <Box py="xl" ta="center">
+                <IconNotes size={48} color={theme.colors.gray[3]} stroke={1} />
+                <Text c="dimmed" mt="md">
+                  No notes found
+                </Text>
+                <Button 
+                  variant="light" 
+                  mt="md" 
+                  leftSection={<IconPlus size={16} />}
+                  onClick={onNewNote}
+                >
+                  Create Your First Note
+                </Button>
+              </Box>
+            )}
           </Stack>
         </Box>
 
-        <Stack gap="xs">
-          <Group>
-            <ActionIcon 
-              variant="default" 
-              onClick={onToggleTheme} 
-              size={36}
-              style={{ flex: 1 }}
-            >
-              {colorScheme === 'dark' ? <IconSun size={16} /> : <IconMoon size={16} />}
-            </ActionIcon>
-            <ActionIcon 
-              variant="default" 
-              onClick={onShowSyncSettings} 
-              size={36}
-              style={{ flex: 1 }}
-              disabled={!isOnline}
-            >
-              <IconCloud size={16} />
-            </ActionIcon>
-            <ActionIcon 
-              variant="default" 
-              onClick={onExport} 
-              size={36}
-              style={{ flex: 1 }}
-            >
-              <IconDownload size={16} />
-            </ActionIcon>
-            <ActionIcon 
-              variant="default" 
-              onClick={onImport} 
-              size={36}
-              style={{ flex: 1 }}
-            >
-              <IconUpload size={16} />
-            </ActionIcon>
-          </Group>
+        <Divider />
+        
+        <Group grow p="md" className="mobile-nav-footer">
+          <ActionIcon 
+            variant="light" 
+            onClick={onToggleTheme} 
+            size="lg"
+            radius="md"
+          >
+            {colorScheme === 'dark' ? <IconSun size={20} /> : <IconMoon size={20} />}
+          </ActionIcon>
+          <ActionIcon 
+            variant="light" 
+            onClick={handleShowSyncSettings} 
+            size="lg"
+            radius="md"
+            disabled={!isOnline}
+          >
+            <IconCloud size={20} />
+          </ActionIcon>
+          <ActionIcon 
+            variant="light" 
+            onClick={onExport} 
+            size="lg"
+            radius="md"
+          >
+            <IconDownload size={20} />
+          </ActionIcon>
+          <ActionIcon 
+            variant="light" 
+            onClick={onImport} 
+            size="lg"
+            radius="md"
+          >
+            <IconUpload size={20} />
+          </ActionIcon>
+        </Group>
 
-          <Group justify="center">
-            <Anchor 
-              href="https://github.com/toolworks-dev/trusty-notes" 
-              target="_blank" 
-              rel="noreferrer"
-            >
-              <ActionIcon variant="subtle">
-                <IconBrandGithub size={20} />
-              </ActionIcon>
-            </Anchor>
-          </Group>
-
+        <Group justify="center" p="xs" pb="md">
+          <Text size="xs" c="dimmed">© 2023 Toolworks</Text>
+          <Anchor 
+            href="https://github.com/toolworks-dev/trusty-notes" 
+            target="_blank" 
+            rel="noreferrer"
+            size="xs"
+            c="dimmed"
+          >
+            <Group gap={4}>
+              <IconBrandGithub size={14} />
+              <Text>GitHub</Text>
+            </Group>
+          </Anchor>
           <Anchor 
             href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md"
             target="_blank"
             rel="noreferrer"
-            size="sm"
+            size="xs"
             c="dimmed"
-            style={{ textAlign: 'center' }}
           >
-            Privacy Policy
+            Privacy
           </Anchor>
-        </Stack>
+        </Group>
       </Stack>
     </Drawer>
   );

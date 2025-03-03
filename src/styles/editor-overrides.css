@@ -1,0 +1,350 @@
+/* Aggressive style overrides for TipTap editor */
+
+/* Remove all hover effects */
+.ProseMirror .is-editor-empty:first-child::before,
+.ProseMirror p.is-editor-empty:first-child::before,
+.ProseMirror .is-empty::before,
+.ProseMirror .is-editor-empty::before {
+  color: rgba(128, 128, 128, 0.5) !important;
+  pointer-events: none !important;
+}
+
+/* Target node selection */
+.ProseMirror .ProseMirror-selectednode,
+.ProseMirror-selectednode,
+.ProseMirror [data-node-selected="true"],
+.ProseMirror [data-drag-handle],
+.ProseMirror [data-node-view-wrapper] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Remove all decorations */
+.ProseMirror-decoration,
+.ProseMirror .ProseMirror-decoration,
+.ProseMirror-gapcursor,
+.ProseMirror .ProseMirror-gapcursor {
+  display: none !important;
+}
+
+/* Target specific TipTap elements */
+.tiptap [data-node-selected="true"],
+.tiptap [data-node-active="true"],
+.tiptap [data-node-highlighted="true"],
+.tiptap [data-node-hovered="true"],
+.tiptap [data-node-dragging="true"],
+.tiptap [data-node-dropping="true"] {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Override any hover styles */
+.tiptap *:hover,
+.ProseMirror *:hover {
+  outline: none !important;
+  border-color: transparent !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* Target specific node types */
+.ProseMirror p:hover,
+.ProseMirror h1:hover,
+.ProseMirror h2:hover,
+.ProseMirror h3:hover,
+.ProseMirror h4:hover,
+.ProseMirror h5:hover,
+.ProseMirror h6:hover,
+.ProseMirror ul:hover,
+.ProseMirror ol:hover,
+.ProseMirror li:hover,
+.ProseMirror blockquote:hover,
+.ProseMirror pre:hover,
+.ProseMirror code:hover,
+.ProseMirror table:hover,
+.ProseMirror tr:hover,
+.ProseMirror td:hover,
+.ProseMirror th:hover {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+}
+
+/* Target drag handles */
+.ProseMirror-widget,
+.ProseMirror [data-drag-handle],
+[data-drag-handle],
+[contenteditable="true"] [data-drag-handle] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+/* Target any element with a hover style */
+.ProseMirror [style*="border"]:hover,
+.ProseMirror [style*="outline"]:hover,
+.ProseMirror [style*="box-shadow"]:hover {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+/* Ensure text selection still works */
+.ProseMirror *::selection {
+  background-color: rgba(35, 131, 226, 0.2) !important;
+}
+
+/* Force proper layout calculation */
+.desktop-note-editor {
+  transition: width 300ms ease, height 300ms ease !important;
+}
+
+/* Force redraw on note selection */
+.desktop-note-editor.force-redraw {
+  animation: forceRedraw 0.1s linear forwards;
+}
+
+@keyframes forceRedraw {
+  0% { opacity: 0.99; }
+  100% { opacity: 1; }
+}
+
+/* Ensure proper sizing of the editor container */
+.desktop-note-editor .ProseMirror {
+  width: 100% !important;
+  box-sizing: border-box !important;
+}
+
+/* Fix layout issues with sidebar transitions */
+.mantine-AppShell-main {
+  transition: padding-left 300ms ease, width 300ms ease, margin-left 300ms ease !important;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Fix sidebar overlap issue */
+.force-redraw {
+  animation: forceRedraw 0.1s linear forwards;
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+/* Ensure navbar doesn't overlap with main content */
+.mantine-AppShell-navbar {
+  z-index: 2 !important;
+  position: fixed !important;
+  height: 100vh !important;
+}
+
+/* Fixed layout mode to prevent sidebar overlap */
+body.fixed-layout .mantine-AppShell-main {
+  position: relative !important;
+  z-index: 1 !important;
+}
+
+body.fixed-layout .mantine-AppShell-navbar {
+  position: fixed !important;
+  height: 100vh !important;
+  z-index: 2 !important;
+}
+
+/* NEW ADDITIONS TO FIX HOVER LINES */
+.ProseMirror-ruler,
+.ProseMirror-ruler-wrapper,
+.ProseMirror-ruler-marker,
+.ProseMirror-ruler-guide,
+.ProseMirror-ruler-line,
+.ProseMirror-ruler-handle {
+  display: none !important;
+  opacity: 0 !important;
+  visibility: hidden !important;
+}
+
+.ProseMirror [style*="border-top"],
+.ProseMirror [style*="border-bottom"],
+.ProseMirror [style*="border-left"],
+.ProseMirror [style*="border-right"] {
+  border-top: none !important;
+  border-bottom: none !important;
+  border-left: none !important;
+  border-right: none !important;
+}
+
+.ProseMirror hr,
+.ProseMirror .horizontal-rule,
+.ProseMirror .hr,
+.ProseMirror [data-type="horizontalRule"] {
+  border: none !important;
+  border-top: 1px solid var(--mantine-color-gray-4) !important;
+  margin: 1em 0 !important;
+  background: none !important;
+  height: 1px !important;
+}
+
+.ProseMirror-line-widget,
+.ProseMirror-line-break,
+.ProseMirror-line-placeholder,
+.ProseMirror-line-background,
+.ProseMirror-line-marker {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+.ProseMirror [data-line-hover="true"],
+.ProseMirror [data-line-active="true"],
+.ProseMirror [data-line-selected="true"],
+.ProseMirror [data-line-highlighted="true"] {
+  background: transparent !important;
+  outline: none !important;
+  border: none !important;
+}
+
+.ProseMirror-hideselection *::selection,
+.ProseMirror-hideselection *::-moz-selection {
+  background: transparent !important;
+}
+
+.ProseMirror-hideselection {
+  caret-color: transparent !important;
+}
+
+.ProseMirror-selectednode::after,
+.ProseMirror-gapcursor::after {
+  display: none !important;
+}
+
+.ProseMirror-focused {
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.ProseMirror-focused:not(.ProseMirror-hideselection) *::selection {
+  background: rgba(35, 131, 226, 0.2) !important;
+}
+
+.ProseMirror-focused:not(.ProseMirror-hideselection) *::-moz-selection {
+  background: rgba(35, 131, 226, 0.2) !important;
+}
+
+.ProseMirror [data-cursor-position],
+.ProseMirror [data-cursor-marker],
+.ProseMirror [data-cursor-handle] {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+.ProseMirror [data-line-number],
+.ProseMirror [data-line-marker],
+.ProseMirror [data-line-indicator] {
+  display: none !important;
+  opacity: 0 !important;
+}
+
+.ProseMirror [data-line-hover]::before,
+.ProseMirror [data-line-hover]::after,
+.ProseMirror [data-line-active]::before,
+.ProseMirror [data-line-active]::after,
+.ProseMirror [data-line-selected]::before,
+.ProseMirror [data-line-selected]::after {
+  display: none !important;
+  opacity: 0 !important;
+  content: none !important;
+}
+
+/* Additional fixes for hover lines */
+.ProseMirror p,
+.ProseMirror h1,
+.ProseMirror h2,
+.ProseMirror h3,
+.ProseMirror h4,
+.ProseMirror h5,
+.ProseMirror h6,
+.ProseMirror ul,
+.ProseMirror ol,
+.ProseMirror li,
+.ProseMirror blockquote,
+.ProseMirror pre,
+.ProseMirror code,
+.ProseMirror table,
+.ProseMirror tr,
+.ProseMirror td,
+.ProseMirror th {
+  border-bottom: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  background-image: none !important;
+  text-decoration: inherit !important;
+}
+
+/* Target paragraph-level elements specifically */
+.ProseMirror p,
+.ProseMirror [data-type="paragraph"] {
+  border-bottom: none !important;
+  border-top: none !important;
+  box-shadow: none !important;
+  text-decoration: none !important;
+  background: transparent !important;
+  position: relative !important;
+}
+
+/* Remove any pseudo-elements that might be creating lines */
+.ProseMirror p::before,
+.ProseMirror p::after,
+.ProseMirror [data-type="paragraph"]::before,
+.ProseMirror [data-type="paragraph"]::after {
+  display: none !important;
+  content: none !important;
+  border: none !important;
+  background: none !important;
+  height: 0 !important;
+  width: 0 !important;
+}
+
+/* Target any element with a bottom border */
+.ProseMirror [style*="border-bottom"],
+.ProseMirror [style*="text-decoration"],
+.ProseMirror [style*="box-shadow"],
+.ProseMirror [style*="background"] {
+  border-bottom: none !important;
+  text-decoration: inherit !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Target any element with a class that might contain 'hover' or 'active' */
+.ProseMirror [class*="hover"],
+.ProseMirror [class*="active"],
+.ProseMirror [class*="selected"],
+.ProseMirror [class*="current"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Target any element with a data attribute that might be causing the hover effect */
+.ProseMirror [data-*="hover"],
+.ProseMirror [data-*="active"],
+.ProseMirror [data-*="selected"],
+.ProseMirror [data-*="current"] {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background: transparent !important;
+}
+
+/* Force all elements to have transparent backgrounds and no borders on hover */
+.ProseMirror *:hover,
+.ProseMirror *:active,
+.ProseMirror *:focus {
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+  background-color: transparent !important;
+  text-decoration: inherit !important;
+} 

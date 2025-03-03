@@ -8,20 +8,19 @@ android {
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 2
-        versionName "2.0"
+        versionName "0.4.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
         aaptOptions {
              // Files and dirs to omit from the packaged assets dir, modified to accommodate modern web apps.
              // Default: https://android.googlesource.com/platform/frameworks/base/+/282e181b58cf72b6ca770dc7ca5f91f135444502/tools/aapt/AaptAssets.cpp#61
             ignoreAssetsPattern '!.svn:!.git:!.ds_store:!*.scc:.*:!CVS:!thumbs.db:!picasa.ini:!*~'
         }
+        resValue "string", "server_url", "https://sync.trustynotes.app"
+        resValue "color", "colorPrimary", "#3366FF"
+        resValue "color", "colorPrimaryDark", "#1A1B1E"
+        resValue "color", "colorAccent", "#5288FF"
     }
-    buildTypes {
-        release {
-            minifyEnabled false
-            proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.pro'
-        }
-    }
+    
     signingConfigs {
         release {
             def props = new Properties()
@@ -35,6 +34,7 @@ android {
             }
         }
     }
+
     buildTypes {
         release {
             signingConfig signingConfigs.release
@@ -60,6 +60,7 @@ dependencies {
     androidTestImplementation "androidx.test.ext:junit:$androidxJunitVersion"
     androidTestImplementation "androidx.test.espresso:espresso-core:$androidxEspressoCoreVersion"
     implementation project(':capacitor-cordova-android-plugins')
+    implementation "androidx.security:security-crypto:1.1.0-alpha06"
 }
 
 apply from: 'capacitor.build.gradle'

@@ -242,3 +242,40 @@ body.editor-focused {
   width: 32px;
   height: 32px;
 }
+
+/* Add this to your richtext.css file */
+.android .rich-text-editor {
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.android .rich-text-editor .ProseMirror {
+  border: none !important;
+  outline: none !important;
+  background-color: transparent !important;
+}
+
+/* Make sure the editor is actually visible and not overflowing */
+.editor-container .rich-text-editor {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100% !important;
+  overflow: hidden;
+}
+
+/* Make the editor properly fill its container */
+.editor-container .rich-text-editor,
+.editor-container .ProseMirror {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  height: 100% !important;
+  border: none !important;
+  outline: none !important;
+  box-shadow: none !important;
+}
+
+.android .ProseMirror {
+  background-color: transparent !important;
+}

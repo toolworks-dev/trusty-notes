@@ -16,7 +16,6 @@ import {
   Burger,
   Anchor,
   Image,
-  Checkbox,
 } from '@mantine/core';
 import { 
   IconSun, 
@@ -30,20 +29,19 @@ import {
   IconUpload,
   IconCloud,
   IconBrandGithub,
-  IconCheckbox,
+  IconNotes,
   IconCheck,
 } from '@tabler/icons-react';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
-import { MarkdownEditor } from './components/MarkdownEditor';
+import { MobileNav } from './components/MobileNav';
+import { notifications } from '@mantine/notifications';
+import { NoteEditor } from './components/NoteEditor';
 import { SyncSettings } from './components/SyncSettings';
 import { useAutoSync } from './hooks/useAutoSync';
 import { SyncSettings as SyncSettingsType, Note } from './types/sync';
 import { WebStorageService } from './services/webStorage';
 import './styles/richtext.css';
-import { MobileNav } from './components/MobileNav';
-import { notifications } from '@mantine/notifications';
-import { InstallPrompt } from './components/InstallPrompt';
-import { NoteEditor } from './components/NoteEditor';
+import './styles/editor-overrides.css';
 
 const isElectron = !!window.electron;
 const logoPath = isElectron ? './trusty.jpg' : '/trusty.jpg';
@@ -69,7 +67,7 @@ function App() {
   const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [ignoreNextSave, setIgnoreNextSave] = useState(false);
-  const [saveStatus, setSaveStatus] = useState<'saving' | 'saved'>('saved');
+  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
 
   useEffect(() => {
     loadNotes();
@@ -122,6 +120,7 @@ function App() {
       const notes = await WebStorageService.getNotes();
       setNotes(notes);
       await notifyExtension(notes);
+      await syncIfNeeded();
     } catch (error) {
       console.error('Failed to fetch notes:', error);
     }
@@ -179,10 +178,7 @@ function App() {
 
     if (title.trim() === '' && content.trim() === '') return;
     try {
-      setSaveStatus('saving');
       await handleSave();
-      setSaveStatus('saved');
-      setTimeout(() => setSaveStatus('saved'), 2000);
     } catch (error) {
       console.error('Save failed:', error);
     }
@@ -217,6 +213,32 @@ function App() {
     setSelectedNote(note);
     setTitle(note.title);
     setContent(note.content);
+    
+    // Force layout recalculation
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+      
+      // Force redraw of the main content area to fix sidebar overlap
+      const mainContent = document.querySelector('.mantine-AppShell-main');
+      if (mainContent) {
+        // Trigger reflow
+        mainContent.classList.add('force-redraw');
+        
+        // Apply explicit width calculation to fix overlap
+        const navbarWidth = document.querySelector('.mantine-AppShell-navbar')?.clientWidth || 300;
+        const mainContentHtml = mainContent as HTMLElement;
+        
+        // Add a permanent class to fix the layout
+        document.body.classList.add('fixed-layout');
+        mainContentHtml.style.width = `calc(100% - ${navbarWidth}px)`;
+        mainContentHtml.style.marginLeft = `${navbarWidth}px`;
+        
+        // Just remove the animation class after transition
+        setTimeout(() => {
+          mainContentHtml.classList.remove('force-redraw');
+        }, 300);
+      }
+    }, 50);
   }
 
   function clearForm() {
@@ -230,7 +252,6 @@ function App() {
     });
     setTitle('Untitled');
     setContent('');
-    setSaveStatus('saved');
   }
   
   useEffect(() => {
@@ -305,7 +326,6 @@ function App() {
       
       if (recentNote) {
         console.debug('Preventing duplicate save');
-        setSaveStatus('saved');
         return;
       }
       
@@ -322,12 +342,9 @@ function App() {
       
       // Always select the saved note to prevent duplicate creation
       setSelectedNote(note);
-      
-      setSaveStatus('saved');
     } catch (error) {
       console.error('Failed to save note:', error);
       alert(`Failed to save note: ${error}`);
-      setSaveStatus('saved');
     }
   }
 
@@ -438,15 +455,128 @@ function App() {
     });
   }, []);
 
+  const syncIfNeeded = async () => {
+    try {
+      const settings = await WebStorageService.getSyncSettings();
+      if (settings.server_url && settings.seed_phrase) {
+        await WebStorageService.initializeCrypto(settings.seed_phrase);
+        await WebStorageService.syncWithServer(settings.server_url);
+      }
+    } catch (error) {
+      console.error("Sync error:", error);
+    }
+  };
+
+  useEffect(() => {
+    console.log("isMobile:", isMobile);
+  }, [isMobile]);
+
+  useEffect(() => {
+    window.dispatchEvent(new Event('resize'));
+  }, [sidebarCollapsed]);
+
+  const toggleSidebar = () => {
+    const newCollapsedState = !sidebarCollapsed;
+    setSidebarCollapsed(newCollapsedState);
+    
+    // Update CSS variable for navbar width
+    document.documentElement.style.setProperty(
+      '--mantine-navbar-width', 
+      newCollapsedState ? '80px' : '300px'
+    );
+    
+    // Force layout recalculation after sidebar state changes
+    setTimeout(() => {
+      window.dispatchEvent(new Event('resize'));
+      
+      // Update the main content width and margin based on new sidebar state
+      const mainContent = document.querySelector('.mantine-AppShell-main');
+      if (mainContent) {
+        const navbarWidth = newCollapsedState ? 80 : 300;
+        const mainContentHtml = mainContent as HTMLElement;
+        mainContentHtml.style.width = `calc(100% - ${navbarWidth}px)`;
+        mainContentHtml.style.marginLeft = `${navbarWidth}px`;
+      }
+    }, 50);
+  };
+
+  useEffect(() => {
+    if (isMobile) {
+      // Mobile-specific layout settings
+      document.documentElement.style.setProperty('--mantine-navbar-width', '0px');
+      document.body.classList.add('mobile-view');
+      document.body.classList.remove('desktop-view');
+      
+      // Fix viewport height issues on mobile
+      const setAppHeight = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--vh', `${vh}px`);
+      };
+      
+      setAppHeight();
+      window.addEventListener('resize', setAppHeight);
+      
+      return () => {
+        window.removeEventListener('resize', setAppHeight);
+      };
+    } else {
+      // Desktop-specific layout settings
+      document.documentElement.style.setProperty(
+        '--mantine-navbar-width', 
+        sidebarCollapsed ? '80px' : '300px'
+      );
+      document.body.classList.add('desktop-view');
+      document.body.classList.remove('mobile-view');
+      
+      // Apply initial layout for desktop
+      const mainContent = document.querySelector('.mantine-AppShell-main');
+      if (mainContent) {
+        const navbarWidth = sidebarCollapsed ? 80 : 300;
+        const mainContentHtml = mainContent as HTMLElement;
+        mainContentHtml.style.width = `calc(100% - ${navbarWidth}px)`;
+        mainContentHtml.style.marginLeft = `${navbarWidth}px`;
+      }
+    }
+  }, [isMobile, sidebarCollapsed]);
+
+  useEffect(() => {
+    if (isMobile) {
+      const handleResize = () => {
+        const isKeyboard = window.innerHeight < window.outerHeight * 0.75;
+        setIsKeyboardVisible(isKeyboard);
+        document.body.classList.toggle('keyboard-visible', isKeyboard);
+        
+        // Update app height variable for mobile
+        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
+      };
+      
+      window.addEventListener('resize', handleResize);
+      // Set initial value
+      handleResize();
+      
+      return () => window.removeEventListener('resize', handleResize);
+    }
+  }, [isMobile]);
+
   return (
     <AppShell
+      className={sidebarCollapsed ? 'sidebar-collapsed' : ''}
       header={isMobile ? { height: 60 } : undefined}
       navbar={{
         width: isMobile ? 0 : (sidebarCollapsed ? 80 : 300),
         breakpoint: 'sm',
-        collapsed: { mobile: true }
+        collapsed: { mobile: true, desktop: false }
       }}
       padding="0"
+      layout="default"
+      styles={{
+        main: {
+          width: `calc(100% - ${isMobile ? 0 : (sidebarCollapsed ? 80 : 300)}px)`,
+          marginLeft: isMobile ? 0 : (sidebarCollapsed ? 80 : 300),
+          paddingLeft: 0,
+          transition: 'margin-left 300ms ease, width 300ms ease'
+        }
+      }}
     >
       {isMobile && (
         <AppShell.Header>
@@ -492,10 +622,15 @@ function App() {
           onShowSyncSettings={() => setShowSyncSettings(true)}
           onExport={exportNotes}
           onImport={importNotes}
-          selectedNote={selectedNote}
+          selectedNote={selectedNote || undefined}
           notes={filteredNotes}
           onSelectNote={selectNote}
           onDeleteNote={deleteNote}
+          isSelectionMode={isSelectionMode}
+          selectedNotes={selectedNotes}
+          onToggleSelectionMode={toggleSelectionMode}
+          onToggleNoteSelection={toggleNoteSelection}
+          onDeleteSelectedNotes={deleteSelectedNotes}
         />
       ) : (
         <AppShell.Navbar p="md">
@@ -540,7 +675,7 @@ function App() {
                         color={isSelectionMode ? "blue" : undefined}
                         size={30}
                       >
-                        <IconCheckbox size={16} />
+                        <IconCheck size={16} />
                       </ActionIcon>
                     </Tooltip>
                     <Tooltip label="Sync Settings">
@@ -568,7 +703,7 @@ function App() {
                 <Tooltip label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
                   <ActionIcon
                     variant="default"
-                    onClick={() => setSidebarCollapsed(!sidebarCollapsed)}
+                    onClick={toggleSidebar}
                     size={30}
                   >
                     {sidebarCollapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
@@ -618,25 +753,25 @@ function App() {
                             'var(--mantine-color-blue-light)' : undefined,
                         }}
                       >
-                        <Group justify="space-between" wrap="nowrap" style={{ width: '100%' }}>
-                          <Group style={{ flex: 1, minWidth: 0 }}>
-                            {isSelectionMode && (
-                              <Checkbox
-                                checked={selectedNotes.has(note.id!)}
-                                onChange={(e) => toggleNoteSelection(note.id!, e as any)}
-                                onClick={(e) => e.stopPropagation()}
-                              />
-                            )}
-                            <Box style={{ minWidth: 0, flex: 1 }}>
-                              <Text fw={500} truncate="end" style={{ maxWidth: '100%' }}>
-                                {note.title || 'Untitled'}
-                              </Text>
-                              <Text size="xs" c="dimmed" truncate="end" style={{ maxWidth: '100%' }}>
-                                {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                              </Text>
-                            </Box>
-                          </Group>
-                          {!isSelectionMode && (
+                        <Group justify="apart" wrap="nowrap">
+                          <Box style={{ overflow: 'hidden' }}>
+                            <Text fw={500} lineClamp={1}>
+                              {note.title || 'Untitled'}
+                            </Text>
+                            <Text size="xs" color="dimmed" lineClamp={1}>
+                              {format(note.updated_at, 'MMM d, yyyy HH:mm')}
+                            </Text>
+                          </Box>
+                          {isSelectionMode ? (
+                            <ActionIcon
+                              variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
+                              color="blue"
+                              onClick={(e) => toggleNoteSelection(note.id!, e)}
+                              style={{ flexShrink: 0 }}
+                            >
+                              {selectedNotes.has(note.id!) && <IconCheck size={16} />}
+                            </ActionIcon>
+                          ) : (
                             <ActionIcon
                               variant="subtle"
                               color="red"
@@ -672,80 +807,153 @@ function App() {
         </AppShell.Navbar>
       )}
   
-      <AppShell.Main>
-        <Stack h="100vh" gap={0} style={{ overflow: 'hidden' }}>
-          {isMobile && <InstallPrompt />}
-          <Box 
-            p={isMobile ? "xs" : "md"} 
-            style={{ 
-              borderBottom: '1px solid var(--mantine-color-gray-3)',
-              position: 'sticky',
-              top: 0,
-              zIndex: 100,
-              backgroundColor: 'var(--mantine-color-body)'
-            }}
-          >
-            {isMobile ? (
-              <TextInput
-                placeholder="Note title"
-                value={title}
-                onChange={(e) => setTitle(e.currentTarget.value)}
-                size="sm"
-                style={{ flex: 1 }}
+      <AppShell.Main style={{ 
+        padding: 0, 
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column'
+      }}>
+        {isMobile ? (
+          <Box className="mobile-content-container">
+            {selectedNote ? (
+              <NoteEditor 
+                note={selectedNote}
+                isMobile={true}
+                isKeyboardVisible={isKeyboardVisible}
+                onBack={() => setSelectedNote(null)}
+                loadNotes={loadNotes}
               />
             ) : (
-              <Group justify="space-between" align="center">
-                <TextInput
-                  placeholder="Note title"
-                  value={title}
-                  onChange={(e) => setTitle(e.currentTarget.value)}
-                  size="lg"
-                  style={{ flex: 1 }}
-                />
-                <Group>
-                  {saveStatus && (
-                    <Group gap="xs">
-                      <IconCheck size={16} style={{ color: 'var(--mantine-color-green-6)' }} />
-                      <Text size="sm" c="dimmed">
-                        {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
-                      </Text>
-                    </Group>
-                  )}
-                  <Button variant="light" onClick={clearForm}>
-                    New Note
-                  </Button>
+              <Stack p="md" gap="sm">
+                <Group justify="apart" mb="md">
+                  <TextInput
+                    placeholder="Search notes..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                    style={{ flex: 1 }}
+                    leftSection={<IconSearch size={16} />}
+                  />
+                  <Group>
+                    {filteredNotes.length > 0 && (
+                      <ActionIcon
+                        variant="light"
+                        color={isSelectionMode ? "blue" : "gray"}
+                        onClick={toggleSelectionMode}
+                      >
+                        <IconCheck size={20} />
+                      </ActionIcon>
+                    )}
+                    <ActionIcon 
+                      size="lg" 
+                      color="blue" 
+                      radius="xl"
+                      onClick={clearForm}
+                      className="mobile-fab"
+                    >
+                      <IconPlus size={24} />
+                    </ActionIcon>
+                  </Group>
                 </Group>
-              </Group>
+                
+                {isSelectionMode && selectedNotes.size > 0 && (
+                  <Button
+                    color="red"
+                    leftSection={<IconTrash size={14} />}
+                    onClick={deleteSelectedNotes}
+                    fullWidth
+                    mb="md"
+                  >
+                    Delete Selected ({selectedNotes.size})
+                  </Button>
+                )}
+                
+                {filteredNotes.length > 0 ? (
+                  <Stack gap="xs">
+                    {filteredNotes.map(note => (
+                      <Paper
+                        key={note.id}
+                        p="md"
+                        withBorder
+                        className="mobile-note-item"
+                        onClick={() => selectNote(note)}
+                      >
+                        <Group justify="apart" wrap="nowrap">
+                          <Box style={{ overflow: 'hidden' }}>
+                            <Text fw={500} lineClamp={1}>
+                              {note.title || 'Untitled'}
+                            </Text>
+                            <Text size="xs" color="dimmed" lineClamp={1}>
+                              {format(note.updated_at, 'MMM d, yyyy HH:mm')}
+                            </Text>
+                          </Box>
+                          {isSelectionMode ? (
+                            <ActionIcon
+                              variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
+                              color="blue"
+                              onClick={(e) => toggleNoteSelection(note.id!, e)}
+                            >
+                              {selectedNotes.has(note.id!) && <IconCheck size={16} />}
+                            </ActionIcon>
+                          ) : (
+                            <ActionIcon 
+                              color="red" 
+                              variant="subtle"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                deleteNote(note.id!);
+                              }}
+                            >
+                              <IconTrash size={16} />
+                            </ActionIcon>
+                          )}
+                        </Group>
+                      </Paper>
+                    ))}
+                  </Stack>
+                ) : (
+                  <Box py="xl" ta="center">
+                    <IconNotes size={48} color={colorScheme === 'dark' ? 'gray.6' : 'gray.3'} stroke={1} />
+                    <Text c="dimmed" mt="md">
+                      No notes found
+                    </Text>
+                    <Button 
+                      variant="light" 
+                      mt="md" 
+                      leftSection={<IconPlus size={16} />}
+                      onClick={clearForm}
+                    >
+                      Create Your First Note
+                    </Button>
+                  </Box>
+                )}
+              </Stack>
             )}
           </Box>
-          <Box 
-            style={{ 
-              flex: 1, 
-              position: 'relative', 
-              height: isMobile ? 'calc(100vh - 120px)' : '100%',
-              overflow: 'hidden',
-              display: 'flex',
-              flexDirection: 'column'
-            }}
-          >
-            <MarkdownEditor
-              content={content}
-              onChange={setContent}
-              isMobile={isMobile}
-              defaultView="edit"
-              editorType="richtext"
-            />
-            
-            {selectedNote && (
-              <Box p="md">
-                <NoteEditor 
-                  note={selectedNote}
-                  loadNotes={loadNotes}
-                />
+        ) : (
+          <Box p="md" style={{ 
+            height: '100%', 
+            overflow: 'auto', 
+            display: 'flex', 
+            flexDirection: 'column',
+            flex: '1 1 auto'
+          }}>
+            {selectedNote ? (
+              <NoteEditor 
+                note={selectedNote}
+                isMobile={false}
+                isKeyboardVisible={isKeyboardVisible}
+                loadNotes={loadNotes}
+              />
+            ) : (
+              <Box py="xl" ta="center">
+                <IconNotes size={64} color={colorScheme === 'dark' ? 'gray.6' : 'gray.3'} stroke={1} />
+                <Text size="xl" c="dimmed" mt="md">
+                  Select a note or create a new one
+                </Text>
               </Box>
             )}
           </Box>
-        </Stack>
+        )}
       </AppShell.Main>
   
       <Modal

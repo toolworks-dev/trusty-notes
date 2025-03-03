@@ -406,4 +406,9 @@ export class WebStorageService {
       return 0;
     }
   }
+
+  static async getNote(id: number): Promise<Note | undefined> {
+    const notes = await this.getNotes();
+    return notes.find(note => note.id === id);
+  }
 }

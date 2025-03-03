@@ -1,0 +1,24 @@
+/* Desktop layout fixes */
+body.desktop-view .mantine-AppShell-main {
+  width: calc(100% - var(--mantine-navbar-width, 300px)) !important;
+  margin-left: var(--mantine-navbar-width, 300px) !important;
+  transition: margin-left 300ms ease, width 300ms ease !important;
+}
+
+body.desktop-view.sidebar-collapsed {
+  --mantine-navbar-width: 80px;
+}
+
+/* Ensure editor takes full width of available space */
+body.desktop-view .desktop-note-editor {
+  width: 100% !important;
+  max-width: 100% !important;
+  overflow: hidden;
+}
+
+/* Fix editor container positioning */
+body.desktop-view .desktop-note-editor > div:nth-child(2) {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+} 

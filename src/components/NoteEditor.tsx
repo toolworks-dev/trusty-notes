@@ -1,17 +1,19 @@
 import { useState, useEffect } from 'react';
 import { 
   Stack, 
-  Text, 
+  Text,
   Button, 
   Group,
   Paper,
   ActionIcon,
-  Alert,
+  Box,
+  TextInput
 } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
-import { IconTrash, IconPlus, IconAlertCircle } from '@tabler/icons-react';
+import { IconTrash, IconChevronLeft, IconPaperclip, IconDownload } from '@tabler/icons-react';
 import { WebStorageService } from '../services/webStorage';
 import { Note } from '../types/sync';
+import { MarkdownEditor } from './MarkdownEditor';
 
 interface AttachmentsListProps {
   note: Note;
@@ -24,21 +26,23 @@ function AttachmentsList({ note, onRemove, onDownload, isSyncing }: AttachmentsL
   if (!note.attachments?.length) return null;
 
   return (
-    <Stack gap="xs">
+    <Stack gap="xs" mt="md">
+      <Text fw={500} size="sm">Attachments</Text>
       {note.attachments.map(attachment => (
         <Group key={attachment.id} justify="space-between">
-          <Text>{attachment.name}</Text>
+          <Text size="sm">{attachment.name}</Text>
           <Group gap="xs">
-            <Button 
-              variant="subtle" 
-              size="xs"
+            <ActionIcon 
+              variant="subtle"
+              size="sm"
               onClick={() => onDownload(attachment.id)}
-              loading={isSyncing}
+              disabled={isSyncing}
             >
-              Download
-            </Button>
+              <IconDownload size={16} />
+            </ActionIcon>
             <ActionIcon 
               color="red" 
+              variant="subtle"
               size="sm"
               onClick={() => onRemove(attachment.id)}
               disabled={isSyncing}
@@ -54,43 +58,56 @@ function AttachmentsList({ note, onRemove, onDownload, isSyncing }: AttachmentsL
 
 interface NoteEditorProps {
   note: Note;
-  loadNotes: () => Promise<void>;
+  isMobile?: boolean;
+  isKeyboardVisible?: boolean;
+  onBack?: () => void;
+  loadNotes: () => void;
 }
 
-export function NoteEditor({ note, loadNotes }: NoteEditorProps) {
-  const [cryptoInitialized, setCryptoInitialized] = useState(false);
-  const [isSyncing, setIsSyncing] = useState(false);
+export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, onBack, loadNotes }: NoteEditorProps) {
   const [currentNote, setCurrentNote] = useState(note);
+  const [title, setTitle] = useState(note.title || 'Untitled');
+  const [content, setContent] = useState(note.content || '');
+  const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>('saved');
+  const [isSyncing, setIsSyncing] = useState(false);
 
   useEffect(() => {
     setCurrentNote(note);
+    setTitle(note.title || 'Untitled');
+    setContent(note.content || '');
   }, [note]);
 
-  // Check if crypto is initialized and sync if needed
+  // Initialize crypto if needed
   useEffect(() => {
-    const checkCryptoAndSync = async () => {
-      const settings = await WebStorageService.getSyncSettings();
-      const hasCrypto = !!settings.seed_phrase;
-      setCryptoInitialized(hasCrypto);
-      
-      if (hasCrypto && settings.seed_phrase) {
-        try {
+    const initCrypto = async () => {
+      try {
+        const settings = await WebStorageService.getSyncSettings();
+        if (settings.seed_phrase) {
           await WebStorageService.initializeCrypto(settings.seed_phrase);
-          if (settings.server_url) {
-            await WebStorageService.syncWithServer(settings.server_url);
-          }
-        } catch (error) {
-          console.error('Failed to initialize crypto:', error);
-          notifications.show({
-            title: 'Error',
-            message: 'Failed to initialize encryption',
-            color: 'red',
-          });
         }
+      } catch (error) {
+        console.error('Failed to initialize crypto:', error);
       }
     };
-    checkCryptoAndSync();
+    
+    initCrypto();
   }, []);
+
+  // Update the useEffect that handles body overflow
+  useEffect(() => {
+    if (isMobile) {
+      // Prevent body scrolling when editor is open on mobile
+      document.body.style.overflow = 'hidden';
+      
+      // Add a class to help with mobile styling
+      document.body.classList.add('editor-open');
+      
+      return () => {
+        document.body.style.overflow = '';
+        document.body.classList.remove('editor-open');
+      };
+    }
+  }, [isMobile]);
 
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
@@ -103,17 +120,8 @@ export function NoteEditor({ note, loadNotes }: NoteEditorProps) {
         throw new Error('File size exceeds 10MB limit');
       }
 
-      const settings = await WebStorageService.getSyncSettings();
-      if (settings.server_url) {
-        await WebStorageService.syncWithServer(settings.server_url);
-      }
-      
       const updatedNote = await WebStorageService.addAttachment(currentNote.id, file);
       setCurrentNote(updatedNote);
-      
-      if (settings.server_url) {
-        await WebStorageService.syncWithServer(settings.server_url);
-      }
       await loadNotes();
       
       notifications.show({
@@ -136,11 +144,6 @@ export function NoteEditor({ note, loadNotes }: NoteEditorProps) {
   const handleDownload = async (attachmentId: string) => {
     try {
       setIsSyncing(true);
-      // Ensure we're synced before download
-      const settings = await WebStorageService.getSyncSettings();
-      if (settings.server_url) {
-        await WebStorageService.syncWithServer(settings.server_url);
-      }
       await WebStorageService.downloadAttachment(note.id!, attachmentId);
     } catch (error) {
       console.error('Failed to download file:', error);
@@ -154,67 +157,222 @@ export function NoteEditor({ note, loadNotes }: NoteEditorProps) {
     }
   };
 
+  const handleRemoveAttachment = async (attachmentId: string) => {
+    if (!confirm('Are you sure you want to remove this attachment?')) return;
+    
+    try {
+      setIsSyncing(true);
+      await WebStorageService.removeAttachment(note.id!, attachmentId);
+      
+      // Get the updated note after attachment removal
+      const notes = await WebStorageService.getNotes();
+      const updated = notes.find(n => n.id === note.id);
+      if (updated) {
+        setCurrentNote(updated);
+      }
+      
+      await loadNotes();
+    } catch (error) {
+      console.error('Failed to remove attachment:', error);
+      notifications.show({
+        title: 'Error',
+        message: error instanceof Error ? error.message : 'Failed to remove attachment',
+        color: 'red',
+      });
+    } finally {
+      setIsSyncing(false);
+    }
+  };
+
+  const saveNote = async () => {
+    setSaveStatus('saving');
+    const updatedNote = {
+      ...note,
+      title,
+      content,
+      updated_at: Date.now()
+    };
+    
+    await WebStorageService.saveNote(updatedNote);
+    await loadNotes();
+    setSaveStatus('saved');
+  };
+
+  const handleDelete = async () => {
+    if (confirm('Are you sure you want to delete this note?')) {
+      await WebStorageService.deleteNote(note.id!);
+      await loadNotes();
+      if (onBack) onBack();
+    }
+  };
+
   return (
-    <Paper p="md" withBorder>
-      <Stack>
-        {!cryptoInitialized ? (
-          <Alert 
-            icon={<IconAlertCircle size={16} />}
-            title="Sync Setup Required"
-            color="yellow"
-          >
-            To attach files, you need to set up sync first. Click the cloud icon in the sidebar to get started.
-          </Alert>
-        ) : (
-          <>
-            <Group justify="space-between">
-              <Text fw={500}>Attachments</Text>
+    <Box 
+      className={`${isMobile ? 'mobile-note-editor' : 'desktop-note-editor'} ${isKeyboardVisible ? 'keyboard-visible' : ''}`}
+      style={{ 
+        height: isMobile ? '100vh' : 'calc(100vh - 32px)', 
+        display: 'flex', 
+        flexDirection: 'column',
+        flex: '1 1 auto',
+        width: isMobile ? '100vw' : '100%',
+        maxWidth: isMobile ? '100vw' : '100%',
+        overflow: 'hidden',
+        position: isMobile ? 'fixed' : 'relative',
+        top: isMobile ? 0 : 'auto',
+        left: isMobile ? 0 : 'auto',
+        right: isMobile ? 0 : 'auto',
+        bottom: isMobile ? 0 : 'auto',
+        zIndex: isMobile ? 1000 : 'auto'
+      }}
+    >
+      {isMobile ? (
+        <>
+          <Paper shadow="sm" p="md" style={{ 
+            marginBottom: '8px',
+            borderRadius: '8px',
+            position: 'relative',
+            zIndex: 10,
+            backgroundColor: 'var(--mantine-color-body)'
+          }}>
+            <Group>
+              {onBack && (
+                <ActionIcon onClick={onBack} variant="subtle" radius="xl">
+                  <IconChevronLeft size={20} />
+                </ActionIcon>
+              )}
+              <TextInput
+                placeholder="Note title"
+                value={title}
+                onChange={(e) => setTitle(e.currentTarget.value)}
+                style={{ flex: 1 }}
+                variant="filled"
+                radius="md"
+                size="md"
+                onBlur={saveNote}
+              />
+              <label htmlFor="file-upload">
+                <ActionIcon component="span" variant="subtle" radius="xl">
+                  <IconPaperclip size={20} />
+                </ActionIcon>
+              </label>
+              <input
+                id="file-upload"
+                type="file"
+                onChange={handleFileUpload}
+                style={{ display: 'none' }}
+                disabled={isSyncing}
+              />
+            </Group>
+          </Paper>
+          
+          <Box className="editor-container" style={{ 
+            flex: 1,
+            border: '1px solid var(--mantine-color-gray-3)', 
+            borderRadius: '8px',
+            overflow: 'hidden',
+            backgroundColor: 'var(--mantine-color-body)',
+            position: 'relative'
+          }}>
+            <MarkdownEditor
+              content={content}
+              onChange={setContent}
+              isMobile={true}
+              defaultView="edit"
+              editorType="richtext"
+            />
+          </Box>
+          
+          {currentNote.attachments && currentNote.attachments.length > 0 && (
+            <Paper p="md" mb="md" withBorder>
+              <AttachmentsList
+                note={currentNote}
+                onRemove={handleRemoveAttachment}
+                onDownload={handleDownload}
+                isSyncing={isSyncing}
+              />
+            </Paper>
+          )}
+          
+          <Paper className="mobile-fixed-bottom" style={{ 
+            position: 'fixed', 
+            bottom: 0, 
+            left: 0, 
+            right: 0,
+            zIndex: 100 
+          }}>
+            <Group justify="space-between" wrap="nowrap">
               <Button 
-                component="label" 
-                size="xs"
-                loading={isSyncing}
+                variant="light" 
+                color="red" 
+                onClick={handleDelete}
+                leftSection={<IconTrash size={16} />}
+                radius="md"
+                size="sm"
               >
-                <Group gap={8} justify="center">
-                  <IconPlus size={16} />
-                  <span>Add File</span>
-                </Group>
-                <input
-                  type="file"
-                  hidden
-                  onChange={handleFileUpload}
-                  disabled={isSyncing}
-                />
+                Delete
+              </Button>
+              <Text size="sm" color="dimmed">
+                {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
+              </Text>
+              <Button
+                onClick={saveNote}
+                radius="md"
+                size="sm"
+              >
+                Save
               </Button>
             </Group>
-            <AttachmentsList
-              note={currentNote}
-              onRemove={async (attachmentId) => {
-                setIsSyncing(true);
-                try {
-                  const settings = await WebStorageService.getSyncSettings();
-                  if (settings.server_url) {
-                    await WebStorageService.syncWithServer(settings.server_url);
-                  }
-                  await WebStorageService.removeAttachment(currentNote.id!, attachmentId);
-                  const updatedNotes = await WebStorageService.getNotes();
-                  const updatedNote = updatedNotes.find(n => n.id === currentNote.id);
-                  if (updatedNote) {
-                    setCurrentNote(updatedNote);
-                  }
-                  if (settings.server_url) {
-                    await WebStorageService.syncWithServer(settings.server_url);
-                  }
-                  await loadNotes();
-                } finally {
-                  setIsSyncing(false);
-                }
-              }}
-              onDownload={handleDownload}
-              isSyncing={isSyncing}
+          </Paper>
+        </>
+      ) : (
+        <>
+          <Paper 
+            shadow="sm" 
+            p="md" 
+            style={{ 
+              borderRadius: 'var(--mantine-radius-md)',
+              marginBottom: '8px'
+            }}
+          >
+            <Group justify="space-between">
+              <TextInput
+                placeholder="Note title"
+                value={title}
+                onChange={(e) => setTitle(e.currentTarget.value)}
+                style={{ flex: 1 }}
+                size="lg"
+                onBlur={saveNote}
+              />
+              <Group>
+                <Button variant="light" color="red" onClick={handleDelete}>
+                  Delete
+                </Button>
+                <Button onClick={saveNote}>
+                  {saveStatus === 'saving' ? 'Saving...' : 'Save'}
+                </Button>
+              </Group>
+            </Group>
+          </Paper>
+          
+          <Box style={{ 
+            flex: '1 1 auto',
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            width: '100%',
+            height: 'calc(100vh - 100px)',
+            minHeight: '500px'
+          }}>
+            <MarkdownEditor
+              content={content}
+              onChange={setContent}
+              isMobile={false}
+              defaultView="edit"
+              editorType="richtext"
             />
-          </>
-        )}
-      </Stack>
-    </Paper>
+          </Box>
+        </>
+      )}
+    </Box>
   );
 } 
