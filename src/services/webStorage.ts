@@ -7,6 +7,8 @@ export class WebStorageService {
   private static readonly SETTINGS_KEY = 'sync_settings';
   private static readonly DELETE_RETENTION_DAYS = 1;
   private static crypto: CryptoService | null = null;
+  private static lastSyncTime: number = 0;
+  private static readonly MIN_SYNC_INTERVAL = 5000; // 5 seconds between syncs
 
   static async initializeCrypto(seedPhrase: string) {
     this.crypto = await CryptoService.new(seedPhrase);
@@ -106,6 +108,15 @@ export class WebStorageService {
       throw new Error('Crypto not initialized');
     }
   
+    // Check if we've synced recently
+    const now = Date.now();
+    const timeSinceLastSync = now - this.lastSyncTime;
+    
+    if (timeSinceLastSync < this.MIN_SYNC_INTERVAL) {
+      console.log(`Throttling sync request. Last sync was ${timeSinceLastSync}ms ago.`);
+      await new Promise(resolve => setTimeout(resolve, this.MIN_SYNC_INTERVAL - timeSinceLastSync));
+    }
+    
     let lastError: Error | null = null;
     
     for (let attempt = 0; attempt < retries; attempt++) {
@@ -159,11 +170,23 @@ export class WebStorageService {
         
         localStorage.setItem(this.NOTES_KEY, JSON.stringify(mergedNotes));
         await this.purgeDeletedNotes();
+        
+        // Update last sync time on success
+        this.lastSyncTime = Date.now();
         return;
         
       } catch (error) {
         console.error(`Sync attempt ${attempt + 1} failed:`, error);
         lastError = error as Error;
+        
+        const errorMessage = error instanceof Error ? error.message : String(error);
+        
+        if (errorMessage.includes('Too many requests')) {
+          const waitTime = Math.pow(2, attempt + 2) * 1000;
+          console.log(`Rate limited. Waiting ${waitTime/1000} seconds before retry...`);
+          await new Promise(resolve => setTimeout(resolve, waitTime));
+          continue;
+        }
         
         if (attempt < retries - 1) {
           await new Promise(resolve => 

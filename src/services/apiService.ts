@@ -18,20 +18,30 @@
     }
   
     static async healthCheck(serverUrl: string): Promise<boolean> {
+      // Check if we're currently rate limited
+      const rateLimitUntil = localStorage.getItem('rate_limit_until');
+      if (rateLimitUntil && Date.now() < parseInt(rateLimitUntil, 10)) {
+        console.log('Skipping health check due to active rate limit');
+        throw new Error('Rate limited, please try again later');
+      }
+      
       try {
         const endpoint = this.getEndpoint(serverUrl, '/health');
         const response = await fetch(endpoint, {
+          method: 'GET',
           headers: {
             'Accept': 'application/json',
           },
         });
         
-        if (!response.ok) {
-          throw new Error('Health check failed');
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 30000;
+          localStorage.setItem('rate_limit_until', (Date.now() + waitTime).toString());
+          return false;
         }
         
-        const data = await response.json();
-        return data.status === 'healthy' && data.database === 'connected';
+        return response.ok;
       } catch (error) {
         console.error('Health check failed:', error);
         return false;
@@ -62,7 +72,8 @@
           body: JSON.stringify({
             public_key: publicKey,
             notes: encryptedNotes,
-            client_version: '0.2.0'
+            client_version: '0.2.0',
+            sync_type: encryptedNotes.length > 0 ? 'full' : 'check' // Indicate if this is just a check
           }),
         });
     
@@ -71,6 +82,18 @@
           ok: response.ok,
           headers: Object.fromEntries(response.headers.entries())
         });
+    
+        // Handle rate limiting with retry-after header
+        if (response.status === 429) {
+          const retryAfter = response.headers.get('Retry-After');
+          const waitTime = retryAfter ? parseInt(retryAfter, 10) * 1000 : 30000;
+          console.log(`Rate limited. Server requested wait of ${waitTime/1000} seconds`);
+          
+          // Store the rate limit info for future requests
+          localStorage.setItem('rate_limit_until', (Date.now() + waitTime).toString());
+          
+          throw new Error(`Too many requests, please try again after ${waitTime/1000} seconds`);
+        }
     
         if (!response.ok) {
           const errorData = await response.json().catch(() => null);
