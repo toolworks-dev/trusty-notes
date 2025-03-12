@@ -4,6 +4,7 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
+import { MlKem768 } from 'mlkem';
 
 dotenv.config();
 
@@ -110,7 +111,7 @@ app.post('/api/sync', async (req, res) => {
       contentType: req.headers['content-type']
     });
 
-    const { public_key, notes, client_version } = req.body;
+    const { public_key, notes, client_version, pq_public_key } = req.body;
 
     if (!public_key || !Array.isArray(notes)) {
       console.log('Invalid request format:', { 
@@ -138,11 +139,16 @@ app.post('/api/sync', async (req, res) => {
     await db.collection('users').updateOne(
       { public_key },
       { 
-        $set: { last_sync: new Date() },
+        $set: { 
+          last_sync: new Date(),
+          pq_public_key: pq_public_key || null
+        },
         $inc: { sync_count: 1 }
       },
       { upsert: true }
     );
+
+    await handleEncryptionMigration(public_key, pq_public_key);
 
     const results = await processNotes(public_key, notes);
     
@@ -183,10 +189,35 @@ app.post('/api/sync', async (req, res) => {
   }
 });
 
+async function handleEncryptionMigration(public_key, pq_public_key) {
+  if (!pq_public_key) return;
+  
+  try {
+    // Flag this user as having PQ capabilities
+    await db.collection('users').updateOne(
+      { public_key },
+      { 
+        $set: { 
+          pq_capable: true,
+          pq_public_key: pq_public_key
+        }
+      },
+      { upsert: true }
+    );
+    
+    console.log(`User ${public_key} enabled for post-quantum encryption`);
+  } catch (error) {
+    console.error('Error updating user PQ capabilities:', error);
+  }
+}
+
 async function processNotes(public_key, incoming_notes) {
   const session = client.startSession();
   
   try {
+    const user = await db.collection('users').findOne({ public_key });
+    const isPQCapable = user?.pq_capable || false;
+    
     const results = await session.withTransaction(async () => {
       const notesCollection = db.collection('notes');
       const results = { 
@@ -196,6 +227,9 @@ async function processNotes(public_key, incoming_notes) {
       };
 
       for (const note of incoming_notes) {
+        // Add encryption version tracking
+        const encryption_version = note.version || 1;
+        
         const existing = await notesCollection.findOne({
           public_key,
           id: note.id,
@@ -212,7 +246,9 @@ async function processNotes(public_key, incoming_notes) {
                 timestamp: note.timestamp,
                 signature: note.signature,
                 public_key,
-                deleted: note.deleted
+                deleted: note.deleted,
+                version: note.version || 1,
+                encryption_version: encryption_version
               } 
             },
             { upsert: true }
@@ -244,7 +280,9 @@ async function processNotes(public_key, incoming_notes) {
         data: note.data,
         nonce: note.nonce,
         timestamp: note.timestamp,
-        signature: note.signature
+        signature: note.signature,
+        version: note.version || 1,
+        encryption_version: note.encryption_version || note.version || 1
       }));
 
       return results;

@@ -6,12 +6,15 @@ import {
   Paper,
   ActionIcon,
   Box,
-  TextInput
+  TextInput,
+  Badge,
+  Stack
 } from '@mantine/core';
-import { IconTrash, IconChevronLeft } from '@tabler/icons-react';
+import { IconTrash, IconChevronLeft, IconShieldLock, IconLock } from '@tabler/icons-react';
 import { WebStorageService } from '../services/webStorage';
 import { Note } from '../types/sync';
 import { MarkdownEditor } from './MarkdownEditor';
+import { format } from 'date-fns';
 
 export interface NoteEditorProps {
   note: Note;
@@ -84,6 +87,29 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
       await loadNotes();
       if (onBack) onBack();
     }
+  };
+
+  const getEncryptionBadge = () => {
+    if (note?.encryptionType === 2) {
+      return (
+        <Badge color="green" size="sm" radius="sm" mb="xs">
+          <Group gap={6}>
+            <IconShieldLock size={14} />
+            <Text size="xs">Post-Quantum Encrypted</Text>
+          </Group>
+        </Badge>
+      );
+    } else if (note?.encryptionType === 1) {
+      return (
+        <Badge color="blue" size="sm" radius="sm" mb="xs">
+          <Group gap={6}>
+            <IconLock size={14} />
+            <Text size="xs">AES Encrypted</Text>
+          </Group>
+        </Badge>
+      );
+    }
+    return null;
   };
 
   return (
@@ -230,6 +256,17 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
           </Box>
         </>
       )}
+      <Paper withBorder radius="md" p="md" mb="md">
+        <Group justify="space-between">
+          <Stack gap={4}>
+            <Text size="sm" fw={500}>Last edited: {format(note.updated_at, 'MMM d, yyyy h:mm a')}</Text>
+            {getEncryptionBadge()}
+          </Stack>
+          <ActionIcon color="red" onClick={handleDelete}>
+            <IconTrash size={18} />
+          </ActionIcon>
+        </Group>
+      </Paper>
     </Box>
   );
 } 

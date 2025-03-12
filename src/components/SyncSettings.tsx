@@ -13,7 +13,7 @@ import {
   TextInput,
   ActionIcon,
 } from '@mantine/core';
-import { IconPlus, IconTrash } from '@tabler/icons-react';
+import { IconPlus, IconTrash, IconShieldLock } from '@tabler/icons-react';
 import { notifications } from '@mantine/notifications';
 import { WebStorageService } from '../services/webStorage';
 import { SyncSettings as SyncSettingsType } from '../types/sync';
@@ -42,6 +42,7 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
   const [showAddServer, setShowAddServer] = useState(false);
   const [isValidUrl, setIsValidUrl] = useState(false);
   const [syncInterval, setSyncInterval] = useState(5);
+  const [isLoading, setIsLoading] = useState(false);
 
   const validateUrl = (url: string) => {
     try {
@@ -232,6 +233,30 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
     }
   };
 
+  const upgradeEncryption = async () => {
+    try {
+      setIsLoading(true);
+      
+      // Upgrade all notes to post-quantum encryption
+      await WebStorageService.upgradeEncryptionForNotes();
+      
+      notifications.show({
+        title: 'Success',
+        message: 'All notes upgraded to post-quantum encryption',
+        color: 'green',
+      });
+    } catch (error) {
+      console.error('Failed to upgrade encryption:', error);
+      notifications.show({
+        title: 'Error',
+        message: 'Failed to upgrade encryption: ' + (error instanceof Error ? error.message : String(error)),
+        color: 'red',
+      });
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   const serverOptions = [
     ...DEFAULT_SERVERS,
     ...customServers.map(url => ({
@@ -329,6 +354,23 @@ export function SyncSettings({ onSync }: SyncSettingsProps) {
               />
             )}
           </Stack>
+        </Stack>
+      </Paper>
+
+      <Paper withBorder p="md" radius="md">
+        <Stack>
+          <Text fw={500}>Post-Quantum Encryption</Text>
+          <Text size="sm" c="dimmed">
+            Your notes are encrypted with post-quantum secure encryption.
+            Any new notes will automatically use quantum-resistant encryption.
+          </Text>
+          <Button 
+            onClick={upgradeEncryption} 
+            loading={isLoading}
+            leftSection={<IconShieldLock size={18} />}
+          >
+            Upgrade Existing Notes
+          </Button>
         </Stack>
       </Paper>
 

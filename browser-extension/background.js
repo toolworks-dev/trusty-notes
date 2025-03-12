@@ -1,61 +1,25 @@
-class CryptoService {
-  constructor(key) {
-    this.key = key;
-  }
-
-  static async new(seedPhrase) {
-    const encoder = new TextEncoder();
-    const data = encoder.encode(seedPhrase);
-    const hash = await crypto.subtle.digest('SHA-256', data);
-    return new CryptoService(new Uint8Array(hash));
-  }
-
-  async encrypt(data) {
-    const iv = crypto.getRandomValues(new Uint8Array(12));
-    const key = await crypto.subtle.importKey(
-      'raw',
-      this.key,
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt']
-    );
-    
-    const encoded = new TextEncoder().encode(JSON.stringify(data));
-    const encrypted = await crypto.subtle.encrypt(
-      { name: 'AES-GCM', iv },
-      key,
-      encoded
-    );
-
-    return {
-      iv: Array.from(iv),
-      data: Array.from(new Uint8Array(encrypted))
-    };
-  }
-
-  async decrypt(encrypted) {
-    const key = await crypto.subtle.importKey(
-      'raw',
-      this.key,
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
-    
-    const decrypted = await crypto.subtle.decrypt(
-      { name: 'AES-GCM', iv: new Uint8Array(encrypted.iv) },
-      key,
-      new Uint8Array(encrypted.data)
-    );
-
-    return JSON.parse(new TextDecoder().decode(decrypted));
-  }
-}
+import { CryptoService } from './services/cryptoService.js';
 
 let cryptoService = null;
 let webappTabCheckInterval = null;
 let lastSyncTime = 0;
 const SYNC_COOLDOWN = 2000;
+
+// Initialize the crypto service when the extension starts
+async function initializeCrypto() {
+  try {
+    // Get seed phrase from storage
+    const result = await chrome.storage.local.get('seedPhrase');
+    if (result.seedPhrase) {
+      cryptoService = await CryptoService.new(result.seedPhrase);
+      console.log('Crypto service initialized with PQ support:', cryptoService.isPQAvailable());
+    } else {
+      console.log('No seed phrase found, crypto not initialized');
+    }
+  } catch (error) {
+    console.error('Failed to initialize crypto:', error);
+  }
+}
 
 async function encryptAndStoreNotes(notes) {
   try {
@@ -237,7 +201,64 @@ function startPeriodicCheck() {
 
 startPeriodicCheck();
 
+// Handle messages from content scripts or popup
 chrome.runtime.onMessage.addListener((message, sender, sendResponse) => {
+  if (message.action === 'encrypt') {
+    if (!cryptoService) {
+      sendResponse({ error: 'Crypto service not initialized' });
+      return;
+    }
+    
+    // Encrypt data asynchronously
+    (async () => {
+      try {
+        const encrypted = await cryptoService.encrypt(message.data);
+        sendResponse({ success: true, encrypted });
+      } catch (error) {
+        sendResponse({ error: error.message });
+      }
+    })();
+    
+    return true; // Indicate asynchronous response
+  }
+  
+  if (message.action === 'decrypt') {
+    if (!cryptoService) {
+      sendResponse({ error: 'Crypto service not initialized' });
+      return;
+    }
+    
+    // Decrypt data asynchronously
+    (async () => {
+      try {
+        const decrypted = await cryptoService.decrypt(message.encrypted);
+        sendResponse({ success: true, decrypted });
+      } catch (error) {
+        sendResponse({ error: error.message });
+      }
+    })();
+    
+    return true; // Indicate asynchronous response
+  }
+  
+  if (message.action === 'setupCrypto') {
+    // Initialize with new seed phrase
+    (async () => {
+      try {
+        await chrome.storage.local.set({ seedPhrase: message.seedPhrase });
+        cryptoService = await CryptoService.new(message.seedPhrase);
+        sendResponse({ 
+          success: true, 
+          pqAvailable: cryptoService.isPQAvailable() 
+        });
+      } catch (error) {
+        sendResponse({ error: error.message });
+      }
+    })();
+    
+    return true; // Indicate asynchronous response
+  }
+
   if (message.type === 'NOTES_UPDATED' && message.notes) {
     lastSyncTime = Date.now();
     encryptAndStoreNotes(message.notes);
@@ -257,4 +278,7 @@ chrome.runtime.onConnect.addListener(function(port) {
   port.onDisconnect.addListener(function() {
     startPeriodicCheck();
   });
-}); 
+});
+
+// Initialize when extension loads
+initializeCrypto(); 

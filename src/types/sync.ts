@@ -16,6 +16,7 @@ export interface Note {
   updated_at: number;
   deleted?: boolean;
   pending_sync?: boolean;
+  encryptionType?: number;
 }
 
 export interface EncryptedNote {
@@ -25,6 +26,7 @@ export interface EncryptedNote {
   timestamp: number;
   signature: string;
   deleted?: boolean;
+  version?: number;
 }
 
 export interface SyncSettings {

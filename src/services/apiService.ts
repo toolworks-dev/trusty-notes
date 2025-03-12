@@ -51,7 +51,8 @@
     static async syncNotes(
       serverUrl: string, 
       publicKey: string, 
-      encryptedNotes: EncryptedNote[]
+      encryptedNotes: EncryptedNote[],
+      pqPublicKey: string | null = null
     ): Promise<SyncResponse> {
       const endpoint = this.getEndpoint(serverUrl, '/sync');
       
@@ -59,7 +60,8 @@
         serverUrl,
         endpoint,
         notesCount: encryptedNotes.length,
-        hasPublicKey: !!publicKey
+        hasPublicKey: !!publicKey,
+        hasPQKey: !!pqPublicKey
       });
       
       try {
@@ -72,8 +74,9 @@
           body: JSON.stringify({
             public_key: publicKey,
             notes: encryptedNotes,
-            client_version: '0.2.0',
-            sync_type: encryptedNotes.length > 0 ? 'full' : 'check' // Indicate if this is just a check
+            client_version: '0.3.0',
+            sync_type: encryptedNotes.length > 0 ? 'full' : 'check',
+            pq_public_key: pqPublicKey
           }),
         });
     

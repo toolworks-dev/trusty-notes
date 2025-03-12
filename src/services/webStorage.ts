@@ -149,10 +149,19 @@ export class WebStorageService {
           throw new Error('User ID not found');
         }
 
+        // Get the MLKEM public key if available
+        let pqPublicKey = null;
+        try {
+          pqPublicKey = await this.crypto.getMlkemPublicKeyBase64();
+        } catch (err) {
+          console.log('MLKEM public key not available, continuing with legacy encryption only');
+        }
+
         const response = await ApiService.syncNotes(
           serverUrl, 
           userId,
-          encryptedNotes
+          encryptedNotes,
+          pqPublicKey
         );
         console.log('Server response:', response);
         
@@ -295,5 +304,35 @@ export class WebStorageService {
   static async getNote(id: number): Promise<Note | undefined> {
     const notes = await this.getNotes();
     return notes.find(note => note.id === id);
+  }
+
+  static async upgradeEncryptionForNotes(): Promise<void> {
+    if (!this.crypto) {
+      throw new Error('Crypto not initialized');
+    }
+    
+    // Get all notes
+    const notesJson = localStorage.getItem(this.NOTES_KEY);
+    const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
+    
+    // Update each note to use PQ encryption when synced next time
+    notes.forEach(note => {
+      if (!note.deleted) {
+        // Mark notes for re-encryption by setting pending_sync
+        note.pending_sync = true;
+      }
+    });
+    
+    // Save back to storage
+    localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
+    
+    console.log(`Marked ${notes.filter(n => !n.deleted).length} notes for encryption upgrade`);
+    
+    // Sync immediately if we have settings and auto-sync is on
+    const settings = await this.getSyncSettings();
+    if (settings?.auto_sync && settings?.seed_phrase) {
+      console.log('Auto-syncing to apply encryption upgrade');
+      await this.syncWithServer(settings.server_url);
+    }
   }
 }
