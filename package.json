@@ -66,6 +66,7 @@
     "rehype-raw": "^7.0.0",
     "remark-gfm": "^4.0.1",
     "stream-browserify": "^3.0.0",
+    "superdilithium": "^2.0.6",
     "util": "^0.12.5"
   },
   "devDependencies": {

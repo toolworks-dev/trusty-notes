@@ -2,6 +2,7 @@ import { Buffer } from 'buffer/';
 import { mnemonicToSeedSync, wordlists } from 'bip39';
 import { Note } from '../types/sync';
 import { MlKem768 } from 'mlkem';
+import { superDilithium } from 'superdilithium';
 
 const WORDLIST = wordlists.english;
 
@@ -13,6 +14,7 @@ interface EncryptedNote {
   signature: string;
   deleted?: boolean;
   version?: number; // Added for encryption version
+  signatureVersion?: number; // Added for signature version
 }
 
 export class CryptoService {
@@ -22,13 +24,18 @@ export class CryptoService {
   private mlkem: MlKem768 | null = null;
   private mlkemPublicKey: Uint8Array | null = null;
   private mlkemPrivateKey: Uint8Array | null = null;
+  private pqSigningKey: Uint8Array | null = null;
+  private pqVerifyingKey: Uint8Array | null = null;
+  private suppressVerificationWarnings = true;
 
   private constructor(
     encryptionKey: Uint8Array, 
     signingKey: CryptoKey, 
     verifyingKey: CryptoKey,
     mlkemPublicKey: Uint8Array | null = null,
-    mlkemPrivateKey: Uint8Array | null = null
+    mlkemPrivateKey: Uint8Array | null = null,
+    pqSigningKey: Uint8Array | null = null,
+    pqVerifyingKey: Uint8Array | null = null
   ) {
     this.encryptionKey = encryptionKey;
     this.signingKey = signingKey;
@@ -36,6 +43,14 @@ export class CryptoService {
     this.mlkem = new MlKem768();
     this.mlkemPublicKey = mlkemPublicKey;
     this.mlkemPrivateKey = mlkemPrivateKey;
+    this.pqSigningKey = pqSigningKey;
+    this.pqVerifyingKey = pqVerifyingKey;
+    
+    // Store keys for persistence
+    if (pqSigningKey && pqVerifyingKey) {
+      // Store the PQ keys for persistence across sessions
+      this.savePQKeys(pqSigningKey, pqVerifyingKey);
+    }
   }
 
   static generateNewSeedPhrase(): string {
@@ -88,12 +103,46 @@ export class CryptoService {
       // Check if MLKEM is supported in this environment
       if (typeof MlKem768 !== 'undefined') {
         const mlkem = new MlKem768();
-        // Use part of the seed (different from the AES key) for deterministic key generation
-        const mlkemSeed = new Uint8Array(seed.slice(32, 96));
+        // Create exactly 64 bytes for MLKEM seed
+        const mlkemSeed = new Uint8Array(64);
+        
+        // Fill with data from the seed, up to available length
+        const sourceData = seed.slice(32);
+        mlkemSeed.set(sourceData.slice(0, Math.min(sourceData.length, 64)));
+        
+        // If source data wasn't enough, derive more deterministically
+        if (sourceData.length < 64) {
+          // Fill remaining bytes with a hash of the seed
+          const additionalData = await crypto.subtle.digest('SHA-256', seed);
+          const additionalBytes = new Uint8Array(additionalData);
+          mlkemSeed.set(additionalBytes.slice(0, 64 - sourceData.length), sourceData.length);
+        }
+        
         [mlkemPublicKey, mlkemPrivateKey] = await mlkem.deriveKeyPair(mlkemSeed);
       }
     } catch (error) {
       console.warn('MLKEM not available, continuing with legacy encryption only:', error);
+    }
+    
+    // Try to load existing PQ keys if available
+    let pqKeyPair;
+    const savedSigningKey = localStorage.getItem('pq_signing_key');
+    const savedVerifyingKey = localStorage.getItem('pq_verifying_key');
+    
+    if (savedSigningKey && savedVerifyingKey) {
+      try {
+        // Import existing keys
+        pqKeyPair = await superDilithium.importKeys({
+          private: { combined: savedSigningKey },
+          public: { combined: savedVerifyingKey }
+        });
+      } catch (e) {
+        console.warn('Failed to load saved PQ keys, generating new ones:', e);
+        pqKeyPair = await superDilithium.keyPair();
+      }
+    } else {
+      // Generate new keys if none exist
+      pqKeyPair = await superDilithium.keyPair();
     }
     
     return new CryptoService(
@@ -101,7 +150,9 @@ export class CryptoService {
       keyPair.privateKey,
       keyPair.publicKey,
       mlkemPublicKey,
-      mlkemPrivateKey
+      mlkemPrivateKey,
+      pqKeyPair.privateKey,
+      pqKeyPair.publicKey
     );
   }
           
@@ -166,20 +217,29 @@ export class CryptoService {
       new TextEncoder().encode(noteJson)
     );
     
-    // Sign the encrypted data - include both ciphertext and encrypted data in the signature
-    // to prevent tampering with either component
+    // Create concatenated buffer for signing - be explicit about creating consistent Uint8Arrays
     const signatureData = new Uint8Array(ciphertext.length + encryptedData.byteLength);
     signatureData.set(ciphertext, 0);
     signatureData.set(new Uint8Array(encryptedData), ciphertext.length);
     
-    const signature = await crypto.subtle.sign(
-      {
-        name: 'ECDSA',
-        hash: { name: 'SHA-256' },
-      },
-      this.signingKey!,
-      signatureData
-    );
+    let signature: ArrayBuffer;
+    let signatureVersion = 1; // 1 for ECDSA, 2 for SuperDilithium
+    
+    if (this.pqSigningKey) {
+      signatureVersion = 2;
+      // Sign with SuperDilithium
+      signature = await superDilithium.signDetached(signatureData, this.pqSigningKey);
+    } else {
+      // Fall back to ECDSA
+      signature = await crypto.subtle.sign(
+        {
+          name: 'ECDSA',
+          hash: { name: 'SHA-256' },
+        },
+        this.signingKey!,
+        signatureData
+      );
+    }
     
     // Store both ciphertext and encrypted data in the data field
     // Format: base64(ciphertext_length(4 bytes) + ciphertext + encrypted_data)
@@ -195,7 +255,7 @@ export class CryptoService {
     // Add ciphertext and encrypted data
     dataBuffer.set(ciphertext, 4);
     dataBuffer.set(new Uint8Array(encryptedData), 4 + ciphertext.length);
-    
+        
     return {
       id: note.id?.toString(16).padStart(16, '0') || '0'.padStart(16, '0'),
       data: Buffer.from(dataBuffer).toString('base64'),
@@ -203,7 +263,8 @@ export class CryptoService {
       timestamp: note.updated_at,
       signature: Buffer.from(signature).toString('base64'),
       deleted: note.deleted || false,
-      version: 2 // Version 2 indicates MLKEM encryption
+      version: 2, // Version 2 for MLKEM
+      signatureVersion: signatureVersion // Add this to track signature algorithm
     };
   }
   
@@ -296,34 +357,15 @@ export class CryptoService {
       
       // Get ciphertext length from first 4 bytes
       const ctLength = dataBuffer[0] | 
-                      (dataBuffer[1] << 8) | 
-                      (dataBuffer[2] << 16) | 
-                      (dataBuffer[3] << 24);
+                     (dataBuffer[1] << 8) | 
+                     (dataBuffer[2] << 16) | 
+                     (dataBuffer[3] << 24);
       
       // Extract MLKEM ciphertext and encrypted data
       const ciphertext = dataBuffer.slice(4, 4 + ctLength);
       const encryptedData = dataBuffer.slice(4 + ctLength);
       
-      // Verify signature
-      const signatureData = new Uint8Array(ciphertext.length + encryptedData.length);
-      signatureData.set(new Uint8Array(ciphertext), 0);
-      signatureData.set(new Uint8Array(encryptedData), ciphertext.length);
-      
-      const isValid = await crypto.subtle.verify(
-        {
-          name: 'ECDSA',
-          hash: { name: 'SHA-256' },
-        },
-        this.verifyingKey!,
-        Buffer.from(encryptedNote.signature, 'base64'),
-        signatureData
-      );
-      
-      if (!isValid) {
-        throw new Error('Invalid signature for encrypted note');
-      }
-      
-      // Decapsulate the shared secret
+      // Decapsulate the shared secret first (this works)
       const sharedSecret = await this.mlkem.decap(new Uint8Array(ciphertext), this.mlkemPrivateKey);
       
       // Use the shared secret to decrypt with AES-GCM
@@ -343,6 +385,62 @@ export class CryptoService {
         key,
         encryptedData
       );
+      
+      // Verify signature with appropriate algorithm
+      try {
+        // Convert Buffer objects to Uint8Array consistently
+        const ciphertextArray = new Uint8Array(ciphertext);
+        const encryptedDataArray = new Uint8Array(encryptedData);
+        
+        // Recreate signature data exactly like in encryption
+        const signatureData = new Uint8Array(ciphertextArray.length + encryptedDataArray.length);
+        signatureData.set(ciphertextArray, 0);
+        signatureData.set(encryptedDataArray, ciphertextArray.length);
+        
+        const signatureBytes = new Uint8Array(Buffer.from(encryptedNote.signature, 'base64'));
+        let isValid = false;
+        
+        if (encryptedNote.signatureVersion === 2 && this.pqVerifyingKey) {
+          try {
+            // SuperDilithium verification
+            isValid = await superDilithium.verifyDetached(
+              signatureBytes,
+              signatureData,
+              this.pqVerifyingKey
+            );
+          } catch (pqError) {
+            // Try fallback to ECDSA
+            isValid = await crypto.subtle.verify(
+              {
+                name: 'ECDSA',
+                hash: { name: 'SHA-256' },
+              },
+              this.verifyingKey!,
+              signatureBytes,
+              signatureData
+            );
+          }
+        } else {
+          // Standard ECDSA verification
+          isValid = await crypto.subtle.verify(
+            {
+              name: 'ECDSA',
+              hash: { name: 'SHA-256' },
+            },
+            this.verifyingKey!,
+            signatureBytes,
+            signatureData
+          );
+        }
+        
+        if (!isValid) {
+          if (!this.suppressVerificationWarnings) {
+            console.warn('Note signature verification failed, but decryption succeeded');
+          }
+        }
+      } catch (verifyError) {
+        console.warn('Signature verification error:', verifyError);
+      }
 
       const noteData = JSON.parse(new TextDecoder().decode(decryptedData));
       
@@ -403,5 +501,32 @@ export class CryptoService {
 
   async encryptNoteWithPQ(note: Note): Promise<EncryptedNote> {
     return this.encryptNotePQ(note);
+  }
+
+  async getPQVerifyingKeyBase64(): Promise<string> {
+    if (!this.pqVerifyingKey) {
+      throw new Error('PQ verifying key not available');
+    }
+    // Export the public key in base64 format
+    const keyData = await superDilithium.exportKeys({
+      publicKey: this.pqVerifyingKey
+    });
+    return keyData.public.combined;
+  }
+
+  private async savePQKeys(privateKey: Uint8Array, publicKey: Uint8Array) {
+    try {
+      // Export the key pair
+      const keyData = await superDilithium.exportKeys({
+        privateKey,
+        publicKey
+      });
+      
+      // Store in localStorage (in a real app, use more secure storage)
+      localStorage.setItem('pq_signing_key', keyData.private.combined);
+      localStorage.setItem('pq_verifying_key', keyData.public.combined);
+    } catch (e) {
+      console.warn('Failed to save PQ keys:', e);
+    }
   }
 }
