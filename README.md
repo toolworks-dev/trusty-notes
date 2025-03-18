@@ -6,18 +6,13 @@ WebApp: https://trustynotes.app
 
 Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
 
-<p align="center">
-<a href="https://addons.mozilla.org/en-US/firefox/addon/trustynotes/"><img src="https://user-images.githubusercontent.com/585534/107280546-7b9b2a00-6a26-11eb-8f9f-f95932f4bfec.png"></a>
-<a href="https://chromewebstore.google.com/detail/trustynotes/jbofhocadlfnlhgjkcnbldobinlfghei"><img src="https://user-images.githubusercontent.com/585534/107280622-91a8ea80-6a26-11eb-8d07-77c548b28665.png"></a><br><br>
-</p>
-
 ![image](https://github.com/user-attachments/assets/f63a297a-3122-47c4-a57b-9042f3461c80)
 
 ## Features
 
 - 📝 Markdown editor with live preview
-- 🔄 Secure cloud synchronization
-- 🔐 End-to-end encryption
+- 🔄 Secure cloud synchronization 
+- 🔐 End-to-end encryption + Post Quantum Encrpytion
 - 🌙 Dark/Light mode
 - 💾 Automatic saving
 - 🔍 Full-text search
@@ -28,10 +23,11 @@ Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/rele
 ## To-Do
 - [x] Improved Sync
 - [x] Rich Text
-- [x] Browser Extension
+- [ ] Browser Extension - No longer maintained
 - [ ] Attachments/Files
 - [x] Desktop Application
 - [x] Mobile Application
+- [x] Post Quantum Encrpytion
 
 ## Client Self-Hosting
 
