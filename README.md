@@ -6,7 +6,8 @@ WebApp: https://trustynotes.app
 
 Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
 
-![image](https://github.com/user-attachments/assets/f63a297a-3122-47c4-a57b-9042f3461c80)
+![image](https://github.com/user-attachments/assets/0507c221-d1a8-438a-b44c-954c1293eedf)
+
 
 ## Features
 
