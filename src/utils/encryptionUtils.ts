@@ -7,29 +7,23 @@ export async function migrateNotesToPQ(): Promise<{
   errorDetails?: string[];
 }> {
   try {
-    // Get the settings
     const settings = await WebStorageService.getSyncSettings();
     if (!settings.seed_phrase) {
       throw new Error('No seed phrase available');
     }
     
-    // Initialize crypto service if needed
     await WebStorageService.initializeCrypto(settings.seed_phrase);
     
-    // Get all notes
     const notes = await WebStorageService.getNotes();
     
-    // Counters
     let migrated = 0;
     let errors = 0;
     const errorDetails: string[] = [];
     
-    // Process each note
     for (const note of notes) {
       try {
-        // Update the note to use PQ encryption
         note.pending_sync = true;
-        note.encryptionType = 2; // Mark as PQ encrypted
+        note.encryptionType = 2;
         await WebStorageService.saveNote(note);
         
         migrated++;
@@ -39,7 +33,6 @@ export async function migrateNotesToPQ(): Promise<{
       }
     }
     
-    // Trigger a sync
     if (settings.auto_sync && migrated > 0) {
       await WebStorageService.syncWithServer(settings.server_url);
     }
@@ -63,10 +56,10 @@ export async function migrateNotesToPQ(): Promise<{
 
 export function isPQEncryptionSupported(): boolean {
   try {
-    // Check if mlkem module is available and usable
-    const MlKem768 = require('mlkem').MlKem768;
-    return !!MlKem768;
+    const cryptoService = WebStorageService.getCryptoInstance();
+    return cryptoService ? cryptoService.isPQCryptoAvailable() : false;
   } catch (error) {
+    console.error("Error checking PQ support:", error);
     return false;
   }
 } 

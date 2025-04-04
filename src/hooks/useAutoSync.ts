@@ -1,7 +1,5 @@
 import { useEffect, useRef } from 'react';
-import { notifications } from '@mantine/notifications';
 import { WebStorageService } from '../services/webStorage';
-import { CryptoService } from '../services/cryptoService';
 
 export function useAutoSync(auto_sync: boolean, sync_interval: number) {
   const syncTimeoutRef = useRef<number | null>(null);
@@ -9,68 +7,59 @@ export function useAutoSync(auto_sync: boolean, sync_interval: number) {
 
   useEffect(() => {
     async function performSync() {
-      if (isSyncingRef.current) return;
+      if (isSyncingRef.current) {
+        console.log('Auto-sync already in progress, skipping.');
+        return;
+      }
     
       try {
         isSyncingRef.current = true;
         const settings = await WebStorageService.getSyncSettings();
-        if (!settings.seed_phrase) {
-          throw new Error('No sync code configured');
+        
+        if (!settings.auto_sync || !settings.seed_phrase || !settings.server_url) {
+          console.log('Auto-sync skipped: Not configured or disabled in settings.');
+          isSyncingRef.current = false;
+          return; 
         }
     
-        const cryptoService = await CryptoService.new(settings.seed_phrase);
-        const notes = await WebStorageService.getNotes();
-        const encryptedNotes = await Promise.all(
-          notes.map(note => cryptoService.encryptNote(note))
-        );
+        console.log('Triggering auto-sync via WebStorageService...');
+        await WebStorageService.syncWithServer(settings.server_url);
+        console.log('Auto-sync attempt via WebStorageService finished.');
     
-        const response = await fetch(`${settings.server_url}/api/sync`, {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            public_key: await cryptoService.getPublicKeyBase64(),
-            notes: encryptedNotes,
-            client_version: '0.3.0'
-          }),
-        });
-    
-        if (!response.ok) {
-          throw new Error(await response.text());
-        }
-    
-        notifications.show({
-          title: 'Auto-sync Complete',
-          message: 'Your notes have been synchronized',
-          color: 'green',
-        });
       } catch (error: unknown) {
         console.error('Auto-sync failed:', error);
-        notifications.show({
-          title: 'Auto-sync Failed',
-          message: error instanceof Error ? error.message : 'An unknown error occurred',
-          color: 'red',
-        });
       } finally {
         isSyncingRef.current = false;
       }
     }
 
     function scheduleNextSync() {
-      if (!auto_sync) return;
-      
-      syncTimeoutRef.current = window.setTimeout(() => {
-        performSync().finally(scheduleNextSync);
-      }, sync_interval * 60 * 1000);
+        if (syncTimeoutRef.current) {
+            clearTimeout(syncTimeoutRef.current);
+            syncTimeoutRef.current = null;
+        }
+        
+        if (!auto_sync) {
+            console.log('Auto-sync scheduling stopped: auto_sync is false.');
+            return;
+        }
+        
+        console.log(`Scheduling next auto-sync in ${sync_interval} minutes.`);
+        syncTimeoutRef.current = window.setTimeout(() => {
+            performSync().finally(scheduleNextSync);
+        }, sync_interval * 60 * 1000);
     }
 
+    console.log('useAutoSync effect started/updated. Scheduling first sync.');
     scheduleNextSync();
 
     return () => {
+      console.log('useAutoSync effect cleanup: Clearing sync timeout.');
       if (syncTimeoutRef.current) {
         clearTimeout(syncTimeoutRef.current);
+        syncTimeoutRef.current = null;
       }
+      isSyncingRef.current = false;
     };
   }, [auto_sync, sync_interval]);
 }

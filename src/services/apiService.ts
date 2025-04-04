@@ -74,7 +74,7 @@
           body: JSON.stringify({
             public_key: publicKey,
             notes: encryptedNotes,
-            client_version: '0.3.0',
+            client_version: '0.6.0',
             sync_type: encryptedNotes.length > 0 ? 'full' : 'check',
             pq_public_key: pqPublicKey
           }),

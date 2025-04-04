@@ -14,6 +14,10 @@ export class WebStorageService {
     this.crypto = await CryptoService.new(seedPhrase);
   }
 
+  static getCryptoInstance(): CryptoService | null {
+    return this.crypto;
+  }
+
   static async getNotes(): Promise<Note[]> {
     const notesJson = localStorage.getItem(this.NOTES_KEY);
     const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
@@ -108,7 +112,6 @@ export class WebStorageService {
       throw new Error('Crypto not initialized');
     }
   
-    // Check if we've synced recently
     const now = Date.now();
     const timeSinceLastSync = now - this.lastSyncTime;
     
@@ -149,7 +152,6 @@ export class WebStorageService {
           throw new Error('User ID not found');
         }
 
-        // Get the MLKEM public key if available
         let pqPublicKey = null;
         try {
           pqPublicKey = await this.crypto.getMlkemPublicKeyBase64();
@@ -180,7 +182,6 @@ export class WebStorageService {
         localStorage.setItem(this.NOTES_KEY, JSON.stringify(mergedNotes));
         await this.purgeDeletedNotes();
         
-        // Update last sync time on success
         this.lastSyncTime = Date.now();
         return;
         
@@ -311,24 +312,19 @@ export class WebStorageService {
       throw new Error('Crypto not initialized');
     }
     
-    // Get all notes
     const notesJson = localStorage.getItem(this.NOTES_KEY);
     const notes: Note[] = notesJson ? JSON.parse(notesJson) : [];
     
-    // Update each note to use PQ encryption when synced next time
     notes.forEach(note => {
       if (!note.deleted) {
-        // Mark notes for re-encryption by setting pending_sync
         note.pending_sync = true;
       }
     });
     
-    // Save back to storage
     localStorage.setItem(this.NOTES_KEY, JSON.stringify(notes));
     
     console.log(`Marked ${notes.filter(n => !n.deleted).length} notes for encryption upgrade`);
     
-    // Sync immediately if we have settings and auto-sync is on
     const settings = await this.getSyncSettings();
     if (settings?.auto_sync && settings?.seed_phrase) {
       console.log('Auto-syncing to apply encryption upgrade');

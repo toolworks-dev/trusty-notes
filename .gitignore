@@ -47,3 +47,4 @@ android/app/release-key.jks
 browser-extension/web-ext-artifacts
 
 server/symlink.sh
+ARCHIVED-browser-extension/

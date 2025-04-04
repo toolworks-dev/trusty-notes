@@ -1,8 +1,14 @@
 import { Buffer } from 'buffer/';
 import { mnemonicToSeedSync, wordlists } from 'bip39';
 import { Note } from '../types/sync';
-import { MlKem768 } from 'mlkem';
-import { superDilithium } from 'superdilithium';
+import { ml_kem768 } from '@noble/post-quantum/ml-kem';
+import { ml_dsa65 } from '@noble/post-quantum/ml-dsa';
+import { sha256 } from '@noble/hashes/sha256';
+import { sha512 } from '@noble/hashes/sha512';
+import { hkdf } from '@noble/hashes/hkdf';
+import { bytesToHex } from '@noble/hashes/utils';
+
+import { p256 } from '@noble/curves/p256';
 
 const WORDLIST = wordlists.english;
 
@@ -13,44 +19,34 @@ interface EncryptedNote {
   timestamp: number;
   signature: string;
   deleted?: boolean;
-  version?: number; // Added for encryption version
-  signatureVersion?: number; // Added for signature version
+  version?: number;
+  signatureVersion?: number;
 }
 
 export class CryptoService {
   private encryptionKey: Uint8Array;
-  private signingKey: CryptoKey | null = null;
-  private verifyingKey: CryptoKey | null = null;
-  private mlkem: MlKem768 | null = null;
-  private mlkemPublicKey: Uint8Array | null = null;
-  private mlkemPrivateKey: Uint8Array | null = null;
-  private pqSigningKey: Uint8Array | null = null;
-  private pqVerifyingKey: Uint8Array | null = null;
-  private suppressVerificationWarnings = true;
-
+  private ecdsaPrivateKeyBytes: Uint8Array;
+  private ecdsaPublicKeyBytes: Uint8Array;
+  private mlKemPrivateKeyBytes: Uint8Array | null = null;
+  private mlKemPublicKeyBytes: Uint8Array | null = null;
+  private mlDsaPrivateKeyBytes: Uint8Array | null = null;
+  private mlDsaPublicKeyBytes: Uint8Array | null = null;
   private constructor(
-    encryptionKey: Uint8Array, 
-    signingKey: CryptoKey, 
-    verifyingKey: CryptoKey,
-    mlkemPublicKey: Uint8Array | null = null,
-    mlkemPrivateKey: Uint8Array | null = null,
-    pqSigningKey: Uint8Array | null = null,
-    pqVerifyingKey: Uint8Array | null = null
+    encryptionKey: Uint8Array,
+    ecdsaPrivateKeyBytes: Uint8Array,
+    ecdsaPublicKeyBytes: Uint8Array,
+    mlKemPrivateKeyBytes: Uint8Array | null,
+    mlKemPublicKeyBytes: Uint8Array | null,
+    mlDsaPrivateKeyBytes: Uint8Array | null,
+    mlDsaPublicKeyBytes: Uint8Array | null
   ) {
     this.encryptionKey = encryptionKey;
-    this.signingKey = signingKey;
-    this.verifyingKey = verifyingKey;
-    this.mlkem = new MlKem768();
-    this.mlkemPublicKey = mlkemPublicKey;
-    this.mlkemPrivateKey = mlkemPrivateKey;
-    this.pqSigningKey = pqSigningKey;
-    this.pqVerifyingKey = pqVerifyingKey;
-    
-    // Store keys for persistence
-    if (pqSigningKey && pqVerifyingKey) {
-      // Store the PQ keys for persistence across sessions
-      this.savePQKeys(pqSigningKey, pqVerifyingKey);
-    }
+    this.ecdsaPrivateKeyBytes = ecdsaPrivateKeyBytes;
+    this.ecdsaPublicKeyBytes = ecdsaPublicKeyBytes;
+    this.mlKemPrivateKeyBytes = mlKemPrivateKeyBytes;
+    this.mlKemPublicKeyBytes = mlKemPublicKeyBytes;
+    this.mlDsaPrivateKeyBytes = mlDsaPrivateKeyBytes;
+    this.mlDsaPublicKeyBytes = mlDsaPublicKeyBytes;
   }
 
   static generateNewSeedPhrase(): string {
@@ -70,463 +66,370 @@ export class CryptoService {
   }
 
   static async new(seedPhrase: string): Promise<CryptoService> {
-    // Generate deterministic seed
     const seed = mnemonicToSeedSync(seedPhrase);
-    
-    // Use the seed directly for encryption key
-    const encryptionKey = new Uint8Array(seed.slice(0, 32));
+    const ikm = seed;
+    const hash = sha512;
+
+    const encryptionKey = hkdf(hash, ikm, undefined, new TextEncoder().encode('TrustyNotes-AES-KEY-V1'), 32);
   
-    // Generate key pair from seed
-    const keyPair = await crypto.subtle.generateKey(
-      {
-        name: 'ECDSA',
-        namedCurve: 'P-256',
-      },
-      true,
-      ['sign', 'verify']
-    );
-  
-    // Store the seed hash as the identifier for this user
-    const publicKeyHash = await crypto.subtle.digest(
-      'SHA-256',
-      seed
-    );
+    const ecdsaPrivateKeyBytes = hkdf(hash, ikm, undefined, new TextEncoder().encode('TrustyNotes-ECDSA-KEY-V1'), 32);
+    const ecdsaPublicKeyBytes = p256.getPublicKey(ecdsaPrivateKeyBytes, true);
+
+    const userIdHash = sha256(seed);
+    localStorage.setItem('user_id', bytesToHex(userIdHash));
     
-    // Store this for user identification
-    localStorage.setItem('user_id', Buffer.from(publicKeyHash).toString('hex'));
-    
-    // Generate MLKEM keys deterministically from the seed
-    let mlkemPublicKey = null;
-    let mlkemPrivateKey = null;
-    
+    let mlKemPrivateKeyBytes: Uint8Array | null = null;
+    let mlKemPublicKeyBytes: Uint8Array | null = null;
     try {
-      // Check if MLKEM is supported in this environment
-      if (typeof MlKem768 !== 'undefined') {
-        const mlkem = new MlKem768();
-        // Create exactly 64 bytes for MLKEM seed
-        const mlkemSeed = new Uint8Array(64);
-        
-        // Fill with data from the seed, up to available length
-        const sourceData = seed.slice(32);
-        mlkemSeed.set(sourceData.slice(0, Math.min(sourceData.length, 64)));
-        
-        // If source data wasn't enough, derive more deterministically
-        if (sourceData.length < 64) {
-          // Fill remaining bytes with a hash of the seed
-          const additionalData = await crypto.subtle.digest('SHA-256', seed);
-          const additionalBytes = new Uint8Array(additionalData);
-          mlkemSeed.set(additionalBytes.slice(0, 64 - sourceData.length), sourceData.length);
-        }
-        
-        [mlkemPublicKey, mlkemPrivateKey] = await mlkem.deriveKeyPair(mlkemSeed);
-      }
+      const mlKemSeed = hkdf(hash, ikm, undefined, new TextEncoder().encode('TrustyNotes-MLKEM-SEED-V1'), 64);
+      const mlKemKeys = ml_kem768.keygen(mlKemSeed);
+      mlKemPrivateKeyBytes = mlKemKeys.secretKey;
+      mlKemPublicKeyBytes = mlKemKeys.publicKey;
+      console.log('ML-KEM keys generated successfully using HKDF.');
     } catch (error) {
-      console.warn('MLKEM not available, continuing with legacy encryption only:', error);
+      console.warn('ML-KEM key generation failed:', error);
     }
     
-    // Try to load existing PQ keys if available
-    let pqKeyPair;
-    const savedSigningKey = localStorage.getItem('pq_signing_key');
-    const savedVerifyingKey = localStorage.getItem('pq_verifying_key');
-    
-    if (savedSigningKey && savedVerifyingKey) {
-      try {
-        // Import existing keys
-        pqKeyPair = await superDilithium.importKeys({
-          private: { combined: savedSigningKey },
-          public: { combined: savedVerifyingKey }
-        });
-      } catch (e) {
-        console.warn('Failed to load saved PQ keys, generating new ones:', e);
-        pqKeyPair = await superDilithium.keyPair();
-      }
-    } else {
-      // Generate new keys if none exist
-      pqKeyPair = await superDilithium.keyPair();
+    let mlDsaPrivateKeyBytes: Uint8Array | null = null;
+    let mlDsaPublicKeyBytes: Uint8Array | null = null;
+    try {
+      const mlDsaSeed = hkdf(hash, ikm, undefined, new TextEncoder().encode('TrustyNotes-MLDSA-SEED-V1'), 32);
+      const mlDsaKeys = ml_dsa65.keygen(mlDsaSeed);
+      mlDsaPrivateKeyBytes = mlDsaKeys.secretKey;
+      mlDsaPublicKeyBytes = mlDsaKeys.publicKey;
+      console.log('ML-DSA keys generated successfully using HKDF.');
+    } catch (error) {
+      console.warn('ML-DSA key generation failed:', error);
     }
-    
+
     return new CryptoService(
       encryptionKey,
-      keyPair.privateKey,
-      keyPair.publicKey,
-      mlkemPublicKey,
-      mlkemPrivateKey,
-      pqKeyPair.privateKey,
-      pqKeyPair.publicKey
+      ecdsaPrivateKeyBytes,
+      ecdsaPublicKeyBytes,
+      mlKemPrivateKeyBytes,
+      mlKemPublicKeyBytes,
+      mlDsaPrivateKeyBytes,
+      mlDsaPublicKeyBytes
     );
   }
           
   async encryptNote(note: Note): Promise<EncryptedNote> {
-    // Check if the note already has an encryption type specified
-    if (note.encryptionType === 2) {
-      return this.encryptNotePQ(note);
+    if (this.mlKemPublicKeyBytes && this.mlDsaPrivateKeyBytes) {
+      if (note.encryptionType !== 1) { 
+        try {
+          note.encryptionType = 2;
+          return await this.encryptNotePQ(note);
+        } catch (error) {
+          console.warn('Failed to use PQ encryption, falling back to AES:', error);
+          note.encryptionType = 1;
+        }
+      } 
     }
-    
-    // By default, use PQ encryption for new notes if MLKEM is available
-    if (this.mlkemPublicKey && this.mlkemPrivateKey) {
-      try {
-        note.encryptionType = 2;
-        return await this.encryptNotePQ(note);
-      } catch (error) {
-        console.warn('Failed to use PQ encryption, falling back to AES:', error);
-        note.encryptionType = 1;
-        return await this.encryptNoteAES(note);
-      }
-    }
-    
-    // Fall back to AES encryption
     note.encryptionType = 1;
     return this.encryptNoteAES(note);
   }
   
   private async encryptNotePQ(note: Note): Promise<EncryptedNote> {
-    if (!this.mlkem || !this.mlkemPublicKey) {
-      throw new Error('MLKEM not initialized');
+    if (!this.mlKemPublicKeyBytes || !this.mlDsaPrivateKeyBytes) {
+      throw new Error('ML-KEM public key or ML-DSA private key not available for PQ encryption.');
     }
     
-    // Create the note JSON
     const noteJson = JSON.stringify({
-      title: note.title,
-      content: note.content,
-      created_at: note.created_at,
-      updated_at: note.updated_at,
-      deleted: note.deleted
+      title: note.title, content: note.content, created_at: note.created_at, updated_at: note.updated_at, deleted: note.deleted
     });
     
-    // Generate a one-time use MLKEM instance for this note
-    const ephemeralMlkem = new MlKem768();
-    const [ciphertext, sharedSecret] = await ephemeralMlkem.encap(this.mlkemPublicKey);
-    
-    // Use the shared secret to encrypt the note with AES-GCM
+    const { cipherText, sharedSecret } = ml_kem768.encapsulate(this.mlKemPublicKeyBytes);
     const nonceBytes = crypto.getRandomValues(new Uint8Array(12));
+    const aesKey = await crypto.subtle.importKey('raw', sharedSecret, { name: 'AES-GCM' }, false, ['encrypt']);
+    const encryptedData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonceBytes }, aesKey, new TextEncoder().encode(noteJson));
     
-    const key = await crypto.subtle.importKey(
-      'raw',
-      sharedSecret,
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt']
-    );
-
-    const encryptedData = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonceBytes
-      },
-      key,
-      new TextEncoder().encode(noteJson)
-    );
-    
-    // Create concatenated buffer for signing - be explicit about creating consistent Uint8Arrays
-    const signatureData = new Uint8Array(ciphertext.length + encryptedData.byteLength);
-    signatureData.set(ciphertext, 0);
-    signatureData.set(new Uint8Array(encryptedData), ciphertext.length);
-    
-    let signature: ArrayBuffer;
-    let signatureVersion = 1; // 1 for ECDSA, 2 for SuperDilithium
-    
-    if (this.pqSigningKey) {
-      signatureVersion = 2;
-      // Sign with SuperDilithium
-      signature = await superDilithium.signDetached(signatureData, this.pqSigningKey);
-    } else {
-      // Fall back to ECDSA
-      signature = await crypto.subtle.sign(
-        {
-          name: 'ECDSA',
-          hash: { name: 'SHA-256' },
-        },
-        this.signingKey!,
-        signatureData
-      );
-    }
-    
-    // Store both ciphertext and encrypted data in the data field
-    // Format: base64(ciphertext_length(4 bytes) + ciphertext + encrypted_data)
-    const dataBuffer = new Uint8Array(4 + ciphertext.length + encryptedData.byteLength);
-    
-    // Store ciphertext length as first 4 bytes (little endian)
-    const ctLength = ciphertext.length;
+    const dataBuffer = new Uint8Array(4 + cipherText.length + encryptedData.byteLength);
+    const ctLength = cipherText.length;
     dataBuffer[0] = ctLength & 0xff;
     dataBuffer[1] = (ctLength >> 8) & 0xff;
     dataBuffer[2] = (ctLength >> 16) & 0xff;
     dataBuffer[3] = (ctLength >> 24) & 0xff;
-    
-    // Add ciphertext and encrypted data
-    dataBuffer.set(ciphertext, 4);
-    dataBuffer.set(new Uint8Array(encryptedData), 4 + ciphertext.length);
+    dataBuffer.set(cipherText, 4);
+    dataBuffer.set(new Uint8Array(encryptedData), 4 + cipherText.length);
+        
+    const dataBase64 = Buffer.from(dataBuffer).toString('base64');
+    const nonceBase64 = Buffer.from(nonceBytes).toString('base64');
+    const noteIdString = note.id?.toString(16).padStart(16, '0') || '0'.padStart(16, '0');
+    const noteTimestamp = note.updated_at;
+    const currentVersion = 2;
+    const currentSignatureVersion = 2;
+
+    const objectToSign = {
+        id: noteIdString,
+        version: currentVersion,
+        signatureVersion: currentSignatureVersion,
+        timestamp: noteTimestamp,
+        nonce: nonceBase64,
+        data: dataBase64,
+        ...(note.deleted && { deleted: true }),
+    };
+    const canonicalString = JSON.stringify(objectToSign);
+    const signedDataBytes = new TextEncoder().encode(canonicalString);
+    const signature = ml_dsa65.sign(this.mlDsaPrivateKeyBytes, signedDataBytes);
         
     return {
-      id: note.id?.toString(16).padStart(16, '0') || '0'.padStart(16, '0'),
-      data: Buffer.from(dataBuffer).toString('base64'),
-      nonce: Buffer.from(nonceBytes).toString('base64'),
-      timestamp: note.updated_at,
+      id: noteIdString,
+      data: dataBase64, 
+      nonce: nonceBase64,
+      timestamp: noteTimestamp,
       signature: Buffer.from(signature).toString('base64'),
       deleted: note.deleted || false,
-      version: 2, // Version 2 for MLKEM
-      signatureVersion: signatureVersion // Add this to track signature algorithm
+      version: currentVersion,
+      signatureVersion: currentSignatureVersion
     };
   }
   
-  // Legacy AES encryption for backward compatibility
   private async encryptNoteAES(note: Note): Promise<EncryptedNote> {
     const nonceBytes = crypto.getRandomValues(new Uint8Array(12));
-    
     const noteJson = JSON.stringify({
-      title: note.title,
-      content: note.content,
-      created_at: note.created_at,
-      updated_at: note.updated_at,
-      deleted: note.deleted
+      title: note.title, content: note.content, created_at: note.created_at, updated_at: note.updated_at, deleted: note.deleted
     });
     
-    const key = await crypto.subtle.importKey(
-      'raw',
-      this.encryptionKey,
-      { name: 'AES-GCM' },
-      false,
-      ['encrypt']
-    );
+    const key = await crypto.subtle.importKey('raw', this.encryptionKey, { name: 'AES-GCM' }, false, ['encrypt']);
+    const encryptedData = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: nonceBytes }, key, new TextEncoder().encode(noteJson));
 
-    const encryptedData = await crypto.subtle.encrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonceBytes
-      },
-      key,
-      new TextEncoder().encode(noteJson)
-    );
+    const encryptedDataBytes = new Uint8Array(encryptedData);
+    const dataBase64 = Buffer.from(encryptedDataBytes).toString('base64');
+    const nonceBase64 = Buffer.from(nonceBytes).toString('base64');
+    const noteIdString = note.id?.toString(16).padStart(16, '0') || '0'.padStart(16, '0');
+    const noteTimestamp = note.updated_at;
+    const currentVersion = 1;
+    const currentSignatureVersion = 1;
 
-    const signature = await crypto.subtle.sign(
-      {
-        name: 'ECDSA',
-        hash: { name: 'SHA-256' },
-      },
-      this.signingKey!,
-      new Uint8Array(encryptedData)
-    );
+    const objectToSign = {
+        id: noteIdString,
+        version: currentVersion,
+        signatureVersion: currentSignatureVersion,
+        timestamp: noteTimestamp,
+        nonce: nonceBase64,
+        data: dataBase64,
+        ...(note.deleted && { deleted: true }),
+    };
+    const canonicalString = JSON.stringify(objectToSign);
+    const signedDataBytes = new TextEncoder().encode(canonicalString);
+    const dataHash = sha256(signedDataBytes); 
+    const signatureObj = p256.sign(dataHash, this.ecdsaPrivateKeyBytes);
+    const signatureBytes = signatureObj.toCompactRawBytes(); 
 
     return {
-      id: note.id?.toString(16).padStart(16, '0') || '0'.padStart(16, '0'),
-      data: Buffer.from(encryptedData).toString('base64'),
-      nonce: Buffer.from(nonceBytes).toString('base64'),
-      timestamp: note.updated_at,
-      signature: Buffer.from(signature).toString('base64'),
+      id: noteIdString,
+      data: dataBase64,
+      nonce: nonceBase64,
+      timestamp: noteTimestamp,
+      signature: Buffer.from(signatureBytes).toString('base64'), 
       deleted: note.deleted || false,
-      version: 1 // Version 1 indicates AES encryption
+      version: currentVersion,
+      signatureVersion: currentSignatureVersion 
     };
   }
 
   async decryptNote(encryptedNote: EncryptedNote): Promise<Note> {
     try {
-      // Check encryption version
       if (encryptedNote.version === 2) {
         try {
           return await this.decryptNotePQ(encryptedNote);
         } catch (error) {
-          console.error('PQ decryption failed, falling back to AES:', error);
-          // If PQ decryption fails, try AES as fallback
-          return await this.decryptNoteAES(encryptedNote);
+          console.error('PQ decryption failed:', error);
+          if ((error as any)?.isSignatureError) {
+             throw error; 
+          } else {
+              console.warn('Attempting AES fallback decryption after non-signature PQ error...');
+              try {
+                  console.error('AES fallback is unsafe for PQ errors, re-throwing original PQ error.');
+                  throw error;
+              } catch (aesError) {
+                  console.error('AES fallback decryption also failed:', aesError);
+                  throw error; 
+              }
+          }
         }
       }
-      
-      // Default to legacy AES decryption for version 1 or undefined
       return await this.decryptNoteAES(encryptedNote);
     } catch (error) {
       console.error('Failed to decrypt note:', error);
-      // Return a placeholder for corrupted notes so the app doesn't crash
       return {
-        id: parseInt(encryptedNote.id, 16),
-        title: 'Error: Could not decrypt note',
-        content: 'This note could not be decrypted. It may be corrupted or created with a newer version.',
-        created_at: encryptedNote.timestamp,
-        updated_at: encryptedNote.timestamp
+        id: parseInt(encryptedNote.id, 16), title: 'Error: Could not decrypt note', content: `Decryption failed: ${error instanceof Error ? error.message : String(error)}`, created_at: encryptedNote.timestamp, updated_at: encryptedNote.timestamp, deleted: false
       };
     }
   }
   
   private async decryptNotePQ(encryptedNote: EncryptedNote): Promise<Note> {
-    if (!this.mlkem || !this.mlkemPrivateKey) {
-      throw new Error('MLKEM not initialized');
+    if (!this.mlKemPrivateKeyBytes || !this.mlDsaPublicKeyBytes) {
+      throw new Error('ML-KEM private key or ML-DSA public key not available for PQ decryption.');
     }
     
-    try {
-      // Extract data and nonce
-      const dataBuffer = Buffer.from(encryptedNote.data, 'base64');
-      const nonce = Buffer.from(encryptedNote.nonce, 'base64');
-      
-      // Get ciphertext length from first 4 bytes
-      const ctLength = dataBuffer[0] | 
-                     (dataBuffer[1] << 8) | 
-                     (dataBuffer[2] << 16) | 
-                     (dataBuffer[3] << 24);
-      
-      // Extract MLKEM ciphertext and encrypted data
-      const ciphertext = dataBuffer.slice(4, 4 + ctLength);
-      const encryptedData = dataBuffer.slice(4 + ctLength);
-      
-      // Decapsulate the shared secret first (this works)
-      const sharedSecret = await this.mlkem.decap(new Uint8Array(ciphertext), this.mlkemPrivateKey);
-      
-      // Use the shared secret to decrypt with AES-GCM
-      const key = await crypto.subtle.importKey(
-        'raw',
-        sharedSecret,
-        { name: 'AES-GCM' },
-        false,
-        ['decrypt']
-      );
+    let decryptedData: ArrayBuffer;
+    let signatureDataToVerify: Uint8Array;
+    let signatureBytes: Uint8Array;
 
-      const decryptedData = await crypto.subtle.decrypt(
-        {
-          name: 'AES-GCM',
-          iv: nonce
-        },
-        key,
-        encryptedData
-      );
-      
-      // Verify signature with appropriate algorithm
-      try {
-        // Convert Buffer objects to Uint8Array consistently
-        const ciphertextArray = new Uint8Array(ciphertext);
-        const encryptedDataArray = new Uint8Array(encryptedData);
-        
-        // Recreate signature data exactly like in encryption
-        const signatureData = new Uint8Array(ciphertextArray.length + encryptedDataArray.length);
-        signatureData.set(ciphertextArray, 0);
-        signatureData.set(encryptedDataArray, ciphertextArray.length);
-        
-        const signatureBytes = new Uint8Array(Buffer.from(encryptedNote.signature, 'base64'));
-        let isValid = false;
-        
-        if (encryptedNote.signatureVersion === 2 && this.pqVerifyingKey) {
-          try {
-            // SuperDilithium verification
-            isValid = await superDilithium.verifyDetached(
-              signatureBytes,
-              signatureData,
-              this.pqVerifyingKey
-            );
-          } catch (pqError) {
-            // Try fallback to ECDSA
-            isValid = await crypto.subtle.verify(
-              {
-                name: 'ECDSA',
-                hash: { name: 'SHA-256' },
-              },
-              this.verifyingKey!,
-              signatureBytes,
-              signatureData
-            );
-          }
-        } else {
-          // Standard ECDSA verification
-          isValid = await crypto.subtle.verify(
-            {
-              name: 'ECDSA',
-              hash: { name: 'SHA-256' },
-            },
-            this.verifyingKey!,
-            signatureBytes,
-            signatureData
-          );
+    try {
+        const dataBuffer = Buffer.from(encryptedNote.data, 'base64');
+        const nonce = Buffer.from(encryptedNote.nonce, 'base64');
+        signatureBytes = Buffer.from(encryptedNote.signature, 'base64');
+
+        const ctLength = dataBuffer[0] | (dataBuffer[1] << 8) | (dataBuffer[2] << 16) | (dataBuffer[3] << 24);
+        if (ctLength < 0 || ctLength > dataBuffer.length - 4) {
+            throw new Error(`Invalid ciphertext length extracted: ${ctLength}`);
         }
+        const ciphertext = dataBuffer.slice(4, 4 + ctLength);
+        const encryptedAesData = dataBuffer.slice(4 + ctLength);
+
+        signatureDataToVerify = new Uint8Array(ciphertext.length + encryptedAesData.length);
+        signatureDataToVerify.set(ciphertext, 0);
+        signatureDataToVerify.set(encryptedAesData, ciphertext.length);
+
+        const sharedSecret = ml_kem768.decapsulate(ciphertext, this.mlKemPrivateKeyBytes);
+
+        const aesKey = await crypto.subtle.importKey('raw', sharedSecret, { name: 'AES-GCM' }, false, ['decrypt']);
+        decryptedData = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, aesKey, encryptedAesData);
+
+    } catch (decryptError) {
+        console.error('Error during PQ decryption (KEM/AES phase):', decryptError);
+        const errorMsg = decryptError instanceof Error ? decryptError.message : String(decryptError);
+        throw new Error(`PQ Decryption failed (KEM/AES phase): ${errorMsg}`);
+    }
+      
+    if (encryptedNote.signatureVersion !== 2) {
+        console.error(`Invalid signature version for PQ note: Expected 2, got ${encryptedNote.signatureVersion}`);
+        const sigVerError = new Error(`Invalid signature version for PQ note: Expected 2, got ${encryptedNote.signatureVersion}`);
+        (sigVerError as any).isSignatureError = true; 
+        throw sigVerError;
+    }
+    
+    const signedObject = {
+        id: encryptedNote.id,
+        version: encryptedNote.version,
+        signatureVersion: encryptedNote.signatureVersion,
+        timestamp: encryptedNote.timestamp,
+        nonce: encryptedNote.nonce,
+        data: encryptedNote.data,
+        ...(encryptedNote.deleted && { deleted: true }),
+    };
+    const canonicalString = JSON.stringify(signedObject);
+    const signedDataBytes = new TextEncoder().encode(canonicalString);
+    
+    try {
+        if (!this.mlDsaPublicKeyBytes) {
+             throw new Error('ML-DSA public key not available for verification.');
+        }
+        const isValid = ml_dsa65.verify(this.mlDsaPublicKeyBytes, signedDataBytes, signatureBytes);
         
         if (!isValid) {
-          if (!this.suppressVerificationWarnings) {
-            console.warn('Note signature verification failed, but decryption succeeded');
-          }
+            console.error('ML-DSA signature verification failed.');
+            const sigError = new Error('ML-DSA signature verification failed.');
+            (sigError as any).isSignatureError = true;
+            throw sigError;
         }
-      } catch (verifyError) {
-        console.warn('Signature verification error:', verifyError);
-      }
-
-      const noteData = JSON.parse(new TextDecoder().decode(decryptedData));
-      
-      return {
-        id: parseInt(encryptedNote.id, 16),
-        ...noteData
-      };
-    } catch (error) {
-      console.error('Failed to decrypt note with MLKEM:', error);
-      throw new Error(`Failed to decrypt note: ${error instanceof Error ? error.message : String(error)}`);
+    } catch (verifyError) {
+        console.error('ML-DSA signature verification process error:', verifyError);
+        const procError = new Error(`ML-DSA signature verification process failed: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
+        (procError as any).isSignatureError = true;
+        throw procError;
     }
+
+    const noteData = JSON.parse(new TextDecoder().decode(decryptedData));
+    return { id: parseInt(encryptedNote.id, 16), ...noteData };
   }
   
   private async decryptNoteAES(encryptedNote: EncryptedNote): Promise<Note> {
-    const encryptedData = Buffer.from(encryptedNote.data, 'base64');
-    const nonce = Buffer.from(encryptedNote.nonce, 'base64');
+    let encryptedDataBytes: Uint8Array;
+    let nonce: Uint8Array;
+    let signatureBytes: Uint8Array | undefined;
+    
+    try {
+        encryptedDataBytes = Buffer.from(encryptedNote.data, 'base64');
+        nonce = Buffer.from(encryptedNote.nonce, 'base64');
+        if (encryptedNote.signature) {
+            signatureBytes = Buffer.from(encryptedNote.signature, 'base64');
+        }
+    } catch(e) {
+        throw new Error(`Failed to decode base64 data/nonce/signature for AES note: ${e instanceof Error ? e.message : String(e)}`);
+    }
+    
+    let decryptedData: ArrayBuffer;
+    try {
+        const key = await crypto.subtle.importKey('raw', this.encryptionKey, { name: 'AES-GCM' }, false, ['decrypt']);
+        decryptedData = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: nonce }, key, encryptedDataBytes);
+    } catch (decryptError) {
+        console.error('AES decryption failed:', decryptError);
+        throw new Error(`AES decryption failed: ${decryptError instanceof Error ? decryptError.message : String(decryptError)}`);
+    }
+    if ((encryptedNote.version === 1 || typeof encryptedNote.version === 'undefined') && signatureBytes) {
+        if (!this.ecdsaPublicKeyBytes) {
+            throw new Error('ECDSA public key not available for verification.');
+        }
 
-    const key = await crypto.subtle.importKey(
-      'raw',
-      this.encryptionKey,
-      { name: 'AES-GCM' },
-      false,
-      ['decrypt']
-    );
+        const signedObject = {
+            id: encryptedNote.id,
+            version: encryptedNote.version || 1,
+            signatureVersion: encryptedNote.signatureVersion || 1,
+            timestamp: encryptedNote.timestamp,
+            nonce: encryptedNote.nonce,
+            data: encryptedNote.data,
+            ...(encryptedNote.deleted && { deleted: true }),
+        };
+        const canonicalString = JSON.stringify(signedObject);
+        const signedDataBytes = new TextEncoder().encode(canonicalString);
 
-    const decryptedData = await crypto.subtle.decrypt(
-      {
-        name: 'AES-GCM',
-        iv: nonce
-      },
-      key,
-      encryptedData
-    );
+        const dataHash = sha256(signedDataBytes); 
+
+        try {
+            const isValid = p256.verify(signatureBytes, dataHash, this.ecdsaPublicKeyBytes);
+            if (!isValid) {
+                console.error('AES note ECDSA signature verification failed.');
+                const sigError = new Error('AES note ECDSA signature verification failed.');
+                (sigError as any).isSignatureError = true;
+                throw sigError;
+            }
+        } catch (verifyError) {
+            console.error('AES note ECDSA signature verification process error:', verifyError);
+            const procError = new Error(`AES note ECDSA signature verification process failed: ${verifyError instanceof Error ? verifyError.message : String(verifyError)}`);
+            (procError as any).isSignatureError = true;
+            throw procError;
+        }
+    } else if (signatureBytes) {
+        console.warn(`Signature found on note with version ${encryptedNote.version}, but AES decryption path expects version 1. Skipping verification.`);
+    }
 
     const noteData = JSON.parse(new TextDecoder().decode(decryptedData));
-    
-    return {
-      id: parseInt(encryptedNote.id, 16),
-      ...noteData
-    };
+    return { id: parseInt(encryptedNote.id, 16), ...noteData };
   }
 
-  async getPublicKeyBase64(): Promise<string> {
-    const keyData = await crypto.subtle.exportKey('raw', this.verifyingKey!);
-    return Buffer.from(keyData).toString('base64');
+  getEcdsaPublicKeyHex(): string {
+      if (!this.ecdsaPublicKeyBytes) {
+         throw new Error('ECDSA public key not available');
+      }
+      return bytesToHex(this.ecdsaPublicKeyBytes);
   }
   
-  async getMlkemPublicKeyBase64(): Promise<string> {
-    if (!this.mlkemPublicKey) {
-      throw new Error('MLKEM public key not available');
+  getMlkemPublicKeyBase64(): string {
+    if (!this.mlKemPublicKeyBytes) {
+      throw new Error('ML-KEM public key not available');
     }
-    return Buffer.from(this.mlkemPublicKey).toString('base64');
+    return Buffer.from(this.mlKemPublicKeyBytes).toString('base64');
+  }
+
+  getMlDsaPublicKeyBase64(): string {
+    if (!this.mlDsaPublicKeyBytes) {
+      throw new Error('ML-DSA public key not available');
+    }
+    return Buffer.from(this.mlDsaPublicKeyBytes).toString('base64');
   }
 
   async encryptNoteWithAES(note: Note): Promise<EncryptedNote> {
     return this.encryptNoteAES(note);
   }
-
   async encryptNoteWithPQ(note: Note): Promise<EncryptedNote> {
     return this.encryptNotePQ(note);
   }
 
-  async getPQVerifyingKeyBase64(): Promise<string> {
-    if (!this.pqVerifyingKey) {
-      throw new Error('PQ verifying key not available');
-    }
-    // Export the public key in base64 format
-    const keyData = await superDilithium.exportKeys({
-      publicKey: this.pqVerifyingKey
-    });
-    return keyData.public.combined;
-  }
-
-  private async savePQKeys(privateKey: Uint8Array, publicKey: Uint8Array) {
-    try {
-      // Export the key pair
-      const keyData = await superDilithium.exportKeys({
-        privateKey,
-        publicKey
-      });
-      
-      // Store in localStorage (in a real app, use more secure storage)
-      localStorage.setItem('pq_signing_key', keyData.private.combined);
-      localStorage.setItem('pq_verifying_key', keyData.public.combined);
-    } catch (e) {
-      console.warn('Failed to save PQ keys:', e);
-    }
+  isPQCryptoAvailable(): boolean {
+      return !!(this.mlKemPublicKeyBytes && this.mlKemPrivateKeyBytes && 
+              this.mlDsaPublicKeyBytes && this.mlDsaPrivateKeyBytes);
   }
 }

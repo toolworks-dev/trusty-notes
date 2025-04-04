@@ -4,7 +4,6 @@ import cors from 'cors';
 import dotenv from 'dotenv';
 import rateLimit from 'express-rate-limit';
 import helmet from 'helmet';
-import { MlKem768 } from 'mlkem';
 
 dotenv.config();
 
@@ -30,7 +29,6 @@ const limiter = rateLimit({
 });
 app.use('/api/', limiter);
 
-// Request logging middleware
 app.use((req, res, next) => {
   console.log(`${new Date().toISOString()} ${req.method} ${req.url}`);
   console.log('Headers:', req.headers);
@@ -129,7 +127,7 @@ app.post('/api/sync', async (req, res) => {
       });
     }
 
-    const MIN_CLIENT_VERSION = '0.1.0';
+    const MIN_CLIENT_VERSION = '0.6.0';
     if (client_version < MIN_CLIENT_VERSION) {
       return res.status(400).json({ 
         error: 'Please update your client to the latest version' 
@@ -193,7 +191,6 @@ async function handleEncryptionMigration(public_key, pq_public_key) {
   if (!pq_public_key) return;
   
   try {
-    // Flag this user as having PQ capabilities
     await db.collection('users').updateOne(
       { public_key },
       { 
@@ -227,7 +224,6 @@ async function processNotes(public_key, incoming_notes) {
       };
 
       for (const note of incoming_notes) {
-        // Add encryption version tracking
         const encryption_version = note.version || 1;
         
         const existing = await notesCollection.findOne({
@@ -248,6 +244,7 @@ async function processNotes(public_key, incoming_notes) {
                 public_key,
                 deleted: note.deleted,
                 version: note.version || 1,
+                signatureVersion: note.signatureVersion || 1,
                 encryption_version: encryption_version
               } 
             },
@@ -282,6 +279,7 @@ async function processNotes(public_key, incoming_notes) {
         timestamp: note.timestamp,
         signature: note.signature,
         version: note.version || 1,
+        signatureVersion: note.signatureVersion || 1,
         encryption_version: note.encryption_version || note.version || 1
       }));
 
