@@ -1,7 +1,7 @@
 {
   "name": "trusty-notes-web",
   "private": true,
-  "version": "0.6.0",
+  "version": "0.6.1",
   "type": "module",
   "description": "TrustyNotes is a simple, secure, and reliable note-taking app",
   "author": "Toolworks.dev",
