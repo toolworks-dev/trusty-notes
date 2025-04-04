@@ -34,7 +34,6 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
     setContent(note.content || '');
   }, [note]);
 
-  // Initialize crypto if needed
   useEffect(() => {
     const initCrypto = async () => {
       try {
@@ -50,13 +49,9 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
     initCrypto();
   }, []);
 
-  // Update the useEffect that handles body overflow
   useEffect(() => {
     if (isMobile) {
-      // Prevent body scrolling when editor is open on mobile
       document.body.style.overflow = 'hidden';
-      
-      // Add a class to help with mobile styling
       document.body.classList.add('editor-open');
       
       return () => {
@@ -161,11 +156,12 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
           
           <Box className="editor-container" style={{ 
             flex: 1,
-            border: '1px solid var(--mantine-color-gray-3)', 
-            borderRadius: '8px',
             overflow: 'hidden',
             backgroundColor: 'var(--mantine-color-body)',
-            position: 'relative'
+            position: 'relative',
+            display: 'flex', 
+            flexDirection: 'column',
+            paddingBottom: '70px'
           }}>
             <MarkdownEditor
               content={content}
@@ -256,17 +252,19 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
           </Box>
         </>
       )}
-      <Paper withBorder radius="md" p="md" mb="md">
-        <Group justify="space-between">
-          <Stack gap={4}>
-            <Text size="sm" fw={500}>Last edited: {format(note.updated_at, 'MMM d, yyyy h:mm a')}</Text>
-            {getEncryptionBadge()}
-          </Stack>
-          <ActionIcon color="red" onClick={handleDelete}>
-            <IconTrash size={18} />
-          </ActionIcon>
-        </Group>
-      </Paper>
+      {!isMobile && (
+        <Paper withBorder radius="md" p="md" mb="md">
+          <Group justify="space-between">
+            <Stack gap={4}>
+              <Text size="sm" fw={500}>Last edited: {format(note.updated_at, 'MMM d, yyyy h:mm a')}</Text>
+              {getEncryptionBadge()}
+            </Stack>
+            <ActionIcon color="red" onClick={handleDelete}>
+              <IconTrash size={18} />
+            </ActionIcon>
+          </Group>
+        </Paper>
+      )}
     </Box>
   );
 } 

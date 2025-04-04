@@ -479,6 +479,8 @@ body.mobile-view .mantine-AppShell-navbar {
 
   /* Target specific areas known to have borders */
   .mobile-note-editor .word-count,
+  .mobile-note-editor .word-count-container,
+  .mobile-note-editor .editor-stats,
   .mobile-note-editor .tiptap-toolbar,
   .mobile-note-editor .format-toolbar,
   .mobile-note-editor .toolbar-container,
@@ -507,6 +509,19 @@ body.mobile-view .mantine-AppShell-navbar {
     box-shadow: none !important;
     margin: 8px !important;
     overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+  }
+
+  /* Ensure ProseMirror takes remaining space */
+  .mobile-note-editor .ProseMirror {
+    flex-grow: 1 !important;
+    min-height: 100px !important;
+    border: none !important;
+    outline: none !important;
+    box-shadow: none !important;
+    padding: 16px !important;
+    overflow-y: auto !important;
   }
 
   /* Specifically target the word count and formatting toolbar area */
@@ -526,6 +541,19 @@ body.mobile-view .mantine-AppShell-navbar {
     display: none !important;
   }
 
+  /* Remove potential top border from word count area */
+  .mobile-note-editor .word-count-container,
+  .mobile-note-editor .editor-stats {
+    border-top: none !important;
+  }
+
+  /* Remove potential bottom border from editor area above word count */
+  .mobile-note-editor .ProseMirror,
+  .mobile-note-editor .rich-text-editor,
+  .mobile-note-editor .tiptap-editor {
+    border-bottom: none !important;
+  }
+
   /* EXTREMELY AGGRESSIVE BORDER REMOVAL */
   .mobile-note-editor::before {
     content: "";
@@ -541,7 +569,7 @@ body.mobile-view .mantine-AppShell-navbar {
   }
 
   /* Override absolutely everything except the main container border */
-  .mobile-note-editor div:not(.editor-container),
+  .mobile-note-editor div:not(.editor-container):not(.ProseMirror),
   .mobile-note-editor span,
   .mobile-note-editor p,
   .mobile-note-editor header,
@@ -570,6 +598,7 @@ body.mobile-view .mantine-AppShell-navbar {
   /* Force the word count bar to have no border/divider */
   .mobile-note-editor [class*="wordCount"],
   .mobile-note-editor [class*="word-count"],
+  .mobile-note-editor .editor-container > .mantine-Group-root:first-of-type,
   .mobile-note-editor [class*="toolbar"],
   .mobile-note-editor [class*="Toolbar"],
   .mobile-note-editor [class*="stats"],
@@ -581,6 +610,23 @@ body.mobile-view .mantine-AppShell-navbar {
     border-bottom: none !important;
     background: transparent !important;
     box-shadow: none !important;
+    padding: 4px 8px !important;
+    margin: 0 !important;
+  }
+
+  /* Ensure the word count group ONLY has a bottom border */
+  .mobile-note-editor .editor-container > .mantine-Group-root:first-of-type {
+    border-top: none !important;
+    border-left: none !important;
+    border-right: none !important;
+    border-bottom: 1px solid var(--mantine-color-gray-3) !important;
+    margin-bottom: 0 !important;
+    padding-bottom: 4px !important;
+  }
+
+  /* Ensure the editor content area below the word count has NO top border */
+  .mobile-note-editor .editor-container > *:not(.mantine-Group-root:first-of-type) {
+    border-top: none !important;
   }
 
   /* Target the very top border of the app */
@@ -639,9 +685,10 @@ body.mobile-view .mantine-AppShell-navbar {
   }
 
   /* Add !important to all border properties everywhere */
-  * {
+  /* BE CAREFUL WITH THIS - Commented out for now as it's too broad */
+  /* * {
     border-color: transparent !important;
-  }
+  } */
 
   /* Fix app shell borders - target root level containers */
   .android .mantine-AppShell-root,
@@ -663,49 +710,59 @@ body.mobile-view .mantine-AppShell-navbar {
   .ios .mobile-note-editor {
     border: none !important;
     border-radius: 0 !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    height: 100vh;
+    display: flex;
+    flex-direction: column;
   }
 
-  .mobile-editor-container {
-    border: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+  /* Container for everything except the fixed bottom bar */
+  .mobile-editor-scroll-area {
+    flex-grow: 1;
+    overflow-y: auto;
+    -webkit-overflow-scrolling: touch;
+    padding: 8px;
+  }
+
+  /* Style the editor container within the scroll area */
+  .mobile-editor-scroll-area .editor-container {
+    border: 1px solid var(--mantine-color-gray-3) !important;
+    border-radius: 8px !important;
+    overflow: hidden !important;
+    margin: 0 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 300px;
   }
 
   .mobile-drawer .mantine-Drawer-body {
     border-top: none !important;
   }
 
-  /* Complete border removal for mobile editor */
-  .mobile-note-editor,
+  /* Complete border removal for mobile editor elements (redundant but safe) */
   .mobile-note-editor .editor-container,
   .mobile-note-editor .ProseMirror,
   .mobile-note-editor .rich-text-editor,
-  .mobile-note-editor .tiptap-editor,
-  .mobile-note-editor .word-count-container,
-  .mobile-note-editor .format-toolbar,
-  .mobile-note-editor .mobile-toolbar,
-  .mobile-note-editor .tiptap-toolbar {
+  .mobile-note-editor .tiptap-editor {
     border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
     outline: none !important;
   }
 
-  /* Remove the horizontal line at the top */
+  /* Remove the horizontal line at the top (redundant but safe) */
   .mobile-note-editor hr,
-  .mobile-note-editor .mantine-Divider-root,
-  .mobile-note-editor .divider,
-  .mobile-note-editor .separator {
+  .mobile-note-editor .mantine-Divider-root {
     display: none !important;
     height: 0 !important;
     opacity: 0 !important;
   }
 
-  /* Target the specific top border */
+  /* Target the specific top border (redundant but safe) */
   .mobile-note-editor > div:first-child,
   .mobile-note-editor > header:first-child {
     border-top: none !important;
@@ -713,9 +770,9 @@ body.mobile-view .mantine-AppShell-navbar {
   }
 
   /* Override any !important rules from other styles */
-  .mobile-note-editor .editor-container {
-    border: none !important;
-  }
+  /* .mobile-note-editor .editor-container { */
+    /* border: none !important; */
+  /* } */
 
   /* Target the top Paper component specifically */
   .mobile-note-editor > div:first-child,
@@ -726,11 +783,76 @@ body.mobile-view .mantine-AppShell-navbar {
     box-shadow: none !important;
   }
 
-  /* Make sure the editor container has a complete border */
+  /* ==== Styles for the Fixed Bottom Bar ==== */
+  .mobile-editor-footer {
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    background-color: var(--mantine-color-body);
+    border-top: 1px solid var(--mantine-color-gray-3);
+    z-index: 1001;
+    gap: 8px;
+  }
+
+  .mobile-editor-footer .editor-metadata {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-start;
+    font-size: 12px;
+    color: var(--mantine-color-dimmed);
+    flex-grow: 1;
+    min-width: 100px;
+  }
+
+  .mobile-editor-footer .editor-metadata span {
+     line-height: 1.3;
+  }
+
+  /* Style for the green badge if needed */
+  .mobile-editor-footer .encryption-badge {
+    margin-top: 2px;
+  }
+
+  .mobile-editor-footer .editor-actions {
+    display: flex;
+    gap: 8px;
+  }
+
+  .mobile-editor-footer .mantine-Button-root {
+    padding: 6px 12px;
+    font-size: 14px;
+    height: auto;
+    min-width: 70px;
+  }
+
+  /* Adjust main content padding to avoid overlap with footer */
+  body.mobile-view .mobile-content-container {
+     padding-bottom: 80px;
+  }
+
+  /* Adjust scroll area padding */
+   .mobile-editor-scroll-area {
+     padding-bottom: 80px;
+   }
+
+   /* Ensure editor container doesn't get cut off */
+   .android .mobile-note-editor {
+     height: 100vh;
+   }
+
+  /* Ensure the editor container has the border again */
   .mobile-note-editor .editor-container {
     border: 1px solid var(--mantine-color-gray-3) !important;
     border-radius: 8px !important;
     overflow: hidden !important;
+    margin: 0 !important;
+    flex-grow: 1;
   }
 
   @media (min-width: 769px) {

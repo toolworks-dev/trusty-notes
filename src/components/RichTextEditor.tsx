@@ -25,7 +25,7 @@ import {
   IconH1,
   IconH2,
 } from '@tabler/icons-react';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, CSSProperties } from 'react';
 
 const tableStyles = {
   '.ProseMirror': {
@@ -272,6 +272,23 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     </Box>
   );
 
+  const mobileBorderStyle: CSSProperties = isMobile ? {
+    borderLeft: '1px solid var(--mantine-color-gray-3)',
+    borderRight: '1px solid var(--mantine-color-gray-3)',
+    borderBottom: '1px solid var(--mantine-color-gray-3)',
+    borderTop: 'none',
+    borderRadius: '8px',
+    padding: '1rem',
+    overflow: 'hidden',
+    flex: 1
+  } : { 
+    border: '1px solid var(--mantine-color-gray-3)', 
+    borderRadius: 'var(--mantine-radius-md)', 
+    padding: '1rem',
+    overflow: 'hidden',
+    flex: 1 
+  };
+
   return (
     <Box style={{ 
       display: 'flex', 
@@ -332,12 +349,9 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
           flex: '1 1 auto',
           display: 'flex',
           flexDirection: 'column',
-          border: '1px solid var(--mantine-color-gray-3)',
-          borderRadius: 'var(--mantine-radius-md)',
-          padding: '1rem',
-          overflow: 'hidden',
           minHeight: 0,
           ...tableStyles,
+          ...mobileBorderStyle
         }}
       >
         <EditorContent 

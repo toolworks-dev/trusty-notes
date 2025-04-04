@@ -315,7 +315,7 @@ export function MobileNav({
         </Group>
 
         <Group justify="center" p="xs" pb="md">
-          <Text size="xs" c="dimmed">© 2023 Toolworks</Text>
+          <Text size="xs" c="dimmed">© 2025 Toolworks.dev</Text>
           <Anchor 
             href="https://github.com/toolworks-dev/trusty-notes" 
             target="_blank" 
