@@ -29,9 +29,12 @@ import {
 import { useEffect, useState, CSSProperties } from 'react';
 import { VimExtension, toggleVimMode, loadVimModeState } from '../utils/VimExtension';
 import { KeySwapExtension } from '../utils/KeySwapExtension';
+import '../styles/editor-overrides.css';
 
 const tableStyles = {
   '.ProseMirror': {
+    overflow: 'auto',
+    height: '100%',
     '& table': {
       borderCollapse: 'collapse',
       margin: '1rem 0',
@@ -167,7 +170,7 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     editorProps: {
       attributes: {
         class: 'rich-text-editor',
-        style: 'height: 100%',
+        style: 'height: 100%; overflow: visible;',
       },
     },
   });
@@ -188,6 +191,22 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
       };
     }
   }, [vimModeEnabled, editor]);
+
+  useEffect(() => {
+    if (isMobile) {
+      const handleResize = () => {
+        const vh = window.innerHeight * 0.01;
+        document.documentElement.style.setProperty('--editor-vh', `${vh}px`);
+      };
+      
+      handleResize();
+      window.addEventListener('resize', handleResize);
+      
+      return () => {
+        window.removeEventListener('resize', handleResize);
+      };
+    }
+  }, [isMobile]);
 
   if (!editor) {
     return null;
@@ -379,9 +398,10 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     borderBottom: '1px solid var(--mantine-color-gray-3)',
     borderTop: 'none',
     borderRadius: '8px',
-    padding: '1rem',
-    overflow: 'hidden',
-    flex: 1
+    padding: '0.5rem',
+    overflow: 'auto',
+    flex: 1,
+    WebkitOverflowScrolling: 'touch'
   } : { 
     border: '1px solid var(--mantine-color-gray-3)', 
     borderRadius: 'var(--mantine-radius-md)', 
@@ -395,17 +415,14 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
       display: 'flex', 
       flexDirection: 'column', 
       height: '100%',
-      overflow: 'hidden'
+      position: 'relative',
     }}>
       {ToolbarWrapper}
       <Box
         style={{
           flex: '1 1 auto',
-          display: 'flex',
-          flexDirection: 'column',
-          minHeight: 0,
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
+          overflow: 'auto',
+          position: 'relative',
           ...tableStyles,
           ...mobileBorderStyle
         }}
@@ -413,11 +430,8 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
         <EditorContent 
           editor={editorInstance}
           style={{
-            flex: '1 1 auto',
-            display: 'flex',
-            flexDirection: 'column',
             height: '100%',
-            overflow: 'visible',
+            minHeight: '100%',
           }}
           className={`rich-text-table-container ${isMobile ? 'mobile-editor' : ''}`}
         />

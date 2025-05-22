@@ -1,5 +1,50 @@
 /* Aggressive style overrides for TipTap editor */
 
+/* CSS Variables */
+:root {
+  --editor-vh: 1vh;
+}
+
+/* Editor scrolling fixes */
+.rich-text-editor {
+  height: 100% !important;
+  overflow: auto !important;
+}
+
+.ProseMirror {
+  height: 100% !important;
+  overflow: auto !important;
+  min-height: 100% !important;
+}
+
+.rich-text-table-container {
+  height: 100% !important;
+  overflow: auto !important;
+}
+
+/* Mobile specific fixes */
+.mobile-editor {
+  padding-bottom: 40px !important;
+}
+
+body.mobile-view .ProseMirror {
+  font-size: 16px !important;
+  line-height: 1.5 !important;
+}
+
+body.keyboard-visible .mobile-editor {
+  max-height: calc(100 * var(--editor-vh));
+  overflow: auto !important;
+}
+
+body.keyboard-visible .rich-text-table-container {
+  height: auto !important;
+}
+
+body.mobile-view .rich-text-table-container {
+  min-height: calc(100 * var(--editor-vh) - 120px);
+}
+
 /* Remove all hover effects */
 .ProseMirror .is-editor-empty:first-child::before,
 .ProseMirror p.is-editor-empty:first-child::before,
