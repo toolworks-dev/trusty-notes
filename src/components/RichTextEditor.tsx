@@ -9,7 +9,7 @@ import TableRow from '@tiptap/extension-table-row';
 import TableCell from '@tiptap/extension-table-cell';
 import TableHeader from '@tiptap/extension-table-header';
 import TextAlign from '@tiptap/extension-text-align';
-import { Group, ActionIcon, Tooltip, Box } from '@mantine/core';
+import { Group, ActionIcon, Tooltip, Box, Switch } from '@mantine/core';
 import {
   IconRowInsertBottom,
   IconColumnInsertRight,
@@ -24,8 +24,11 @@ import {
   IconCode,
   IconH1,
   IconH2,
+  IconKeyboard,
 } from '@tabler/icons-react';
 import { useEffect, useState, CSSProperties } from 'react';
+import { VimExtension, toggleVimMode, loadVimModeState } from '../utils/VimExtension';
+import { KeySwapExtension } from '../utils/KeySwapExtension';
 
 const tableStyles = {
   '.ProseMirror': {
@@ -99,6 +102,8 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
   const [lastContent, setLastContent] = useState(content);
   const [lastText, setLastText] = useState('');
 
+  const [vimModeEnabled, setVimModeEnabled] = useState(() => loadVimModeState());
+  
   const editor = useEditor({
     extensions: [
       StarterKit,
@@ -130,6 +135,23 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
       TextAlign.configure({
         types: ['heading', 'paragraph', 'table'],
       }),
+      KeySwapExtension,
+      VimExtension.configure({
+        enabled: vimModeEnabled,
+        onSave: () => {
+          if (content && onChange) {
+            onChange(content);
+            console.log('Saved document');
+          }
+        },
+        onQuit: () => {
+          console.log('Quit requested');
+          setVimModeEnabled(false);
+        },
+        getFilename: () => {
+          return 'note.md';
+        }
+      }),
     ],
       content,
     onUpdate: ({ editor }) => {
@@ -158,6 +180,15 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     }
   }, [content, editor]);
 
+  useEffect(() => {
+    if (editor) {
+      editor.extensionStorage.vim = {
+        ...editor.extensionStorage.vim,
+        enabled: vimModeEnabled
+      };
+    }
+  }, [vimModeEnabled, editor]);
+
   if (!editor) {
     return null;
   }
@@ -172,6 +203,11 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     return editorInstance.isActive('table');
   };  
 
+  const handleVimModeToggle = () => {
+    const isEnabled = toggleVimMode();
+    setVimModeEnabled(isEnabled);
+  };
+
   const ToolbarWrapper = (
     <Box 
       className={isMobile ? "mobile-toolbar" : "desktop-toolbar"}
@@ -184,90 +220,155 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
         padding: '4px'
       }}
     >
-      <Group gap={4} wrap={isMobile ? "nowrap" : "wrap"}>
-        <Group gap={4}>
-          <Tooltip label="Bold">
-            <ActionIcon
-              variant={editor?.isActive('bold') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleBold().run())}
-              size="sm"
-            >
-              <IconBold size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Italic">
-            <ActionIcon
-              variant={editor?.isActive('italic') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleItalic().run())}
-              size="sm"
-            >
-              <IconItalic size={16} />
-            </ActionIcon>
-          </Tooltip>
+      <Group gap={4} style={{ justifyContent: 'space-between' }} wrap={isMobile ? "nowrap" : "wrap"}>
+        <Group gap={4} wrap={isMobile ? "nowrap" : "wrap"}>
+          <Group gap={4}>
+            <Tooltip label="Bold">
+              <ActionIcon
+                variant={editor?.isActive('bold') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleBold().run())}
+                size="sm"
+              >
+                <IconBold size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Italic">
+              <ActionIcon
+                variant={editor?.isActive('italic') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleItalic().run())}
+                size="sm"
+              >
+                <IconItalic size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
+          <Group gap={4}>
+            <Tooltip label="Heading 1">
+              <ActionIcon
+                variant={editor?.isActive('heading', { level: 1 }) ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleHeading({ level: 1 }).run())}
+                size="sm"
+              >
+                <IconH1 size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Heading 2">
+              <ActionIcon
+                variant={editor?.isActive('heading', { level: 2 }) ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleHeading({ level: 2 }).run())}
+                size="sm"
+              >
+                <IconH2 size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
+          <Group gap={4}>
+            <Tooltip label="Bullet List">
+              <ActionIcon
+                variant={editor?.isActive('bulletList') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleBulletList().run())}
+                size="sm"
+              >
+                <IconList size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Numbered List">
+              <ActionIcon
+                variant={editor?.isActive('orderedList') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleOrderedList().run())}
+                size="sm"
+              >
+                <IconListNumbers size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
+          <Group gap={4}>
+            <Tooltip label="Blockquote">
+              <ActionIcon
+                variant={editor?.isActive('blockquote') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleBlockquote().run())}
+                size="sm"
+              >
+                <IconQuote size={16} />
+              </ActionIcon>
+            </Tooltip>
+            <Tooltip label="Code Block">
+              <ActionIcon
+                variant={editor?.isActive('codeBlock') ? 'filled' : 'subtle'}
+                onClick={() => runCommand(chain => chain.toggleCodeBlock().run())}
+                size="sm"
+              >
+                <IconCode size={16} />
+              </ActionIcon>
+            </Tooltip>
+          </Group>
+
+          {isTableSelected() && (
+            <Group gap={4}>
+              <Tooltip label="Add Row">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => runCommand(chain => chain.addRowAfter().run())}
+                  size="sm"
+                >
+                  <IconRowInsertBottom size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Add Column">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => runCommand(chain => chain.addColumnAfter().run())}
+                  size="sm"
+                >
+                  <IconColumnInsertRight size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Delete Row">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => runCommand(chain => chain.deleteRow().run())}
+                  size="sm"
+                >
+                  <IconRowRemove size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Delete Column">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => runCommand(chain => chain.deleteColumn().run())}
+                  size="sm"
+                >
+                  <IconColumnRemove size={16} />
+                </ActionIcon>
+              </Tooltip>
+              <Tooltip label="Delete Table">
+                <ActionIcon
+                  variant="subtle"
+                  onClick={() => runCommand(chain => chain.deleteTable().run())}
+                  size="sm"
+                >
+                  <IconTrash size={16} />
+                </ActionIcon>
+              </Tooltip>
+            </Group>
+          )}
         </Group>
 
-        <Group gap={4}>
-          <Tooltip label="Heading 1">
-            <ActionIcon
-              variant={editor?.isActive('heading', { level: 1 }) ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleHeading({ level: 1 }).run())}
-              size="sm"
-            >
-              <IconH1 size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Heading 2">
-            <ActionIcon
-              variant={editor?.isActive('heading', { level: 2 }) ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleHeading({ level: 2 }).run())}
-              size="sm"
-            >
-              <IconH2 size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-
-        <Group gap={4}>
-          <Tooltip label="Bullet List">
-            <ActionIcon
-              variant={editor?.isActive('bulletList') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleBulletList().run())}
-              size="sm"
-            >
-              <IconList size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Numbered List">
-            <ActionIcon
-              variant={editor?.isActive('orderedList') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleOrderedList().run())}
-              size="sm"
-            >
-              <IconListNumbers size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-
-        <Group gap={4}>
-          <Tooltip label="Quote">
-            <ActionIcon
-              variant={editor?.isActive('blockquote') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleBlockquote().run())}
-              size="sm"
-            >
-              <IconQuote size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Code">
-            <ActionIcon
-              variant={editor?.isActive('code') ? 'filled' : 'subtle'}
-              onClick={() => runCommand(chain => chain.toggleCode().run())}
-              size="sm"
-            >
-              <IconCode size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
+        {/* Vim Mode Toggle */}
+        {!isMobile && (
+          <Group gap={4}>
+            <Switch
+              label="Vim Mode"
+              checked={vimModeEnabled}
+              onChange={handleVimModeToggle}
+              style={{ userSelect: 'none' }}
+              thumbIcon={vimModeEnabled ? <IconKeyboard size={12} stroke={2.5} /> : null}
+            />
+          </Group>
+        )}
       </Group>
     </Box>
   );
@@ -297,59 +398,14 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
       overflow: 'hidden'
     }}>
       {ToolbarWrapper}
-      {isTableSelected() && (
-        <Group mb="xs" wrap="nowrap">
-          <Tooltip label="Add Row">
-            <ActionIcon
-              variant="subtle"
-              onClick={() => runCommand(chain => chain.addRowAfter().run())}
-            >
-              <IconRowInsertBottom size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Add Column">
-            <ActionIcon
-              variant="subtle"
-              onClick={() => runCommand(chain => chain.addColumnAfter().run())}
-            >
-              <IconColumnInsertRight size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Delete Row">
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              onClick={() => runCommand(chain => chain.deleteRow().run())}
-            >
-              <IconRowRemove size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Delete Column">
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              onClick={() => runCommand(chain => chain.deleteColumn().run())}
-            >
-              <IconColumnRemove size={16} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="Delete Table">
-            <ActionIcon
-              variant="subtle"
-              color="red"
-              onClick={() => runCommand(chain => chain.deleteTable().run())}
-            >
-              <IconTrash size={16} />
-            </ActionIcon>
-          </Tooltip>
-        </Group>
-      )}
       <Box
         style={{
           flex: '1 1 auto',
           display: 'flex',
           flexDirection: 'column',
           minHeight: 0,
+          overflowY: 'auto',
+          WebkitOverflowScrolling: 'touch',
           ...tableStyles,
           ...mobileBorderStyle
         }}
@@ -361,7 +417,7 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
             display: 'flex',
             flexDirection: 'column',
             height: '100%',
-            overflow: 'hidden',
+            overflow: 'visible',
           }}
           className={`rich-text-table-container ${isMobile ? 'mobile-editor' : ''}`}
         />
