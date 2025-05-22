@@ -2,7 +2,7 @@ FROM oven/bun:1
 
 WORKDIR /app
 
-COPY package*.json ./
+COPY package.json bun.lock ./
 COPY .env ./
 RUN bun install
 
