@@ -6,6 +6,8 @@ WebApp: https://trustynotes.app
 
 Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
 
+Vim Mode documentation at: https://github.com/toolworks-dev/trusty-notes/blob/main/docs/vim.md
+
 ![image](https://github.com/user-attachments/assets/0507c221-d1a8-438a-b44c-954c1293eedf)
 
 
