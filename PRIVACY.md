@@ -37,7 +37,7 @@ TrustyNotes is committed to protecting your privacy. This Privacy Policy explain
 - Communication with our servers uses HTTPS encryption
 - Notes are signed using ECDSA to verify authenticity
 - Server access is restricted and monitored
-- We implement regular security audits and updates
+- We implement regular updates
 
 ## Data Sharing
 We do not share your data with third parties. Your encrypted notes are only:
