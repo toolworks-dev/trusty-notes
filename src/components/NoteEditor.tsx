@@ -162,6 +162,15 @@ export function NoteEditor({ note, isMobile = false, onBack, loadNotes }: NoteEd
               variant="unstyled"
               size="md"
               onBlur={saveNote}
+              onKeyDown={(e) => {
+                console.log('Mobile title keydown:', e.key);
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  console.log('Enter pressed in mobile title, saving note...');
+                  e.currentTarget.blur();
+                  saveNote();
+                }
+              }}
               style={{ 
                 flex: 1
               }}
@@ -264,6 +273,15 @@ export function NoteEditor({ note, isMobile = false, onBack, loadNotes }: NoteEd
               variant="unstyled"
               size="xl"
               onBlur={saveNote}
+              onKeyDown={(e) => {
+                console.log('Desktop title keydown:', e.key);
+                if (e.key === 'Enter') {
+                  e.preventDefault();
+                  console.log('Enter pressed in desktop title, saving note...');
+                  e.currentTarget.blur();
+                  saveNote();
+                }
+              }}
               className="modern-editor-title"
               style={{ 
                 flex: 1,

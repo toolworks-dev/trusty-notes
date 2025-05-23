@@ -120,16 +120,143 @@ export const VimExtension = Extension.create<VimOptions>({
           statusElement.style.position = 'fixed';
           statusElement.style.bottom = '25px';
           statusElement.style.right = '10px';
-          statusElement.style.padding = '2px 8px';
-          statusElement.style.backgroundColor = 'rgba(0, 0, 0, 0.75)';
+          statusElement.style.padding = '4px 8px';
+          statusElement.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
           statusElement.style.color = 'white';
-          statusElement.style.borderRadius = '3px';
+          statusElement.style.borderRadius = '4px';
           statusElement.style.fontFamily = 'monospace';
           statusElement.style.fontSize = '11px';
           statusElement.style.zIndex = '9999';
           statusElement.style.display = window.vimMode?.enabled ? 'block' : 'none';
+          statusElement.style.cursor = 'pointer';
+          statusElement.style.border = '1px solid rgba(255, 255, 255, 0.3)';
+          statusElement.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.3)';
+          statusElement.style.transition = 'all 0.2s ease';
+          statusElement.title = 'Click for Vim cheat sheet';
+          
+          const cheatSheet = document.createElement('div');
+          cheatSheet.className = 'vim-cheat-sheet';
+          cheatSheet.style.position = 'fixed';
+          cheatSheet.style.top = '50%';
+          cheatSheet.style.left = '50%';
+          cheatSheet.style.transform = 'translate(-50%, -50%)';
+          cheatSheet.style.backgroundColor = 'rgba(0, 0, 0, 0.95)';
+          cheatSheet.style.color = 'white';
+          cheatSheet.style.padding = '20px';
+          cheatSheet.style.borderRadius = '8px';
+          cheatSheet.style.fontFamily = 'monospace';
+          cheatSheet.style.fontSize = '12px';
+          cheatSheet.style.zIndex = '10000';
+          cheatSheet.style.display = 'none';
+          cheatSheet.style.maxWidth = '500px';
+          cheatSheet.style.maxHeight = '80vh';
+          cheatSheet.style.overflowY = 'auto';
+          cheatSheet.style.border = '2px solid #4A90E2';
+          cheatSheet.style.boxShadow = '0 10px 30px rgba(0, 0, 0, 0.5)';
+          cheatSheet.style.lineHeight = '1.4';
+          
+          cheatSheet.innerHTML = `
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; border-bottom: 1px solid #444; padding-bottom: 10px;">
+              <h3 style="margin: 0; color: #4A90E2; font-size: 16px;">🎯 Vim Mode Cheat Sheet</h3>
+              <button class="close-cheat-sheet" style="background: none; border: none; color: #ccc; font-size: 18px; cursor: pointer; padding: 0; width: 24px; height: 24px;">×</button>
+            </div>
+            
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
+              <div>
+                <h4 style="color: #FF6B6B; margin: 0 0 8px 0; font-size: 13px;">🔄 MODES</h4>
+                <div style="font-size: 11px; line-height: 1.3;">
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">Esc</kbd> → Normal mode</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">i</kbd> → Insert mode</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">a</kbd> → Insert after cursor</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">o/O</kbd> → New line below/above</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">v/V</kbd> → Visual/Line select</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">:</kbd> → Command mode</div>
+                </div>
+                
+                <h4 style="color: #4ECDC4; margin: 12px 0 8px 0; font-size: 13px;">➡️ NAVIGATION</h4>
+                <div style="font-size: 11px; line-height: 1.3;">
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">h j k l</kbd> → Left, Down, Up, Right</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">w/b/e</kbd> → Word forward/back/end</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">0/$</kbd> → Start/End of line</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">gg/G</kbd> → Top/Bottom of document</div>
+                </div>
+                
+                <h4 style="color: #95E1D3; margin: 12px 0 8px 0; font-size: 13px;">🔍 SEARCH</h4>
+                <div style="font-size: 11px; line-height: 1.3;">
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">/text</kbd> → Search forward</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">n/N</kbd> → Next/Previous match</div>
+                </div>
+              </div>
+              
+              <div>
+                <h4 style="color: #FFD93D; margin: 0 0 8px 0; font-size: 13px;">✏️ EDITING</h4>
+                <div style="font-size: 11px; line-height: 1.3;">
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">x</kbd> → Delete character</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">dd</kbd> → Delete line</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">dw/d$</kbd> → Delete word/to end</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">cc/cw</kbd> → Change line/word</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">yy</kbd> → Copy line</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">p/P</kbd> → Paste after/before</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">u</kbd> → Undo</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">Ctrl+r</kbd> → Redo</div>
+                </div>
+                
+                <h4 style="color: #A8E6CF; margin: 12px 0 8px 0; font-size: 13px;">💾 COMMANDS</h4>
+                <div style="font-size: 11px; line-height: 1.3;">
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">:w</kbd> → Save note</div>
+                  <div><kbd style="background: #333; padding: 1px 4px; border-radius: 2px;">:wq</kbd> → Save and exit vim mode</div>
+                </div>
+                
+                <div style="margin-top: 15px; padding: 8px; background: rgba(74, 144, 226, 0.2); border-radius: 4px; border-left: 3px solid #4A90E2;">
+                  <div style="font-size: 10px; color: #ccc;">💡 <strong>Quick Tips:</strong></div>
+                  <div style="font-size: 10px; color: #ccc;">Press <kbd style="background: #333; padding: 1px 3px; border-radius: 2px;">Ctrl+;</kbd> to toggle vim mode</div>
+                  <div style="font-size: 10px; color: #ccc;">Press <kbd style="background: #333; padding: 1px 3px; border-radius: 2px;">Ctrl+'</kbd> to toggle this cheat sheet</div>
+                </div>
+              </div>
+            </div>
+          `;
+          
+          statusElement.addEventListener('click', (e) => {
+            e.stopPropagation();
+            cheatSheet.style.display = cheatSheet.style.display === 'none' ? 'block' : 'none';
+          });
+          
+          statusElement.addEventListener('mouseenter', () => {
+            statusElement.style.backgroundColor = 'rgba(74, 144, 226, 0.8)';
+            statusElement.style.transform = 'scale(1.05)';
+          });
+          
+          statusElement.addEventListener('mouseleave', () => {
+            statusElement.style.backgroundColor = 'rgba(0, 0, 0, 0.85)';
+            statusElement.style.transform = 'scale(1)';
+          });
+          
+          const closeButton = cheatSheet.querySelector('.close-cheat-sheet');
+          closeButton?.addEventListener('click', () => {
+            cheatSheet.style.display = 'none';
+          });
+          
+          document.addEventListener('click', (e) => {
+            if (!cheatSheet.contains(e.target as Node) && !statusElement.contains(e.target as Node)) {
+              cheatSheet.style.display = 'none';
+            }
+          });
+          
+          document.addEventListener('keydown', (e) => {
+            if (e.key === 'Escape' && cheatSheet.style.display === 'block') {
+              cheatSheet.style.display = 'none';
+            }
+          });
+          
+          document.addEventListener('keydown', (e) => {
+            if (e.ctrlKey && e.key === "'") {
+              e.preventDefault();
+              cheatSheet.style.display = cheatSheet.style.display === 'none' ? 'block' : 'none';
+            }
+          });
           
           document.body.appendChild(statusElement);
+          document.body.appendChild(cheatSheet);
           
           const statusLine = document.createElement('div');
           statusLine.className = 'vim-status-line';
@@ -194,6 +321,10 @@ export const VimExtension = Extension.create<VimOptions>({
                 console.log(`Executing command from input: "${command}"`);
                 window.vimMode.commandBuffer = command;
                 commandInput.style.display = 'none';
+                
+                setTimeout(() => {
+                  view.focus();
+                }, 10);
                 
                  if (command.startsWith(':')) {
                    const actualCommand = command.substring(1).trim();
@@ -306,6 +437,25 @@ export const VimExtension = Extension.create<VimOptions>({
               }
               return false;
             }
+            
+            if (e.key === 'Escape') {
+              e.preventDefault();
+              e.stopPropagation();
+              
+              if (window.vimMode) {
+                window.vimMode.mode = 'normal';
+                if (window.vimMode.statusElement) {
+                  window.vimMode.statusElement.textContent = 'NORMAL';
+                }
+                commandInput.style.display = 'none';
+                window.vimMode.commandBuffer = '';
+                
+                setTimeout(() => {
+                  view.focus();
+                }, 10);
+              }
+              return false;
+            }
           });
           
           document.body.appendChild(commandInput);
@@ -314,6 +464,42 @@ export const VimExtension = Extension.create<VimOptions>({
             window.vimMode.statusElement = statusElement;
             window.vimMode.statusLine = statusLine;
             window.vimMode.commandInput = commandInput;
+          }
+          
+          if (window.vimMode.enabled) {
+            window.vimMode.mode = 'insert';
+            if (window.vimMode.statusElement) {
+              window.vimMode.statusElement.textContent = 'INSERT';
+            }
+          }
+          
+          if (window.vimMode.statusLine) {
+            window.vimMode.statusLine.style.display = window.vimMode.enabled ? 'flex' : 'none';
+            
+            if (window.vimMode.enabled && window.vimMode.statusLine.firstChild) {
+              const leftSide = window.vimMode.statusLine.firstChild as HTMLElement;
+              leftSide.innerHTML = '<b>INSERT</b>';
+              
+              if (window.vimMode.options.getFilename) {
+                const filename = window.vimMode.options.getFilename();
+                if (filename) {
+                  leftSide.innerHTML += ` | ${filename}`;
+                }
+              }
+              
+              if (window.vimMode.enabled && window.vimMode.statusLine.lastChild) {
+                const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
+                const originalText = rightSide.textContent;
+                rightSide.textContent = 'Ctrl+; to toggle vim mode';
+                
+                setTimeout(() => {
+                  if (window.vimMode && window.vimMode.statusLine && window.vimMode.statusLine.lastChild) {
+                    const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
+                    rightSide.textContent = originalText || 'Line: 1, Col: 1';
+                  }
+                }, 3000);
+              }
+            }
           }
           
           return {
@@ -338,7 +524,6 @@ export const VimExtension = Extension.create<VimOptions>({
               let line = 1;
               let column = 1;
               let totalLines = 1;
-              let lineCount = 0;
               
               const nodeTypes = new Set();
               state.doc.descendants(node => {
@@ -350,34 +535,62 @@ export const VimExtension = Extension.create<VimOptions>({
               
               console.log("Document node types:", Array.from(nodeTypes));
               
-              const paragraphMap = new Map();
               const lineMap = new Map();
-              
               let visualLine = 1;
               
+              const processedPositions = new Set<number>();
+              
               state.doc.descendants((node, pos) => {
+                if (processedPositions.has(pos)) {
+                  return true;
+                }
+                
                 if (node.type.name === 'paragraph' || 
                     node.type.name === 'heading' || 
-                    node.type.name === 'listItem' ||
                     node.type.name === 'codeBlock') {
                   
-                  paragraphMap.set(pos, visualLine);
                   lineMap.set(pos, visualLine);
+                  processedPositions.add(pos);
                   
-                  lineCount++;
-                } 
-                else if (node.type.name === 'hardBreak') {
+                  let hardBreakCount = 0;
+                  node.descendants((childNode, childPos) => {
+                    if (childNode.type.name === 'hardBreak') {
+                      hardBreakCount++;
+                      const absolutePos = pos + childPos + 1;
+                      lineMap.set(absolutePos, visualLine + hardBreakCount);
+                      processedPositions.add(absolutePos);
+                    }
+                    return true;
+                  });
+                  
+                  visualLine += Math.max(hardBreakCount, 0) + 1;
+                }
+                else if (node.type.name === 'listItem') {
+                  lineMap.set(pos, visualLine);
+                  processedPositions.add(pos);
+                  
+                  node.descendants((childNode, childPos) => {
+                    const childAbsolutePos = pos + childPos;
+                    processedPositions.add(childAbsolutePos);
+                    
+                    if (childNode.type.name === 'hardBreak') {
+                      const absolutePos = pos + childPos + 1;
+                      lineMap.set(absolutePos, visualLine + 1);
+                      visualLine++;
+                    }
+                    return true;
+                  });
+                  
                   visualLine++;
-                  lineMap.set(pos + 1, visualLine);
-                  
                 }
                 
                 return true;
               });
               
-              totalLines = Math.max(visualLine, 1);
+              totalLines = Math.max(visualLine - 1, 1);
               
               console.log(`Line structure: totalLines=${totalLines}, visualLine=${visualLine}`);
+              console.log('Line map:', Array.from(lineMap.entries()).slice(0, 10));
               
               if (lineMap.has($head.pos)) {
                 line = lineMap.get($head.pos);
@@ -387,15 +600,15 @@ export const VimExtension = Extension.create<VimOptions>({
                 let closestLine = 1;
                 
                 for (const [pos, lineNum] of lineMap.entries()) {
-                  if (pos <= $head.pos && pos > closestPos) {
+                  if (pos <= $head.pos && pos >= closestPos) {
                     closestPos = pos;
                     closestLine = lineNum;
                   }
                 }
                 
                 let additionalBreaks = 0;
-                state.doc.nodesBetween(closestPos, $head.pos, (node) => {
-                  if (node.type.name === 'hardBreak') {
+                state.doc.nodesBetween(closestPos, $head.pos, (node, nodePos) => {
+                  if (node.type.name === 'hardBreak' && nodePos <= $head.pos) {
                     additionalBreaks++;
                   }
                   return true;
@@ -462,6 +675,7 @@ export const VimExtension = Extension.create<VimOptions>({
                 window.vimMode.statusElement!.textContent = 'NORMAL';
                 window.vimMode.commandInput!.style.display = 'none';
                 window.vimMode.commandBuffer = '';
+                view.focus();
                 return true;
               }
               
@@ -474,6 +688,10 @@ export const VimExtension = Extension.create<VimOptions>({
                 
                 window.vimMode.mode = 'normal';
                 window.vimMode.statusElement!.textContent = 'NORMAL';
+                
+                setTimeout(() => {
+                  view.focus();
+                }, 10);
                 
                 if (commandInput.startsWith(':')) {
                   const command = commandInput.substring(1).trim();
@@ -729,6 +947,7 @@ export const VimExtension = Extension.create<VimOptions>({
             if (event.key === 'Escape' && window.vimMode.mode === 'insert') {
               window.vimMode.mode = 'normal';
               window.vimMode.statusElement!.textContent = 'NORMAL';
+              view.focus();
               return true;
             }
             
@@ -736,10 +955,9 @@ export const VimExtension = Extension.create<VimOptions>({
               if (event.key === 'Escape') {
                 window.vimMode.mode = 'normal';
                 window.vimMode.statusElement!.textContent = 'NORMAL';
+                view.focus();
                 return true;
               }
-              
-              
               
               return true;
             }
@@ -773,6 +991,7 @@ export const VimExtension = Extension.create<VimOptions>({
               if (event.key === 'i') {
                 window.vimMode.mode = 'insert';
                 window.vimMode.statusElement!.textContent = 'INSERT';
+                view.focus();
                 return true;
               }
               
@@ -790,6 +1009,7 @@ export const VimExtension = Extension.create<VimOptions>({
                 
                 window.vimMode.mode = 'insert';
                 window.vimMode.statusElement!.textContent = 'INSERT';
+                view.focus();
                 return true;
               }
 
@@ -803,6 +1023,7 @@ export const VimExtension = Extension.create<VimOptions>({
                 
                 window.vimMode.mode = 'insert';
                 window.vimMode.statusElement!.textContent = 'INSERT';
+                view.focus();
                 return true;
               }
 
@@ -816,6 +1037,7 @@ export const VimExtension = Extension.create<VimOptions>({
                 
                 window.vimMode.mode = 'insert';
                 window.vimMode.statusElement!.textContent = 'INSERT';
+                view.focus();
                 return true;
               }
               
@@ -849,76 +1071,60 @@ export const VimExtension = Extension.create<VimOptions>({
               
               if (event.key === 'j' || event.key === 'ArrowDown') {
                 const { selection } = state;
-                const { $from } = selection;
-                const pos = $from.pos;
+                const { $head } = selection;
+                const currentPos = $head.pos;
                 
-                const nextLineStart = $from.after(1);
+                const linePositions: number[] = [];
+                state.doc.descendants((node, pos) => {
+                  if (node.type.name === 'paragraph' || 
+                      node.type.name === 'heading' || 
+                      node.type.name === 'listItem' ||
+                      node.type.name === 'codeBlock') {
+                    
+                    linePositions.push(pos);
+                    
+                    node.descendants((childNode, childPos) => {
+                      if (childNode.type.name === 'hardBreak') {
+                        linePositions.push(pos + childPos + 1);
+                      }
+                      return true;
+                    });
+                  } else if (node.type.name === 'hardBreak') {
+                    linePositions.push(pos + 1);
+                  }
+                  return true;
+                });
                 
-                if (nextLineStart && nextLineStart > pos) {
-                  const tr = state.tr.setSelection(
-                    TextSelection.create(state.doc, nextLineStart)
-                  );
-                  dispatch(tr);
-
-                  if (window.vimMode) {
-                    setTimeout(() => {
-                      const updatedSelection = view.state.selection;
-                      const updatedPos = updatedSelection.$head.pos;
-                      let updatedLine = 1;
-                      
-                      const lineMap = new Map();
-                      let visualLine = 1;
-                      
-                      view.state.doc.descendants((node, pos) => {
-                        if (node.type.name === 'paragraph' || 
-                            node.type.name === 'heading' || 
-                            node.type.name === 'listItem' ||
-                            node.type.name === 'codeBlock') {
-                          
-                          lineMap.set(pos, visualLine);
-                          visualLine++;
-                        } 
-                        else if (node.type.name === 'hardBreak') {
-                          visualLine++;
-                          lineMap.set(pos + 1, visualLine);
-                        }
-                        
-                        return true;
-                      });
-                      
-                      if (lineMap.has(updatedPos)) {
-                        updatedLine = lineMap.get(updatedPos);
-                      } else {
-                        let closestPos = 0;
-                        let closestLine = 1;
-                        
-                        for (const [pos, lineNum] of lineMap.entries()) {
-                          if (pos <= updatedPos && pos > closestPos) {
-                            closestPos = pos;
-                            closestLine = lineNum;
-                          }
-                        }
-                        
-                        updatedLine = closestLine;
-                      }
-                      
-                      let column = 1;
-                      view.state.doc.nodesBetween(0, updatedPos, (node, pos) => {
-                        if (node.isText && pos <= updatedPos && pos + node.nodeSize > updatedPos) {
-                          column = updatedPos - pos + 1;
-                          return false;
-                        }
-                        return true;
-                      });
-                      
-                      window.vimMode.cursorPosition.line = updatedLine;
-                      window.vimMode.cursorPosition.column = column;
-                      
-                      if (window.vimMode.statusLine) {
-                        const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
-                        rightSide.textContent = `Line: ${updatedLine}, Col: ${column} (${window.vimMode.cursorPosition.totalLines} lines)`;
-                      }
-                    }, 0);
+                linePositions.sort((a, b) => a - b);
+                
+                let currentLineIndex = -1;
+                for (let i = 0; i < linePositions.length; i++) {
+                  if (linePositions[i] <= currentPos && 
+                      (i === linePositions.length - 1 || linePositions[i + 1] > currentPos)) {
+                    currentLineIndex = i;
+                    break;
+                  }
+                }
+                
+                if (currentLineIndex >= 0 && currentLineIndex < linePositions.length - 1) {
+                  const nextLineStart = linePositions[currentLineIndex + 1];
+                  const currentLineStart = linePositions[currentLineIndex];
+                  const currentColumn = currentPos - currentLineStart;
+                  
+                  let nextLineEnd = nextLineStart + 100;
+                  if (currentLineIndex + 2 < linePositions.length) {
+                    nextLineEnd = linePositions[currentLineIndex + 2] - 1;
+                  } else {
+                    nextLineEnd = state.doc.content.size;
+                  }
+                  
+                  const targetPos = Math.min(nextLineStart + currentColumn, nextLineEnd);
+                  
+                  if (targetPos !== currentPos && targetPos <= state.doc.content.size) {
+                    const tr = state.tr.setSelection(
+                      TextSelection.create(state.doc, targetPos)
+                    );
+                    dispatch(tr);
                   }
                 }
                 return true;
@@ -926,76 +1132,58 @@ export const VimExtension = Extension.create<VimOptions>({
               
               if (event.key === 'k' || event.key === 'ArrowUp') {
                 const { selection } = state;
-                const { $from } = selection;
-                const pos = $from.pos;
+                const { $head } = selection;
+                const currentPos = $head.pos;
                 
-                const prevLineStart = $from.before(1);
+                const linePositions: number[] = [];
+                state.doc.descendants((node, pos) => {
+                  if (node.type.name === 'paragraph' || 
+                      node.type.name === 'heading' || 
+                      node.type.name === 'listItem' ||
+                      node.type.name === 'codeBlock') {
+                    
+                    linePositions.push(pos);
+                    
+                    node.descendants((childNode, childPos) => {
+                      if (childNode.type.name === 'hardBreak') {
+                        linePositions.push(pos + childPos + 1);
+                      }
+                      return true;
+                    });
+                  } else if (node.type.name === 'hardBreak') {
+                    linePositions.push(pos + 1);
+                  }
+                  return true;
+                });
                 
-                if (prevLineStart && prevLineStart < pos) {
-                  const tr = state.tr.setSelection(
-                    TextSelection.create(state.doc, prevLineStart)
-                  );
-                  dispatch(tr);
+                linePositions.sort((a, b) => a - b);
+                
+                let currentLineIndex = -1;
+                for (let i = 0; i < linePositions.length; i++) {
+                  if (linePositions[i] <= currentPos && 
+                      (i === linePositions.length - 1 || linePositions[i + 1] > currentPos)) {
+                    currentLineIndex = i;
+                    break;
+                  }
+                }
+                
+                if (currentLineIndex > 0) {
+                  const prevLineStart = linePositions[currentLineIndex - 1];
+                  const currentLineStart = linePositions[currentLineIndex];
+                  const currentColumn = currentPos - currentLineStart;
                   
-                  if (window.vimMode) {
-                    setTimeout(() => {
-                      const updatedSelection = view.state.selection;
-                      const updatedPos = updatedSelection.$head.pos;
-                      let updatedLine = 1;
-                      
-                      const lineMap = new Map();
-                      let visualLine = 1;
-                      
-                      view.state.doc.descendants((node, pos) => {
-                        if (node.type.name === 'paragraph' || 
-                            node.type.name === 'heading' || 
-                            node.type.name === 'listItem' ||
-                            node.type.name === 'codeBlock') {
-                          
-                          lineMap.set(pos, visualLine);
-                          visualLine++;
-                        } 
-                        else if (node.type.name === 'hardBreak') {
-                          visualLine++;
-                          lineMap.set(pos + 1, visualLine);
-                        }
-                        
-                        return true;
-                      });
-                      
-                      if (lineMap.has(updatedPos)) {
-                        updatedLine = lineMap.get(updatedPos);
-                      } else {
-                        let closestPos = 0;
-                        let closestLine = 1;
-                        
-                        for (const [pos, lineNum] of lineMap.entries()) {
-                          if (pos <= updatedPos && pos > closestPos) {
-                            closestPos = pos;
-                            closestLine = lineNum;
-                          }
-                        }
-                        
-                        updatedLine = closestLine;
-                      }
-                      
-                      let column = 1;
-                      view.state.doc.nodesBetween(0, updatedPos, (node, pos) => {
-                        if (node.isText && pos <= updatedPos && pos + node.nodeSize > updatedPos) {
-                          column = updatedPos - pos + 1;
-                          return false;
-                        }
-                        return true;
-                      });
-                      
-                      window.vimMode.cursorPosition.line = updatedLine;
-                      window.vimMode.cursorPosition.column = column;
-                      
-                      if (window.vimMode.statusLine) {
-                        const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
-                        rightSide.textContent = `Line: ${updatedLine}, Col: ${column} (${window.vimMode.cursorPosition.totalLines} lines)`;
-                      }
-                    }, 0);
+                  let prevLineEnd = currentLineStart - 1;
+                  if (currentLineIndex < linePositions.length) {
+                    prevLineEnd = linePositions[currentLineIndex] - 1;
+                  }
+                  
+                  const targetPos = Math.min(prevLineStart + currentColumn, prevLineEnd);
+                  
+                  if (targetPos !== currentPos && targetPos >= 0) {
+                    const tr = state.tr.setSelection(
+                      TextSelection.create(state.doc, targetPos)
+                    );
+                    dispatch(tr);
                   }
                 }
                 return true;
@@ -1214,6 +1402,7 @@ export const VimExtension = Extension.create<VimOptions>({
                   window.vimMode.mode = 'insert';
                   window.vimMode.statusElement!.textContent = 'INSERT';
                   window.vimMode.commandState = { count: '', operator: '', motion: '' };
+                  view.focus();
                 } else {
                   window.vimMode.commandState.operator = 'c';
                 }
@@ -1252,6 +1441,7 @@ export const VimExtension = Extension.create<VimOptions>({
                   
                   window.vimMode.mode = 'insert';
                   window.vimMode.statusElement!.textContent = 'INSERT';
+                  view.focus();
                 }
                 
                 window.vimMode.commandState = { count: '', operator: '', motion: '' };
@@ -1375,6 +1565,7 @@ export const VimExtension = Extension.create<VimOptions>({
               if (event.key === 'v') {
                 window.vimMode.mode = 'visual';
                 window.vimMode.statusElement!.textContent = 'VISUAL';
+                view.focus();
                 return true;
               }
               
@@ -1471,6 +1662,7 @@ export const VimExtension = Extension.create<VimOptions>({
                 
                 window.vimMode.mode = 'visual';
                 window.vimMode.statusElement!.textContent = 'VISUAL LINE';
+                view.focus();
                 return true;
               }
 
@@ -1553,7 +1745,9 @@ export function toggleVimMode() {
       
       if (window.vimMode.enabled) {
         window.vimMode.mode = 'insert';
-        window.vimMode.statusElement.textContent = 'INSERT';
+        if (window.vimMode.statusElement) {
+          window.vimMode.statusElement.textContent = 'INSERT';
+        }
       }
     }
     
@@ -1569,6 +1763,19 @@ export function toggleVimMode() {
           if (filename) {
             leftSide.innerHTML += ` | ${filename}`;
           }
+        }
+        
+        if (window.vimMode.enabled && window.vimMode.statusLine.lastChild) {
+          const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
+          const originalText = rightSide.textContent;
+          rightSide.textContent = 'Ctrl+; to toggle vim mode';
+          
+          setTimeout(() => {
+            if (window.vimMode && window.vimMode.statusLine && window.vimMode.statusLine.lastChild) {
+              const rightSide = window.vimMode.statusLine.lastChild as HTMLElement;
+              rightSide.textContent = originalText || 'Line: 1, Col: 1';
+            }
+          }, 3000);
         }
       }
     }

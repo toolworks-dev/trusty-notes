@@ -29,6 +29,7 @@ When Vim mode is enabled, a status line appears at the bottom of the editor show
 
 | Command | Description |
 |---------|-------------|
+| `Ctrl +` | Enter/Exit Vim Mode
 | `Escape` | Switch to Normal mode from any other mode |
 | `i` | Enter Insert mode at cursor position |
 | `a` | Enter Insert mode after cursor position |

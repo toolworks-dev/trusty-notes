@@ -134,15 +134,24 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
     }
   }, [vimModeEnabled, editor]);
 
+  useEffect(() => {
+    const handleKeyDown = (event: KeyboardEvent) => {
+      if (event.ctrlKey && event.key === ';') {
+        event.preventDefault();
+        handleVimModeToggle();
+      }
+    };
+
+    document.addEventListener('keydown', handleKeyDown);
+
+    return () => {
+      document.removeEventListener('keydown', handleKeyDown);
+    };
+  }, []);
+
   if (!editor) {
     return null;
   }
-
-  const runCommand = (callback: (chain: ReturnType<NonNullable<typeof editor>['chain']>) => void) => {
-    if (editor) {
-      callback(editor.chain().focus());
-    }
-  };
 
   const isTableSelected = () => {
     return editor.isActive('table');
@@ -151,6 +160,22 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
   const handleVimModeToggle = () => {
     const isEnabled = toggleVimMode();
     setVimModeEnabled(isEnabled);
+    
+    if (window.vimMode && window.vimMode.statusElement) {
+      const statusMessage = isEnabled ? 'Vim mode enabled' : 'Vim mode disabled';
+      window.vimMode.statusElement.textContent = statusMessage;
+      window.vimMode.statusElement.style.display = 'block';
+      
+      setTimeout(() => {
+        if (window.vimMode && window.vimMode.statusElement) {
+          if (isEnabled) {
+            window.vimMode.statusElement.textContent = window.vimMode.mode.toUpperCase();
+          } else {
+            window.vimMode.statusElement.style.display = 'none';
+          }
+        }
+      }, 1500);
+    }
   };
 
   const ToolbarButton = ({ 
@@ -171,6 +196,7 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
         variant={isActive ? 'filled' : 'subtle'}
         color={isActive ? 'blue' : 'gray'}
         onClick={onClick}
+        onMouseDown={(e) => e.preventDefault()}
         disabled={disabled}
         size={isMobile ? 'sm' : 'md'}
         className="modern-toolbar-button"
@@ -254,13 +280,13 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
               icon={<IconBold size={isMobile ? 14 : 16} />}
               label="Bold"
               isActive={editor?.isActive('bold') ?? false}
-              onClick={() => runCommand(chain => chain.toggleBold().run())}
+              onClick={() => editor?.chain().focus().toggleBold().run()}
             />
             <ToolbarButton
               icon={<IconItalic size={isMobile ? 14 : 16} />}
               label="Italic"
               isActive={editor?.isActive('italic') ?? false}
-              onClick={() => runCommand(chain => chain.toggleItalic().run())}
+              onClick={() => editor?.chain().focus().toggleItalic().run()}
             />
           </ToolbarGroup>
 
@@ -272,13 +298,13 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
               icon={<IconH1 size={isMobile ? 14 : 16} />}
               label="Heading 1"
               isActive={editor?.isActive('heading', { level: 1 }) ?? false}
-              onClick={() => runCommand(chain => chain.toggleHeading({ level: 1 }).run())}
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 1 }).run()}
             />
             <ToolbarButton
               icon={<IconH2 size={isMobile ? 14 : 16} />}
               label="Heading 2"
               isActive={editor?.isActive('heading', { level: 2 }) ?? false}
-              onClick={() => runCommand(chain => chain.toggleHeading({ level: 2 }).run())}
+              onClick={() => editor?.chain().focus().toggleHeading({ level: 2 }).run()}
             />
           </ToolbarGroup>
 
@@ -290,13 +316,13 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
               icon={<IconList size={isMobile ? 14 : 16} />}
               label="Bullet List"
               isActive={editor?.isActive('bulletList') ?? false}
-              onClick={() => runCommand(chain => chain.toggleBulletList().run())}
+              onClick={() => editor?.chain().focus().toggleBulletList().run()}
             />
             <ToolbarButton
               icon={<IconListNumbers size={isMobile ? 14 : 16} />}
               label="Numbered List"
               isActive={editor?.isActive('orderedList') ?? false}
-              onClick={() => runCommand(chain => chain.toggleOrderedList().run())}
+              onClick={() => editor?.chain().focus().toggleOrderedList().run()}
             />
           </ToolbarGroup>
 
@@ -308,14 +334,14 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
               icon={<IconQuote size={isMobile ? 14 : 16} />}
               label="Quote"
               isActive={editor?.isActive('blockquote') ?? false}
-              onClick={() => runCommand(chain => chain.toggleBlockquote().run())}
+              onClick={() => editor?.chain().focus().toggleBlockquote().run()}
             />
             {!isMobile && (
               <ToolbarButton
                 icon={<IconCode size={16} />}
                 label="Code Block"
                 isActive={editor?.isActive('codeBlock') ?? false}
-                onClick={() => runCommand(chain => chain.toggleCodeBlock().run())}
+                onClick={() => editor?.chain().focus().toggleCodeBlock().run()}
               />
             )}
           </ToolbarGroup>
@@ -328,7 +354,7 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
                 <ToolbarButton
                   icon={<IconTable size={16} />}
                   label="Insert Table"
-                  onClick={() => runCommand(chain => chain.insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run())}
+                  onClick={() => editor?.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()}
                 />
               </ToolbarGroup>
             </>
@@ -342,17 +368,17 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
                 <ToolbarButton
                   icon={<IconRowInsertBottom size={isMobile ? 14 : 16} />}
                   label="Add Row"
-                  onClick={() => runCommand(chain => chain.addRowAfter().run())}
+                  onClick={() => editor?.chain().focus().addRowAfter().run()}
                 />
                 <ToolbarButton
                   icon={<IconColumnInsertRight size={isMobile ? 14 : 16} />}
                   label="Add Column"
-                  onClick={() => runCommand(chain => chain.addColumnAfter().run())}
+                  onClick={() => editor?.chain().focus().addColumnAfter().run()}
                 />
                 <ToolbarButton
                   icon={<IconTrash size={isMobile ? 14 : 16} />}
                   label="Delete Table"
-                  onClick={() => runCommand(chain => chain.deleteTable().run())}
+                  onClick={() => editor?.chain().focus().deleteTable().run()}
                 />
               </ToolbarGroup>
             </>
@@ -367,19 +393,19 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
                   icon={<IconAlignLeft size={16} />}
                   label="Align Left"
                   isActive={editor?.isActive({ textAlign: 'left' }) ?? false}
-                  onClick={() => runCommand(chain => chain.setTextAlign('left').run())}
+                  onClick={() => editor?.chain().focus().setTextAlign('left').run()}
                 />
                 <ToolbarButton
                   icon={<IconAlignCenter size={16} />}
                   label="Align Center"
                   isActive={editor?.isActive({ textAlign: 'center' }) ?? false}
-                  onClick={() => runCommand(chain => chain.setTextAlign('center').run())}
+                  onClick={() => editor?.chain().focus().setTextAlign('center').run()}
                 />
                 <ToolbarButton
                   icon={<IconAlignRight size={16} />}
                   label="Align Right"
                   isActive={editor?.isActive({ textAlign: 'right' }) ?? false}
-                  onClick={() => runCommand(chain => chain.setTextAlign('right').run())}
+                  onClick={() => editor?.chain().focus().setTextAlign('right').run()}
                 />
               </ToolbarGroup>
             </>
@@ -389,18 +415,20 @@ export function RichTextEditor({ content, onChange, isMobile }: RichTextEditorPr
           {!isMobile && (
             <>
               <ToolbarDivider />
-              <Switch
-                label="Vim"
-                checked={vimModeEnabled}
-                onChange={handleVimModeToggle}
-                size="sm"
-                color="blue"
-                thumbIcon={vimModeEnabled ? <IconKeyboard size={12} /> : null}
-                styles={{
-                  root: { alignItems: 'center' },
-                  label: { fontSize: '0.875rem', fontWeight: 500 }
-                }}
-              />
+              <Tooltip label="Vim Mode (Ctrl+;)" position="bottom">
+                <Switch
+                  label="Vim"
+                  checked={vimModeEnabled}
+                  onChange={handleVimModeToggle}
+                  size="sm"
+                  color="blue"
+                  thumbIcon={vimModeEnabled ? <IconKeyboard size={12} /> : null}
+                  styles={{
+                    root: { alignItems: 'center' },
+                    label: { fontSize: '0.875rem', fontWeight: 500 }
+                  }}
+                />
+              </Tooltip>
             </>
           )}
         </Group>
