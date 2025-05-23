@@ -8,7 +8,7 @@ Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/rele
 
 Vim Mode documentation at: https://github.com/toolworks-dev/trusty-notes/blob/main/docs/vim.md
 
-![image](https://github.com/user-attachments/assets/0507c221-d1a8-438a-b44c-954c1293eedf)
+![image](https://github.com/user-attachments/assets/0d573b72-41af-4851-b90b-d2105bc50286)
 
 
 ## Features
