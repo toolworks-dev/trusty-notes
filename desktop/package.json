@@ -1,6 +1,6 @@
 {
     "name": "trusty-notes-electron",
-    "version": "0.8.0",
+    "version": "0.8.1",
     "main": "main.js",
     "type": "commonjs",
     "description": "TrustyNotes is a simple, secure, and reliable note-taking app",
