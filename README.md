@@ -88,3 +88,21 @@ bun run dist:all // for both
 ```
 
 Builds are in ```desktop/dist-electron```
+
+
+## Build Android Application
+
+### Requires
+- Bun (https://bun.sh)
+- Android Studio Tools (https://developer.android.com/studio)
+- OpenJDK 21+ (https://openjdk.org/)
+
+### Build
+
+```
+bun install
+bun run build:android
+```
+
+Build is in ```android/app/build/ouputs/apk/release```
+
