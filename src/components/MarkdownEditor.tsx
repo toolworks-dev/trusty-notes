@@ -68,10 +68,20 @@ export function MarkdownEditor({
         value={content}
         onChange={(e) => onChange(e.currentTarget.value)}
         styles={{
-          root: { height: '100%' },
-          wrapper: { height: '100%' },
-          input: {
+          root: { 
             height: '100%',
+            display: 'flex',
+            flexDirection: 'column'
+          },
+          wrapper: { 
+            height: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1
+          },
+          input: {
+            flex: 1,
+            minHeight: isMobile ? '300px' : '400px',
             padding: isMobile ? '1rem' : '1.5rem',
             fontSize: isMobile ? '16px' : '14px',
             lineHeight: isMobile ? '1.6' : '1.5',
@@ -87,9 +97,8 @@ export function MarkdownEditor({
               : '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace'
           }
         }}
-        autosize={false}
-        minRows={undefined}
-        maxRows={undefined}
+        autosize
+        minRows={isMobile ? 15 : 20}
       />
     )
   );
@@ -104,8 +113,7 @@ export function MarkdownEditor({
         background: 'var(--editor-bg)',
         color: 'var(--text-primary)',
         fontSize: isMobile ? '16px' : '14px',
-        lineHeight: isMobile ? '1.6' : '1.5',
-        WebkitOverflowScrolling: 'touch'
+        lineHeight: isMobile ? '1.6' : '1.5'
       }}
     >
       <ReactMarkdown
@@ -122,11 +130,12 @@ export function MarkdownEditor({
       return (
         <Box style={{ 
           height: '100%', 
-          overflow: 'hidden',
+          overflow: 'auto',
           display: 'flex',
           flexDirection: 'column',
           flex: 1,
-          minHeight: 0
+          minHeight: 0,
+          WebkitOverflowScrolling: 'touch'
         }}>
           {view === 'edit' ? renderEditor() : renderPreview()}
         </Box>
@@ -238,7 +247,7 @@ export function MarkdownEditor({
       <Box 
         style={{ 
           flex: 1,
-          overflow: 'hidden',
+          overflow: isMobile ? 'hidden' : 'auto',
           position: 'relative',
           minHeight: 0,
           display: 'flex',
