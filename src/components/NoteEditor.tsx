@@ -3,14 +3,14 @@ import {
   Text,
   Button, 
   Group,
-  Paper,
   ActionIcon,
   Box,
   TextInput,
   Badge,
-  Stack
+  Stack,
+  Divider
 } from '@mantine/core';
-import { IconTrash, IconChevronLeft, IconShieldLock, IconLock } from '@tabler/icons-react';
+import { IconTrash, IconChevronLeft, IconShieldLock, IconLock, IconDeviceFloppy } from '@tabler/icons-react';
 import { WebStorageService } from '../services/webStorage';
 import { Note } from '../types/sync';
 import { MarkdownEditor } from './MarkdownEditor';
@@ -19,12 +19,11 @@ import { format } from 'date-fns';
 export interface NoteEditorProps {
   note: Note;
   isMobile?: boolean;
-  isKeyboardVisible?: boolean;
   onBack?: () => void;
   loadNotes: () => Promise<void>;
 }
 
-export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, onBack, loadNotes }: NoteEditorProps) {
+export function NoteEditor({ note, isMobile = false, onBack, loadNotes }: NoteEditorProps) {
   const [title, setTitle] = useState(note.title || 'Untitled');
   const [content, setContent] = useState(note.content || '');
   const [saveStatus, setSaveStatus] = useState<'saved' | 'saving' | null>('saved');
@@ -51,11 +50,16 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
 
   useEffect(() => {
     if (isMobile) {
+      const originalBodyOverflow = document.body.style.overflow;
+      const originalHtmlOverflow = document.documentElement.style.overflow;
+
       document.body.style.overflow = 'hidden';
+      document.documentElement.style.overflow = 'hidden';
       document.body.classList.add('editor-open');
       
       return () => {
-        document.body.style.overflow = '';
+        document.body.style.overflow = originalBodyOverflow;
+        document.documentElement.style.overflow = originalHtmlOverflow;
         document.body.classList.remove('editor-open');
       };
     }
@@ -87,184 +91,242 @@ export function NoteEditor({ note, isMobile = false, isKeyboardVisible = false, 
   const getEncryptionBadge = () => {
     if (note?.encryptionType === 2) {
       return (
-        <Badge color="green" size="sm" radius="sm" mb="xs">
-          <Group gap={6}>
-            <IconShieldLock size={14} />
-            <Text size="xs">Post-Quantum Encrypted</Text>
-          </Group>
+        <Badge 
+          color="green" 
+          size="sm" 
+          radius="lg" 
+          variant="light"
+          leftSection={<IconShieldLock size={12} />}
+        >
+          Post-Quantum
         </Badge>
       );
     } else if (note?.encryptionType === 1) {
       return (
-        <Badge color="blue" size="sm" radius="sm" mb="xs">
-          <Group gap={6}>
-            <IconLock size={14} />
-            <Text size="xs">AES Encrypted</Text>
-          </Group>
+        <Badge 
+          color="blue" 
+          size="sm" 
+          radius="lg" 
+          variant="light"
+          leftSection={<IconLock size={12} />}
+        >
+          AES Encrypted
         </Badge>
       );
     }
     return null;
   };
 
+  if (isMobile) {
+    return (
+      <Box 
+        className="mobile-note-editor"
+        style={{ 
+          position: 'fixed',
+          top: 'calc(60px + max(0px, env(safe-area-inset-top)))',
+          left: 0,
+          right: 0,
+          bottom: 0,
+          width: '100vw',
+          height: 'calc(100vh - 60px - max(0px, env(safe-area-inset-top)))',
+          display: 'flex', 
+          flexDirection: 'column',
+          background: 'var(--editor-bg)',
+          zIndex: 1001,
+          overflow: 'hidden'
+        }}
+      >
+        {/* Mobile Header - Fixed Height */}
+        <Box 
+          style={{ 
+            padding: '0.75rem',
+            borderBottom: '1px solid var(--editor-border)',
+            background: 'var(--editor-toolbar)',
+            flexShrink: 0
+          }}
+        >
+          <Group gap="sm" wrap="nowrap" align="center">
+            {onBack && (
+              <ActionIcon 
+                onClick={onBack} 
+                variant="subtle" 
+                size="lg"
+              >
+                <IconChevronLeft size={20} />
+              </ActionIcon>
+            )}
+            <TextInput
+              placeholder="Note title"
+              value={title}
+              onChange={(e) => setTitle(e.currentTarget.value)}
+              variant="unstyled"
+              size="md"
+              onBlur={saveNote}
+              style={{ 
+                flex: 1
+              }}
+              styles={{
+                input: {
+                  fontSize: '18px',
+                  fontWeight: 600,
+                  color: 'var(--text-primary)',
+                  padding: '0.5rem 0'
+                }
+              }}
+            />
+            <ActionIcon
+              onClick={saveNote}
+              variant="light"
+              size="lg"
+              loading={saveStatus === 'saving'}
+            >
+              <IconDeviceFloppy size={18} />
+            </ActionIcon>
+          </Group>
+          
+          <Group mt="xs" gap="xs" wrap="nowrap">
+            <Text size="xs" c="dimmed" style={{ whiteSpace: 'nowrap' }}>
+              {format(note.updated_at, 'MMM d, yyyy h:mm a')}
+            </Text>
+            {getEncryptionBadge()}
+          </Group>
+        </Box>
+        
+        {/* Mobile Editor Content - Natural Height */}
+        <Box style={{ 
+          flex: 1,
+          overflow: 'hidden',
+          display: 'flex', 
+          flexDirection: 'column',
+          minHeight: 0,
+          height: 0
+        }}>
+          <MarkdownEditor
+            content={content}
+            onChange={setContent}
+            isMobile={true}
+            defaultView="edit"
+            editorType="richtext"
+          />
+        </Box>
+        
+        {/* Mobile Bottom Bar - Fixed to Bottom */}
+        <Box 
+          style={{ 
+            padding: '0.75rem',
+            paddingBottom: 'max(0.75rem, env(safe-area-inset-bottom))',
+            borderTop: '1px solid var(--editor-border)',
+            background: 'var(--editor-toolbar)',
+            flexShrink: 0
+          }}
+        >
+          <Group justify="space-between" align="center">
+            <Button 
+              variant="light" 
+              color="red" 
+              onClick={handleDelete}
+              leftSection={<IconTrash size={16} />}
+              size="sm"
+            >
+              Delete
+            </Button>
+            <Text size="sm" c="dimmed">
+              {saveStatus === 'saving' ? 'Saving...' : 'Auto-saved'}
+            </Text>
+          </Group>
+        </Box>
+      </Box>
+    );
+  }
+
+  // Desktop Version
   return (
     <Box 
-      className={`${isMobile ? 'mobile-note-editor' : 'desktop-note-editor'} ${isKeyboardVisible ? 'keyboard-visible' : ''}`}
+      className="modern-editor-container desktop-note-editor"
       style={{ 
-        height: isMobile ? '100vh' : 'calc(100vh - 32px)', 
+        height: '100%',
         display: 'flex', 
         flexDirection: 'column',
-        flex: '1 1 auto',
-        width: isMobile ? '100vw' : '100%',
-        maxWidth: isMobile ? '100vw' : '100%',
-        overflow: 'hidden',
-        position: isMobile ? 'fixed' : 'relative',
-        top: isMobile ? 0 : 'auto',
-        left: isMobile ? 0 : 'auto',
-        right: isMobile ? 0 : 'auto',
-        bottom: isMobile ? 0 : 'auto',
-        zIndex: isMobile ? 1000 : 'auto'
+        background: 'var(--editor-bg)',
+        border: '1px solid var(--editor-border)',
+        borderRadius: 'var(--radius-2xl)',
+        overflow: 'hidden'
       }}
     >
-      {isMobile ? (
-        <>
-          <Paper shadow="sm" p="md" style={{ 
-            marginBottom: '8px',
-            borderRadius: '8px',
-            position: 'relative',
-            zIndex: 10,
-            backgroundColor: 'var(--mantine-color-body)'
-          }}>
-            <Group>
-              {onBack && (
-                <ActionIcon onClick={onBack} variant="subtle" radius="xl">
-                  <IconChevronLeft size={20} />
-                </ActionIcon>
-              )}
-              <TextInput
-                placeholder="Note title"
-                value={title}
-                onChange={(e) => setTitle(e.currentTarget.value)}
-                style={{ flex: 1 }}
-                variant="filled"
-                radius="md"
-                size="md"
-                onBlur={saveNote}
-              />
-            </Group>
-          </Paper>
-          
-          <Box className="editor-container" style={{ 
-            flex: 1,
-            overflow: 'hidden',
-            backgroundColor: 'var(--mantine-color-body)',
-            position: 'relative',
-            display: 'flex', 
-            flexDirection: 'column',
-            paddingBottom: '70px'
-          }}>
-            <MarkdownEditor
-              content={content}
-              onChange={setContent}
-              isMobile={true}
-              defaultView="edit"
-              editorType="richtext"
+      {/* Desktop Header */}
+      <Box className="modern-editor-header">
+        <Stack gap="md">
+          <Group justify="space-between" wrap="nowrap">
+            <TextInput
+              placeholder="Note title"
+              value={title}
+              onChange={(e) => setTitle(e.currentTarget.value)}
+              variant="unstyled"
+              size="xl"
+              onBlur={saveNote}
+              className="modern-editor-title"
+              style={{ 
+                flex: 1,
+                fontSize: '2rem',
+                fontWeight: 700
+              }}
             />
-          </Box>
-          
-          <Paper className="mobile-fixed-bottom" style={{ 
-            position: 'fixed', 
-            bottom: 0, 
-            left: 0, 
-            right: 0,
-            zIndex: 100 
-          }}>
-            <Group justify="space-between" wrap="nowrap">
+            <Group gap="sm">
               <Button 
                 variant="light" 
                 color="red" 
                 onClick={handleDelete}
                 leftSection={<IconTrash size={16} />}
-                radius="md"
-                size="sm"
+                className="hover-lift"
               >
                 Delete
               </Button>
-              <Text size="sm" color="dimmed">
-                {saveStatus === 'saving' ? 'Saving...' : 'Saved'}
-              </Text>
-              <Button
+              <Button 
                 onClick={saveNote}
-                radius="md"
-                size="sm"
+                variant="filled"
+                color="blue"
+                leftSection={<IconDeviceFloppy size={16} />}
+                className="hover-lift"
+                loading={saveStatus === 'saving'}
               >
-                Save
+                {saveStatus === 'saving' ? 'Saving...' : 'Save'}
               </Button>
             </Group>
-          </Paper>
-        </>
-      ) : (
-        <>
-          <Paper 
-            shadow="sm" 
-            p="md" 
-            style={{ 
-              borderRadius: 'var(--mantine-radius-md)',
-              marginBottom: '8px'
-            }}
-          >
-            <Group justify="space-between">
-              <TextInput
-                placeholder="Note title"
-                value={title}
-                onChange={(e) => setTitle(e.currentTarget.value)}
-                style={{ flex: 1 }}
-                size="lg"
-                onBlur={saveNote}
-              />
-              <Group>
-                <Button variant="light" color="red" onClick={handleDelete}>
-                  Delete
-                </Button>
-                <Button onClick={saveNote}>
-                  {saveStatus === 'saving' ? 'Saving...' : 'Save'}
-                </Button>
-              </Group>
-            </Group>
-          </Paper>
-          
-          <Box style={{ 
-            flex: '1 1 auto',
-            overflow: 'hidden',
-            display: 'flex',
-            flexDirection: 'column',
-            width: '100%',
-            height: 'calc(100vh - 100px)',
-            minHeight: '500px'
-          }}>
-            <MarkdownEditor
-              content={content}
-              onChange={setContent}
-              isMobile={false}
-              defaultView="edit"
-              editorType="richtext"
-            />
-          </Box>
-        </>
-      )}
-      {!isMobile && (
-        <Paper withBorder radius="md" p="md" mb="md">
-          <Group justify="space-between">
-            <Stack gap={4}>
-              <Text size="sm" fw={500}>Last edited: {format(note.updated_at, 'MMM d, yyyy h:mm a')}</Text>
-              {getEncryptionBadge()}
-            </Stack>
-            <ActionIcon color="red" onClick={handleDelete}>
-              <IconTrash size={18} />
-            </ActionIcon>
           </Group>
-        </Paper>
-      )}
+          
+          <Divider />
+          
+          {/* Desktop metadata */}
+          <Group justify="space-between">
+            <Group gap="md">
+              <Text size="sm" c="dimmed" fw={500}>
+                Last edited: {format(note.updated_at, 'MMM d, yyyy h:mm a')}
+              </Text>
+              {getEncryptionBadge()}
+            </Group>
+            <Text size="sm" c="dimmed">
+              {saveStatus === 'saving' ? 'Saving...' : 'Auto-saved'}
+            </Text>
+          </Group>
+        </Stack>
+      </Box>
+      
+      {/* Desktop Editor */}
+      <Box style={{ 
+        flex: 1,
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        position: 'relative'
+      }}>
+        <MarkdownEditor
+          content={content}
+          onChange={setContent}
+          isMobile={false}
+          defaultView="edit"
+          editorType="richtext"
+        />
+      </Box>
     </Box>
   );
 } 

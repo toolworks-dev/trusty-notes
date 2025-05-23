@@ -1,869 +1,1435 @@
-body.mobile-view .mantine-AppShell-main {
-  width: 100% !important;
-  margin-left: 0 !important;
-  padding: 0 !important;
-}
+/* Modern Mobile UI - Complete Redesign */
 
-/* Fix mobile note editor layout */
-body.mobile-view .mobile-note-editor {
-  position: fixed;
-  top: 0;
-  left: 0;
-  right: 0;
-  bottom: 0;
-  width: 100vw !important;
-  height: 100vh !important;
-  max-width: 100vw !important;
-  max-height: 100vh !important;
-  z-index: 1000;
-  background-color: var(--mantine-color-body);
-  padding: 8px;
-  overflow: hidden;
-}
-
-/* Ensure mobile layout takes precedence */
-body.mobile-view .mantine-AppShell-navbar {
-  display: none !important;
-}
-
-.ios {
-    --ion-safe-area-top: env(safe-area-inset-top);
-    --ion-safe-area-bottom: env(safe-area-inset-bottom);
-    padding-top: var(--ion-safe-area-top);
-    padding-bottom: var(--ion-safe-area-bottom);
-  }
-
-  .android {
-    --ion-safe-area-top: env(safe-area-inset-top);
-    --ion-safe-area-bottom: env(safe-area-inset-bottom);
-    padding-top: var(--ion-safe-area-top);
-    padding-bottom: var(--ion-safe-area-bottom);
-    background-color: var(--mantine-color-body);
-    height: 100vh;
-    overflow: hidden;
-  }
-    
-  .keyboard-visible .markdown-editor {
-    max-height: calc(100vh - 270px);
-  }
-  
-  @media (max-width: 768px) {
-    html, body {
-      max-width: 100%;
-      overflow-x: hidden;
-      -webkit-text-size-adjust: 100%;
-      font-size: 16px;
-    }
-
-    .android .rich-text-editor {
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 120px);
-      border-radius: 12px;
-      box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
-      overflow: hidden;
-    }
-  
-    .android .ProseMirror {
-      min-height: 50vh;
-      height: calc(100vh - 180px);
-      overflow-y: auto;
-      -webkit-overflow-scrolling: touch;
-      padding: 16px;
-      line-height: 1.6;
-    }
-  
-    .android .mantine-AppShell-main {
-      height: 100vh;
-      overflow: hidden;
-      padding: 8px !important;
-    }  
-    
-    .mantine-AppShell-main {
-      padding: 8px !important;
-      width: 100% !important;
-      max-width: 100% !important;
-      margin: 0 !important;
-      overflow-x: hidden;
-    }
-    
-    .rich-text-editor {
-      max-width: calc(100vw - 16px) !important;
-      width: 100% !important;
-      margin: 0 !important;
-      font-size: 16px !important;
-      border-radius: 12px;
-      overflow: hidden;
-    }
-  
-    .mantine-TextInput-input,
-    .mantine-Textarea-input {
-      font-size: 16px !important;
-      border-radius: 8px;
-      padding: 12px;
-      box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
-    }
-  
-    .mobile-toolbar {
-      padding: 8px 12px;
-      background: var(--mantine-color-body);
-      border-bottom: 1px solid var(--mantine-color-gray-2);
-      display: flex;
-      gap: 8px;
-      overflow-x: auto;
-      scrollbar-width: none;
-      -webkit-overflow-scrolling: touch;
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.05);
-    }
-
-    .mobile-toolbar::-webkit-scrollbar {
-      display: none;
-    }
-
-    .mobile-toolbar .mantine-ActionIcon-root {
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      transition: all 0.2s ease;
-      background-color: var(--mantine-color-gray-0);
-    }
-
-    .mobile-toolbar .mantine-ActionIcon-root:active {
-      transform: scale(0.95);
-      background-color: var(--mantine-color-gray-1);
-    }
-  
-    .mobile-header {
-      display: flex;
-      align-items: center;
-      padding: 12px;
-      background-color: var(--mantine-color-body);
-      border-bottom: 1px solid var(--mantine-color-gray-2);
-      position: sticky;
-      top: 0;
-      z-index: 100;
-      backdrop-filter: blur(8px);
-      -webkit-backdrop-filter: blur(8px);
-    }
-  
-    .mobile-note-item {
-      border-radius: 12px;
-      margin-bottom: 8px;
-      transition: transform 0.2s ease;
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.06);
-    }
-    
-    .mobile-note-item:active {
-      transform: scale(0.98);
-    }
-    
-    .mobile-fab {
-      position: fixed;
-      bottom: 24px;
-      right: 24px;
-      width: 56px;
-      height: 56px;
-      border-radius: 28px;
-      box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-      z-index: 100;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      cursor: pointer;
-      transition: all 0.2s ease;
-    }
-    
-    .mobile-fab:active {
-      transform: scale(0.95);
-      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.15);
-    }
-    
-    .mobile-drawer {
-      border-radius: 16px 16px 0 0;
-      overflow: hidden;
-    }
-    
-    .mobile-nav-header {
-      padding: 16px;
-      border-bottom: 1px solid var(--mantine-color-gray-2);
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-    
-    .mobile-nav-footer {
-      padding: 16px;
-      border-top: 1px solid var(--mantine-color-gray-2);
-      display: flex;
-      justify-content: space-around;
-    }
-  }
-
-  .mobile-editor {
-    border-radius: 0.75rem;
-    overflow: hidden;
-    box-shadow: var(--shadow-lg);
-    background: var(--surface);
-  }
-
-  .mobile-toolbar {
-    padding: 0.75rem;
-    background: var(--surface);
-    border-bottom: 1px solid var(--border);
-    display: flex;
-    gap: 0.5rem;
-    overflow-x: auto;
-    scrollbar-width: none;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  .mobile-toolbar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .mobile-toolbar .mantine-ActionIcon-root {
-    width: 2.5rem;
-    height: 2.5rem;
-    border-radius: 0.5rem;
-    transition: var(--transition);
-  }
-
-  .mobile-toolbar .mantine-ActionIcon-root:active {
-    transform: scale(0.95);
-  }
-
-  /* Improved mobile spacing */
-  @media (max-width: 768px) {
-    .mantine-AppShell-main {
-      padding: 0.75rem !important;
-    }
-
-    .mobile-editor {
-      margin: 0 -0.75rem;
-      border-radius: 0;
-    }
-  }
-
-  .android .ProseMirror {
-    min-height: 50vh;
-    height: calc(100vh - 200px);
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
+/* Core mobile viewport setup */
+@media (max-width: 768px) {
+  /* Fix mobile viewport and prevent zoom on input focus */
+  html {
     font-size: 16px !important;
-  }
-
-  .android input,
-  .android textarea {
-    font-size: 16px !important;
-  }
-
-  .android .rich-text-editor {
-    max-width: 100% !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 8px !important;
-  }
-
-  @supports (-webkit-touch-callout: none) {
-    .android {
-        height: -webkit-fill-available;
-    }
-  }
-
-  .mobile-note-editor {
-    display: flex;
-    flex-direction: column;
+    -webkit-text-size-adjust: 100% !important;
+    -webkit-tap-highlight-color: transparent !important;
+    height: 100% !important;
     height: 100vh !important;
-    max-height: 100vh !important;
-    overflow: hidden;
-    width: 100% !important;
-    max-width: 100% !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    z-index: 1000;
-    background-color: var(--mantine-color-body);
-    padding: 8px;
+    height: 100dvh !important;
   }
 
-  .mobile-note-editor .editor-container {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    overflow: hidden;
-    margin-bottom: 60px; /* Space for the bottom toolbar */
-  }
-
-  .mobile-note-editor .ProseMirror {
-    flex: 1;
-    overflow-y: auto;
-    padding: 16px;
-    min-height: 200px;
-  }
-
-  .mobile-note-editor .word-count {
-    position: fixed;
-    bottom: 70px;
-    right: 16px;
-    background-color: var(--mantine-color-body);
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-size: 12px;
-    opacity: 0.8;
-    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-    z-index: 100;
-  }
-
-  .mobile-note-editor .toolbar {
-    position: sticky;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    background-color: var(--mantine-color-body);
-    border-top: 1px solid var(--mantine-color-gray-3);
-    padding: 8px;
-    z-index: 10;
-  }
-
-  .dark .mobile-note-editor .editor-container {
-    background-color: var(--mantine-color-dark-6);
-    border-color: var(--mantine-color-dark-4);
-  }
-
-  .dark .mobile-note-editor .word-count {
-    background-color: var(--mantine-color-dark-6);
-  }
-
-  .dark .mobile-note-editor .toolbar {
-    background-color: var(--mantine-color-dark-7);
-    border-color: var(--mantine-color-dark-4);
-  }
-
-  .android .ProseMirror {
-    min-height: 50vh !important;
-  }
-
-  .keyboard-visible .android .ProseMirror {
-    min-height: 30vh !important;
-    max-height: 40vh !important;
-  }
-
-  .mobile-note-editor .toolbar button {
-    padding: 6px !important;
-    min-width: auto !important;
-  }
-
-  .mobile-note-editor input[type="text"] {
-    font-size: 16px !important;
-  }
-
-  .mobile-content-container {
-    padding-bottom: 60px;
-  }
-
-  .mobile-note-editor .ProseMirror:focus {
-    outline: none !important;
-    box-shadow: none !important;
-  }
-
-  .mobile-note-editor .toolbar .mantine-Group-root {
-    gap: 4px !important;
-  }
-
-  .keyboard-visible .mobile-note-editor .word-count {
-    bottom: 120px;
-  }
-
-  .android input,
-  .android textarea,
-  .android select {
-    font-size: 16px !important;
-  }
-
-  .android .mantine-AppShell-main {
-    display: flex;
-    flex-direction: column;
-    height: 100vh;
-    overflow: hidden;
+  body {
+    overflow-x: hidden !important;
+    overflow-y: auto !important;
+    position: relative !important;
+    margin: 0 !important;
     padding: 0 !important;
+    font-size: 16px !important;
+    background: var(--bg-primary) !important;
+    touch-action: manipulation !important;
+    height: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 100vw !important;
   }
 
-  .mobile-fixed-bottom {
+  /* Root app container */
+  #root {
+    height: 100% !important;
+    height: 100vh !important;
+    height: 100dvh !important;
+    width: 100vw !important;
+    overflow: hidden !important;
+  }
+
+  /* Aggressive mobile header button overrides */
+  .mantine-AppShell-header .mantine-ActionIcon-root,
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="md"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    max-width: 40px !important;
+    max-height: 40px !important;
+    width: 40px !important;
+    height: 40px !important;
+    border-radius: 10px !important;
+    padding: 0 !important;
+    font-size: 14px !important;
+  }
+
+  /* Force icon sizes in header */
+  .mantine-AppShell-header .mantine-ActionIcon-root svg,
+  .mantine-AppShell-header .mantine-ActionIcon-root .tabler-icon {
+    width: 18px !important;
+    height: 18px !important;
+    min-width: 18px !important;
+    min-height: 18px !important;
+  }
+
+  /* Compact header group spacing */
+  .mantine-AppShell-header .mantine-Group-root[data-justify="space-between"] {
+    padding: 0 0.75rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .mantine-AppShell-header .mantine-Group-root:not([data-justify="space-between"]) {
+    gap: 0.4rem !important;
+  }
+
+  /* Smaller logo and title */
+  .mantine-AppShell-header .mantine-Image-root {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  .mantine-AppShell-header .mantine-Text-root[size="lg"] {
+    font-size: 1.1rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Compact burger menu */
+  .mantine-AppShell-header .mantine-Burger-root {
+    width: 28px !important;
+    height: 28px !important;
+  }
+
+  /* Mobile App Shell - Modern Layout */
+  .mantine-AppShell-root {
+    min-height: 100vh !important;
+    min-height: 100dvh !important;
+    width: 100vw !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: var(--bg-primary) !important;
+  }
+  
+  .mantine-AppShell-main {
+    padding-top: calc(60px + max(0px, env(safe-area-inset-top))) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    width: 100vw !important;
+    min-height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100dvh - 60px - max(0px, env(safe-area-inset-top))) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: var(--bg-primary) !important;
+  }
+
+  /* Hide desktop navbar on mobile */
+  .mantine-AppShell-navbar {
+    display: none !important;
+  }
+
+  /* Modern Mobile Header - Fixed positioning for status bar */
+  .mantine-AppShell-header {
     position: fixed !important;
+    top: 0 !important;
+    left: 0 !important;
+    right: 0 !important;
+    z-index: 1000;
+    background: var(--bg-secondary) !important;
+    border-bottom: 1px solid var(--border-primary) !important;
+    backdrop-filter: blur(12px) !important;
+    -webkit-backdrop-filter: blur(12px) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1) !important;
+    padding-top: max(0.5rem, env(safe-area-inset-top)) !important;
+    height: calc(60px + max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  [data-mantine-color-scheme="dark"] .mantine-AppShell-header {
+    background: rgba(18, 18, 18, 0.95) !important;
+    border-bottom: 1px solid var(--border-accent) !important;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3) !important;
+  }
+
+  /* Adjust main content for fixed header */
+  .mantine-AppShell-main {
+    padding-top: calc(60px + max(0px, env(safe-area-inset-top))) !important;
+    padding-left: 0 !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    width: 100vw !important;
+    min-height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100dvh - 60px - max(0px, env(safe-area-inset-top))) !important;
+    position: relative !important;
+    overflow: hidden !important;
+    background: var(--bg-primary) !important;
+  }
+
+  /* Mobile Content Container - Improved */
+  .mobile-content-container {
+    width: 100% !important;
+    /* height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important; */
+    /* height: calc(100dvh - 60px - max(0px, env(safe-area-inset-top))) !important; */
+    /* overflow-y: auto !important; */
+    /* -webkit-overflow-scrolling: touch !important; */
+    /* padding: 0 !important; */
+    background: var(--bg-primary) !important;
+    position: relative !important; /* Keep for absolute children if any, or specific layout needs */
+    display: flex !important;
+    flex-direction: column !important;
+    flex: 1 !important;
+    min-height: 0 !important; /* Crucial for nested flex scrolling */
+    overflow: visible !important; /* Changed from hidden to visible */
+    /* left: 0 !important; */ /* Likely not needed if width is 100% and part of normal flow */
+    /* transform: none !important; */ /* Likely not needed */
+  }
+
+  /* Mobile Note Editor - Full Screen */
+  .mobile-note-editor {
+    position: fixed !important;
+    top: calc(60px + max(0px, env(safe-area-inset-top))) !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 0 !important;
+    width: 100vw !important;
+    z-index: 1100 !important;
+    background: var(--editor-bg) !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+  }
+
+  /* Mobile Editor Header - Simplified */
+  .mobile-note-editor > *:first-child {
+    flex-shrink: 0 !important;
+    background: var(--editor-toolbar) !important;
+    border-bottom: 1px solid var(--editor-border) !important;
+    padding: 0.75rem !important;
+  }
+
+  [data-mantine-color-scheme="dark"] .mobile-note-editor > *:first-child {
+    background: var(--editor-toolbar) !important;
+    border-bottom: 1px solid var(--border-accent) !important;
+  }
+
+  /* Mobile Editor Title Input */
+  .mobile-note-editor .mantine-TextInput-input {
+    font-size: 1.25rem !important;
+    font-weight: 600 !important;
+    background: transparent !important;
+    border: none !important;
+    padding: 0.25rem 0 !important;
+    color: var(--text-primary) !important;
+  }
+
+  .mobile-note-editor .mantine-TextInput-input:focus {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+
+  /* Mobile Editor Content Area */
+  .mobile-note-editor > *:nth-child(2) {
+    flex: 1 !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    min-height: 0 !important;
+    background: var(--editor-bg) !important;
+  }
+
+  /* Mobile Editor Bottom Actions - Absolute Positioning */
+  .mobile-note-editor > *:last-child {
+    position: absolute !important;
     bottom: 0 !important;
     left: 0 !important;
     right: 0 !important;
-    z-index: 1001 !important;
-    padding: 12px !important;
-    border-top: 1px solid var(--mantine-color-gray-3) !important;
-    background-color: var(--mantine-color-body) !important;
+    background: var(--editor-toolbar) !important;
+    border-top: 1px solid var(--editor-border) !important;
+    padding: 0.75rem !important;
+    padding-bottom: max(0.75rem, env(safe-area-inset-bottom)) !important;
+    z-index: 10 !important;
   }
 
-  .mobile-content-container {
-    padding-bottom: 70px; /* Space for fixed bottom controls */
+  [data-mantine-color-scheme="dark"] .mobile-note-editor > *:last-child {
+    background: var(--editor-toolbar) !important;
+    border-top: 1px solid var(--border-accent) !important;
   }
 
-  :root {
-    --app-height: 100vh;
+  /* Modern Rich Text Editor Mobile */
+  .mobile-editor .modern-rich-text-editor {
+    height: 100% !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    background: var(--editor-bg) !important;
+    border-radius: 0 !important;
+    flex: 1 !important;
+    min-height: 0 !important;
   }
 
-  .android .mobile-note-editor {
-    height: var(--app-height);
-    max-height: var(--app-height);
+  /* Mobile Toolbar - Modern Design */
+  .mobile-editor .modern-toolbar {
+    padding: 0.25rem 0.5rem !important;
+    height: 52px !important;
+    overflow-x: auto !important;
+    overflow-y: hidden !important;
+    scrollbar-width: none !important;
+    -webkit-overflow-scrolling: touch !important;
+    flex-shrink: 0 !important;
+    border-radius: 0 !important;
+    display: flex !important;
+    align-items: center !important;
+    background: var(--editor-toolbar) !important;
+    border-bottom: 1px solid var(--editor-border) !important;
   }
 
-  /* Add this to ensure there's only one border visible */
-  .android .rich-text-editor,
-  .android .rich-text-editor div,
-  .android .rich-text-editor .ProseMirror,
-  .android .rich-text-editor .ProseMirror:focus {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
+  .mobile-editor .modern-toolbar::-webkit-scrollbar {
+    display: none !important;
   }
 
-  /* Ensure only the container has the border */
-  .mobile-note-editor .editor-container {
-    border: 1px solid var(--mantine-color-gray-3) !important;
+  .mobile-editor .modern-toolbar-button,
+  .mobile-editor .modern-toolbar .mantine-ActionIcon-root {
+    min-width: 34px !important;
+    min-height: 34px !important;
+    max-width: 34px !important;
+    max-height: 34px !important;
+    border-radius: 6px !important;
+    margin: 0 0.05rem !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    font-size: 11px !important;
   }
 
-  /* Remove the top border from the editor area */
-  .mobile-note-editor .tiptap-toolbar,
-  .mobile-note-editor .rich-text-editor .tiptap-toolbar,
-  .mobile-note-editor .mobile-toolbar {
-    border-bottom: none !important;
-    border-top: none !important;
-    box-shadow: none !important;
+  .mobile-editor .modern-toolbar .mantine-Group-root {
+    gap: 0.1rem !important;
+    flex-wrap: nowrap !important;
+    min-width: fit-content !important;
   }
 
-  /* Remove the word count and toolbar borders */
-  .mobile-note-editor .word-count-container,
-  .mobile-note-editor .format-toolbar,
-  .mobile-note-editor .mobile-toolbar {
-    border: none !important;
-    border-bottom: none !important;
-    border-top: none !important;
-    box-shadow: none !important;
+  /* Remove vertical dividers on mobile to save space */
+  .mobile-editor .modern-toolbar .mantine-Divider-root[data-orientation="vertical"] {
+    display: none !important;
   }
 
-  /* Keep only the main editor container border */
-  .mobile-note-editor .editor-container {
-    border: 1px solid var(--mantine-color-gray-3) !important;
-    box-shadow: none !important;
-    overflow: hidden;
-  }
-
-  /* Fix any padding issues */
-  .mobile-note-editor .word-count-container,
-  .mobile-note-editor .format-toolbar {
-    padding-left: 0 !important;
-    padding-right: 0 !important;
-    margin: 0 !important;
-  }
-
-  /* Make sure the ProseMirror area itself has no border */
-  .mobile-note-editor .ProseMirror {
-    border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-  }
-
-  /* ==== BORDER RESET: Target every possible element that might have a border ==== */
-  .mobile-note-editor *:not(.editor-container) {
-    border: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-
-  /* Target specific areas known to have borders */
-  .mobile-note-editor .word-count,
-  .mobile-note-editor .word-count-container,
-  .mobile-note-editor .editor-stats,
-  .mobile-note-editor .tiptap-toolbar,
-  .mobile-note-editor .format-toolbar,
-  .mobile-note-editor .toolbar-container,
-  .mobile-note-editor .editor-toolbar,
-  .mobile-note-editor .rich-text-editor > div,
-  .mobile-note-editor .rich-text-editor > header,
-  .mobile-note-editor .ProseMirror-menubar,
-  .mobile-note-editor .ProseMirror-gapcursor,
-  .mobile-note-editor .mobile-toolbar,
-  .mobile-note-editor .rich-text-editor .mobile-toolbar,
-  .mobile-note-editor .tiptap-editor {
-    border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-
-  /* Only allow the editor container to have a border */
-  .mobile-note-editor .editor-container {
-    border: 1px solid var(--mantine-color-gray-3) !important;
-    border-radius: 8px !important;
-    outline: none !important;
-    box-shadow: none !important;
-    margin: 8px !important;
+  /* Mobile Editor Content */
+  .mobile-editor .modern-editor-content {
+    flex: 1 !important;
+    min-height: 0 !important;
     overflow: hidden !important;
     display: flex !important;
     flex-direction: column !important;
-  }
-
-  /* Ensure ProseMirror takes remaining space */
-  .mobile-note-editor .ProseMirror {
-    flex-grow: 1 !important;
-    min-height: 100px !important;
+    border-radius: 0 !important;
     border: none !important;
-    outline: none !important;
-    box-shadow: none !important;
-    padding: 16px !important;
-    overflow-y: auto !important;
+    background: var(--editor-bg) !important;
   }
 
-  /* Specifically target the word count and formatting toolbar area */
-  .mobile-note-editor .editor-topbar,
-  .mobile-note-editor .editor-stats,
-  .mobile-note-editor .word-count-container {
-    border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    box-shadow: none !important;
-    background: transparent !important;
-  }
-
-  /* Make sure all divider lines are removed */
-  .mobile-note-editor hr,
-  .mobile-note-editor .divider {
-    display: none !important;
-  }
-
-  /* Remove potential top border from word count area */
-  .mobile-note-editor .word-count-container,
-  .mobile-note-editor .editor-stats {
-    border-top: none !important;
-  }
-
-  /* Remove potential bottom border from editor area above word count */
-  .mobile-note-editor .ProseMirror,
-  .mobile-note-editor .rich-text-editor,
-  .mobile-note-editor .tiptap-editor {
-    border-bottom: none !important;
-  }
-
-  /* EXTREMELY AGGRESSIVE BORDER REMOVAL */
-  .mobile-note-editor::before {
-    content: "";
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    pointer-events: none;
-    z-index: 2000;
-    border: none !important;
-    box-shadow: none !important;
-  }
-
-  /* Override absolutely everything except the main container border */
-  .mobile-note-editor div:not(.editor-container):not(.ProseMirror),
-  .mobile-note-editor span,
-  .mobile-note-editor p,
-  .mobile-note-editor header,
-  .mobile-note-editor footer,
-  .mobile-note-editor nav,
-  .mobile-note-editor section,
-  .mobile-note-editor article,
-  .mobile-note-editor aside,
-  .mobile-note-editor hr,
-  .mobile-note-editor .divider,
-  .mobile-note-editor .bar,
-  .mobile-note-editor .separator,
-  .mobile-note-editor .line,
-  .mobile-note-editor .boundary,
-  .mobile-note-editor .border {
-    border: 0 none transparent !important;
-    border-top: 0 none transparent !important;
-    border-bottom: 0 none transparent !important;
-    border-left: 0 none transparent !important;
-    border-right: 0 none transparent !important;
-    box-shadow: none !important;
-    outline: none !important;
-    background-image: none !important;
-  }
-
-  /* Force the word count bar to have no border/divider */
-  .mobile-note-editor [class*="wordCount"],
-  .mobile-note-editor [class*="word-count"],
-  .mobile-note-editor .editor-container > .mantine-Group-root:first-of-type,
-  .mobile-note-editor [class*="toolbar"],
-  .mobile-note-editor [class*="Toolbar"],
-  .mobile-note-editor [class*="stats"],
-  .mobile-note-editor [class*="Stats"],
-  .mobile-note-editor [class*="counter"],
-  .mobile-note-editor [class*="Counter"] {
-    border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    background: transparent !important;
-    box-shadow: none !important;
-    padding: 4px 8px !important;
-    margin: 0 !important;
-  }
-
-  /* Ensure the word count group ONLY has a bottom border */
-  .mobile-note-editor .editor-container > .mantine-Group-root:first-of-type {
-    border-top: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    border-bottom: 1px solid var(--mantine-color-gray-3) !important;
-    margin-bottom: 0 !important;
-    padding-bottom: 4px !important;
-  }
-
-  /* Ensure the editor content area below the word count has NO top border */
-  .mobile-note-editor .editor-container > *:not(.mantine-Group-root:first-of-type) {
-    border-top: none !important;
-  }
-
-  /* Target the very top border of the app */
-  .android body,
-  .android #root,
-  .android .mantine-AppShell-root,
-  .android .mantine-AppShell-header,
-  .android .mantine-AppShell-navbar,
-  .android .mantine-AppShell-main,
-  .android header,
-  .android nav,
-  .android main {
-    border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    border-left: none !important;
-    border-right: none !important;
-    box-shadow: none !important;
-    outline: none !important;
-  }
-
-  /* Target the border around the main app */
-  body.android,
-  .android .mantine-AppShell-root,
-  .android .mantine-AppShell-main {
-    border: none !important;
-    overflow: hidden;
-  }
-
-  /* Target any horizontal separators at app level */
-  .android hr,
-  .android .separator,
-  .android .divider,
-  .android [class*="divider"],
-  .android [class*="separator"],
-  .android [class*="border"] {
-    display: none !important;
-    border: none !important;
-    height: 0 !important;
+  .mobile-editor .modern-editor-prose {
+    flex: 1 !important;
     min-height: 0 !important;
-    max-height: 0 !important;
-    opacity: 0 !important;
-    visibility: hidden !important;
+    overflow: hidden !important;
+    display: flex !important;
+    flex-direction: column !important;
+    background: var(--editor-bg) !important;
   }
 
-  /* Remove the border from the word counter section */
-  .android [class*="word"],
-  .android [class*="Word"],
-  .android [class*="count"],
-  .android [class*="Count"],
-  .android [class*="stat"],
-  .android [class*="Stat"] {
+  /* Mobile ProseMirror Editor - Fixed */
+  .mobile-editor .ProseMirror {
+    flex: 1 !important;
+    padding: 1rem !important;
+    font-size: 16px !important;
+    line-height: 1.6 !important;
+    outline: none !important;
     border: none !important;
-    border-bottom: none !important;
-    border-top: none !important;
+    background: var(--editor-bg) !important;
+    color: var(--text-primary) !important;
+    -webkit-text-size-adjust: 100% !important;
+    touch-action: manipulation !important;
+    box-sizing: border-box !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    margin: 0 !important;
+    width: 100% !important;
+    min-height: 0 !important;
+    height: auto !important;
   }
 
-  /* Add !important to all border properties everywhere */
-  /* BE CAREFUL WITH THIS - Commented out for now as it's too broad */
-  /* * {
-    border-color: transparent !important;
-  } */
-
-  /* Fix app shell borders - target root level containers */
-  .android .mantine-AppShell-root,
-  .android .mantine-AppShell-body,
-  .android #app,
-  .android #root,
-  .android > div {
-    border: none !important;
+  /* Mobile Editor Content Chain Fix */
+  .mobile-editor .EditorContent {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+    background: var(--editor-bg) !important;
+    height: 100% !important;
   }
 
-  .mobile-drawer-content {
-    border: none !important;
-    border-top: none !important;
-    border-radius: 0 !important;
-    box-shadow: none !important;
+  .mobile-editor .EditorContent > div {
+    flex: 1 !important;
+    display: flex !important;
+    flex-direction: column !important;
+    overflow: hidden !important;
+    min-height: 0 !important;
+    background: var(--editor-bg) !important;
+    height: 100% !important;
   }
 
-  .android .mobile-note-editor,
-  .ios .mobile-note-editor {
-    border: none !important;
-    border-radius: 0 !important;
+  .mobile-editor .EditorContent > div > div {
+    flex: 1 !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
+    min-height: 0 !important;
+  }
+
+  /* Mobile Modal Improvements */
+  .mantine-Modal-root {
+    z-index: 1300 !important;
+  }
+
+  .mantine-Modal-content {
+    height: 100vh !important;
+    background: var(--bg-primary) !important;
+  }
+
+  .mantine-Modal-header {
+    display: none !important;
+    height: 0 !important;
     padding: 0 !important;
     margin: 0 !important;
-    position: fixed;
-    top: 0;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+    min-height: 0 !important;
   }
 
-  /* Container for everything except the fixed bottom bar */
-  .mobile-editor-scroll-area {
-    flex-grow: 1;
-    overflow-y: auto;
-    -webkit-overflow-scrolling: touch;
-    padding: 8px;
-  }
-
-  /* Style the editor container within the scroll area */
-  .mobile-editor-scroll-area .editor-container {
-    border: 1px solid var(--mantine-color-gray-3) !important;
-    border-radius: 8px !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    display: flex !important;
-    flex-direction: column !important;
-    min-height: 300px;
-  }
-
-  .mobile-drawer .mantine-Drawer-body {
-    border-top: none !important;
-  }
-
-  /* Complete border removal for mobile editor elements (redundant but safe) */
-  .mobile-note-editor .editor-container,
-  .mobile-note-editor .ProseMirror,
-  .mobile-note-editor .rich-text-editor,
-  .mobile-note-editor .tiptap-editor {
-    border: none !important;
-    outline: none !important;
-  }
-
-  /* Remove the horizontal line at the top (redundant but safe) */
-  .mobile-note-editor hr,
-  .mobile-note-editor .mantine-Divider-root {
+  .mantine-Modal-close {
     display: none !important;
-    height: 0 !important;
-    opacity: 0 !important;
   }
 
-  /* Target the specific top border (redundant but safe) */
-  .mobile-note-editor > div:first-child,
-  .mobile-note-editor > header:first-child {
-    border-top: none !important;
-    border-bottom: none !important;
+  .mantine-Modal-title {
+    display: none !important;
   }
 
-  /* Override any !important rules from other styles */
-  /* .mobile-note-editor .editor-container { */
-    /* border: none !important; */
-  /* } */
-
-  /* Target the top Paper component specifically */
-  .mobile-note-editor > div:first-child,
-  .mobile-note-editor > .mantine-Paper-root:first-child {
-    border: none !important;
-    border-top: none !important;
-    border-bottom: none !important;
-    box-shadow: none !important;
+  .mantine-Modal-body {
+    padding: 0 !important;
+    padding-top: calc(60px + max(0px, env(safe-area-inset-top))) !important;
+    overflow-y: auto !important;
+    flex: 1 !important;
+    background: var(--bg-primary) !important;
+    height: 100vh !important;
   }
 
-  /* ==== Styles for the Fixed Bottom Bar ==== */
-  .mobile-editor-footer {
-    position: fixed;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: space-between;
-    align-items: center;
-    padding: 8px 12px;
-    background-color: var(--mantine-color-body);
-    border-top: 1px solid var(--mantine-color-gray-3);
-    z-index: 1001;
-    gap: 8px;
+  /* Custom Sync Settings Close Button */
+  .sync-settings-close-button {
+    background: rgba(0, 0, 0, 0.1) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid rgba(0, 0, 0, 0.1) !important;
   }
 
-  .mobile-editor-footer .editor-metadata {
-    display: flex;
-    flex-direction: column;
-    align-items: flex-start;
-    font-size: 12px;
-    color: var(--mantine-color-dimmed);
-    flex-grow: 1;
-    min-width: 100px;
+  .sync-settings-close-button:hover {
+    background: rgba(0, 0, 0, 0.2) !important;
   }
 
-  .mobile-editor-footer .editor-metadata span {
-     line-height: 1.3;
+  [data-mantine-color-scheme="dark"] .sync-settings-close-button {
+    background: rgba(255, 255, 255, 0.1) !important;
+    border: 1px solid rgba(255, 255, 255, 0.1) !important;
   }
 
-  /* Style for the green badge if needed */
-  .mobile-editor-footer .encryption-badge {
-    margin-top: 2px;
+  [data-mantine-color-scheme="dark"] .sync-settings-close-button:hover {
+    background: rgba(255, 255, 255, 0.2) !important;
+  }
+}
+
+/* Very Small Screens (under 375px width - iPhone SE, smaller Android phones) */
+@media (max-width: 375px) and (max-height: 667px) {
+  /* Reduce header height for very small screens */
+  .mantine-AppShell-header {
+    height: calc(56px + max(0px, env(safe-area-inset-top))) !important;
   }
 
-  .mobile-editor-footer .editor-actions {
-    display: flex;
-    gap: 8px;
+  .mantine-AppShell-main {
+    padding-top: calc(56px + max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100vh - 56px - max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100dvh - 56px - max(0px, env(safe-area-inset-top))) !important;
   }
 
-  .mobile-editor-footer .mantine-Button-root {
-    padding: 6px 12px;
-    font-size: 14px;
-    height: auto;
-    min-width: 70px;
+  .mobile-note-editor {
+    top: calc(56px + max(0px, env(safe-area-inset-top))) !important;
   }
 
-  /* Adjust main content padding to avoid overlap with footer */
-  body.mobile-view .mobile-content-container {
-     padding-bottom: 80px;
-  }
-
-  /* Adjust scroll area padding */
-   .mobile-editor-scroll-area {
-     padding-bottom: 80px;
-   }
-
-   /* Ensure editor container doesn't get cut off */
-   .android .mobile-note-editor {
-     height: 100vh;
-   }
-
-  /* Ensure the editor container has the border again */
-  .mobile-note-editor .editor-container {
-    border: 1px solid var(--mantine-color-gray-3) !important;
+  /* Compact header buttons for very small screens */
+  .mantine-AppShell-header .mantine-ActionIcon-root,
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="md"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 36px !important;
+    min-height: 36px !important;
+    max-width: 36px !important;
+    max-height: 36px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 8px !important;
-    overflow: hidden !important;
-    margin: 0 !important;
-    flex-grow: 1;
+    padding: 0 !important;
+    font-size: 12px !important;
   }
 
-  @media (min-width: 769px) {
-    .mantine-AppShell-main {
-      width: calc(100% - var(--mantine-navbar-width, 0px)) !important;
-      margin-left: var(--mantine-navbar-width, 0px) !important;
-      padding: 16px !important;
-    }
-    
-    .desktop-note-editor {
-      width: 100% !important;
-      max-width: 100% !important;
-    }
+  /* Compact header button icons */
+  .mantine-AppShell-header .mantine-ActionIcon-root svg,
+  .mantine-AppShell-header .mantine-ActionIcon-root .tabler-icon {
+    width: 16px !important;
+    height: 16px !important;
+    min-width: 16px !important;
+    min-height: 16px !important;
   }
+
+  /* Compact header button group spacing */
+  .mantine-AppShell-header .mantine-Group-root {
+    gap: 0.3rem !important;
+  }
+
+  /* Compact header padding */
+  .mantine-AppShell-header .mantine-Group-root[data-justify="space-between"] {
+    padding: 0 0.5rem !important;
+    gap: 0.3rem !important;
+  }
+
+  .mantine-AppShell-header .mantine-Group-root:not([data-justify="space-between"]) {
+    gap: 0.25rem !important;
+  }
+
+  /* Smaller logo in header */
+  .mantine-AppShell-header .mantine-Image-root {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Compact header title */
+  .mantine-AppShell-header .mantine-Text-root[size="lg"] {
+    font-size: 0.95rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Compact burger menu */
+  .mantine-AppShell-header .mantine-Burger-root {
+    width: 24px !important;
+    height: 24px !important;
+  }
+
+  /* Reduce toolbar height */
+  .mobile-editor .modern-toolbar {
+    height: 48px !important;
+    padding: 0.2rem 0.4rem !important;
+  }
+
+  /* Smaller toolbar buttons */
+  .mobile-editor .modern-toolbar-button,
+  .mobile-editor .modern-toolbar .mantine-ActionIcon-root {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    max-width: 30px !important;
+    max-height: 30px !important;
+    border-radius: 5px !important;
+    margin: 0 0.03rem !important;
+    font-size: 10px !important;
+  }
+
+  /* Reduce padding in mobile note editor */
+  .mobile-note-editor > *:first-child {
+    padding: 0.5rem !important;
+  }
+
+  .mobile-note-editor .mantine-TextInput-input {
+    font-size: 1.1rem !important;
+    padding: 0.2rem 0 !important;
+  }
+
+  /* Smaller editor content padding */
+  .mobile-editor .ProseMirror {
+    padding: 0.75rem !important;
+    font-size: 15px !important;
+  }
+
+  /* Reduce typography sizes */
+  .mobile-editor .ProseMirror h1 {
+    font-size: 1.625rem !important;
+    margin: 1rem 0 0.75rem !important;
+  }
+
+  .mobile-editor .ProseMirror h2 {
+    font-size: 1.375rem !important;
+    margin: 1rem 0 0.5rem !important;
+  }
+
+  /* Reduce mobile nav header padding */
+  .mobile-nav-header {
+    padding: 1rem !important;
+  }
+
+  /* Smaller action icons in mobile nav */
+  .mobile-nav-footer .mantine-ActionIcon-root {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Reduce note card padding */
+  .mobile-content-container .modern-note-card {
+    padding: 1rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Smaller FAB for very small screens */
+  .mobile-fab {
+    width: 56px !important;
+    height: 56px !important;
+    bottom: 20px !important;
+    right: 20px !important;
+    font-size: 18px !important;
+  }
+
+  /* Reduce search input padding */
+  .mobile-search .mantine-TextInput-input {
+    padding: 0.875rem 1rem !important;
+    padding-left: 3.5rem !important;
+  }
+
+  /* Compact button sizing */
+  .mantine-Button-root {
+    min-height: 44px !important;
+    padding: 0.625rem 1rem !important;
+    font-size: 15px !important;
+  }
+
+  /* Reduce general action icon sizes */
+  .mantine-ActionIcon-root {
+    min-width: 44px !important;
+    min-height: 44px !important;
+  }
+
+  /* Compact empty state */
+  .mobile-content-container .empty-state {
+    padding: 2rem 1rem !important;
+  }
+
+  .mobile-content-container .empty-state-icon {
+    width: 64px !important;
+    height: 64px !important;
+    margin-bottom: 1rem !important;
+  }
+
+  .mobile-content-container .empty-state-title {
+    font-size: 1.25rem !important;
+    margin-bottom: 0.5rem !important;
+  }
+
+  .mobile-content-container .empty-state-description {
+    font-size: 0.9rem !important;
+    margin-bottom: 1.5rem !important;
+  }
+}
+
+/* Extra Small Screens (under 320px width - very old devices) */
+@media (max-width: 320px) {
+  /* Even more compact layout */
+  .mantine-AppShell-header {
+    height: calc(52px + max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  .mantine-AppShell-main {
+    padding-top: calc(52px + max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100vh - 52px - max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100dvh - 52px - max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  .mobile-note-editor {
+    top: calc(52px + max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  /* Ultra compact header buttons for extra small screens */
+  .mantine-AppShell-header .mantine-ActionIcon-root,
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="md"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 32px !important;
+    min-height: 32px !important;
+    max-width: 32px !important;
+    max-height: 32px !important;
+    width: 32px !important;
+    height: 32px !important;
+    border-radius: 6px !important;
+    padding: 0 !important;
+    font-size: 11px !important;
+  }
+
+  /* Ultra compact header button icons */
+  .mantine-AppShell-header .mantine-ActionIcon-root svg,
+  .mantine-AppShell-header .mantine-ActionIcon-root .tabler-icon {
+    width: 14px !important;
+    height: 14px !important;
+    min-width: 14px !important;
+    min-height: 14px !important;
+  }
+
+  /* Ultra compact header spacing */
+  .mantine-AppShell-header .mantine-Group-root {
+    gap: 0.2rem !important;
+  }
+
+  /* Ultra compact header padding */
+  .mantine-AppShell-header .mantine-Group-root[data-justify="space-between"] {
+    padding: 0 0.4rem !important;
+    gap: 0.2rem !important;
+  }
+
+  .mantine-AppShell-header .mantine-Group-root:not([data-justify="space-between"]) {
+    gap: 0.15rem !important;
+  }
+
+  /* Extra small logo */
+  .mantine-AppShell-header .mantine-Image-root {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Ultra compact header title */
+  .mantine-AppShell-header .mantine-Text-root[size="lg"] {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Ultra compact burger menu */
+  .mantine-AppShell-header .mantine-Burger-root {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Burger menu lines */
+  .mantine-AppShell-header .mantine-Burger-burger {
+    width: 16px !important;
+    height: 1.5px !important;
+  }
+
+  /* Very compact toolbar */
+  .mobile-editor .modern-toolbar {
+    height: 44px !important;
+    padding: 0.15rem 0.3rem !important;
+  }
+
+  .mobile-editor .modern-toolbar-button,
+  .mobile-editor .modern-toolbar .mantine-ActionIcon-root {
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    border-radius: 4px !important;
+    margin: 0 0.02rem !important;
+    font-size: 9px !important;
+  }
+
+  /* Very compact note cards */
+  .mobile-content-container .modern-note-card {
+    padding: 0.75rem !important;
+    margin-bottom: 0.5rem !important;
+    border-radius: 12px !important;
+  }
+
+  /* Compact search */
+  .mobile-search {
+    margin-bottom: 1rem !important;
+  }
+
+  .mobile-search .mantine-TextInput-input {
+    padding: 0.75rem !important;
+    padding-left: 3rem !important;
+    border-radius: 12px !important;
+  }
+
+  /* Very small FAB */
+  .mobile-fab {
+    width: 52px !important;
+    height: 52px !important;
+    bottom: 16px !important;
+    right: 16px !important;
+    font-size: 16px !important;
+    border-radius: 16px !important;
+  }
+
+  /* Ultra compact buttons */
+  .mantine-Button-root {
+    min-height: 40px !important;
+    padding: 0.5rem 0.75rem !important;
+    font-size: 14px !important;
+    border-radius: 10px !important;
+  }
+
+  .mantine-ActionIcon-root {
+    min-width: 40px !important;
+    min-height: 40px !important;
+    border-radius: 10px !important;
+  }
+
+  /* Compact mobile nav */
+  .mobile-nav-header {
+    padding: 0.75rem !important;
+  }
+
+  .mobile-nav-footer .mantine-ActionIcon-root {
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  /* Very compact editor content */
+  .mobile-editor .ProseMirror {
+    padding: 0.5rem !important;
+    font-size: 14px !important;
+  }
+
+  .mobile-note-editor > *:first-child {
+    padding: 0.4rem !important;
+  }
+
+  .mobile-note-editor .mantine-TextInput-input {
+    font-size: 1rem !important;
+    padding: 0.15rem 0 !important;
+  }
+
+  /* Ensure minimum touch targets even on very small screens */
+  .mantine-ActionIcon-root,
+  .mantine-Button-root {
+    min-width: 40px !important;
+    min-height: 40px !important;
+  }
+
+  /* Override for header buttons to be smaller */
+  .mantine-AppShell-header .mantine-ActionIcon-root {
+    min-width: 32px !important;
+    min-height: 32px !important;
+  }
+
+  /* Scale down text slightly but keep readable */
+  .mobile-content-container .modern-note-card .mantine-Text-root {
+    font-size: 0.85rem !important;
+    line-height: 1.4 !important;
+  }
+
+  /* Compact note list item text */
+  .mobile-content-container .modern-note-card .mantine-Text-root[size="xs"] {
+    font-size: 0.75rem !important;
+  }
+
+  /* Responsive text in mobile nav */
+  .mobile-nav-header .mantine-Text-root {
+    font-size: 0.9rem !important;
+  }
+
+  /* Smaller link text in footer */
+  .mobile-nav-footer + .mantine-Group-root .mantine-Text-root {
+    font-size: 0.7rem !important;
+  }
+}
+
+/* Ultra Small Screens Safety Net (under 280px width) */
+@media (max-width: 280px) {
+  /* Emergency compact header buttons */
+  .mantine-AppShell-header .mantine-ActionIcon-root,
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="md"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 28px !important;
+    min-height: 28px !important;
+    max-width: 28px !important;
+    max-height: 28px !important;
+    width: 28px !important;
+    height: 28px !important;
+    border-radius: 4px !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+  }
+
+  /* Emergency compact header button icons */
+  .mantine-AppShell-header .mantine-ActionIcon-root svg,
+  .mantine-AppShell-header .mantine-ActionIcon-root .tabler-icon {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+  }
+
+  /* Emergency compact header spacing */
+  .mantine-AppShell-header .mantine-Group-root {
+    gap: 0.1rem !important;
+  }
+
+  /* Emergency compact header padding */
+  .mantine-AppShell-header .mantine-Group-root[data-justify="space-between"] {
+    padding: 0 0.25rem !important;
+    gap: 0.1rem !important;
+  }
+
+  .mantine-AppShell-header .mantine-Group-root:not([data-justify="space-between"]) {
+    gap: 0.05rem !important;
+  }
+
+  /* Hide title text if needed on ultra small screens */
+  .mantine-AppShell-header .mantine-Text-root[size="lg"] {
+    display: none !important;
+  }
+
+  /* Ultra small logo */
+  .mantine-AppShell-header .mantine-Image-root {
+    width: 16px !important;
+    height: 16px !important;
+  }
+
+  /* Ultra compact burger menu */
+  .mantine-AppShell-header .mantine-Burger-root {
+    width: 16px !important;
+    height: 16px !important;
+  }
+}
+
+/* Targeting ActionIcons in the mobile navigation footer */
+.mobile-nav-footer .mantine-ActionIcon-root {
+  pointer-events: auto !important;
+  cursor: pointer !important; /* Also ensure cursor indicates interactivity */
+}
+
+/* Desktop Override */
+@media (min-width: 769px) {
+  /* Reset ActionIcon styles for desktop */
+  .mantine-ActionIcon-root,
+  .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-ActionIcon-root[data-size="md"],
+  .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: initial !important;
+    min-height: initial !important;
+    max-width: initial !important;
+    max-height: initial !important;
+    width: initial !important;
+    height: initial !important;
+    border-radius: initial !important;
+    padding: initial !important;
+    font-size: initial !important;
+  }
+
+  /* Reset ActionIcon icons for desktop */
+  .mantine-ActionIcon-root svg,
+  .mantine-ActionIcon-root .tabler-icon {
+    width: initial !important;
+    height: initial !important;
+    min-width: initial !important;
+    min-height: initial !important;
+  }
+
+  /* Standard desktop ActionIcon sizes */
+  .mantine-ActionIcon-root[data-size="lg"] {
+    min-width: 48px !important;
+    min-height: 48px !important;
+  }
+
+  .mantine-ActionIcon-root[data-size="md"] {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 28px !important;
+    min-height: 28px !important;
+  }
+
+  /* Desktop navbar styles */
+  .mantine-AppShell-main {
+    width: calc(100% - var(--mantine-navbar-width, 0px)) !important;
+    margin-left: var(--mantine-navbar-width, 0px) !important;
+    padding: 16px !important;
+    position: relative !important;
+  }
+  
+  .desktop-note-editor {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  .mobile-note-editor,
+  .mobile-content-container,
+  .mobile-header,
+  .mobile-fab {
+    display: none !important;
+  }
+}
+
+/* Landscape orientation fixes for small screens */
+@media (max-width: 812px) and (max-height: 414px) and (orientation: landscape) {
+  /* Ultra compact header for landscape */
+  .mantine-AppShell-header {
+    height: calc(48px + max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  .mantine-AppShell-main {
+    padding-top: calc(48px + max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100vh - 48px - max(0px, env(safe-area-inset-top))) !important;
+    min-height: calc(100dvh - 48px - max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  .mobile-note-editor {
+    top: calc(48px + max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  /* Ultra compact header buttons for landscape */
+  .mantine-AppShell-header .mantine-ActionIcon-root,
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="lg"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="md"],
+  .mantine-AppShell-header .mantine-ActionIcon-root[data-size="sm"] {
+    min-width: 30px !important;
+    min-height: 30px !important;
+    max-width: 30px !important;
+    max-height: 30px !important;
+    width: 30px !important;
+    height: 30px !important;
+    border-radius: 5px !important;
+    padding: 0 !important;
+    font-size: 10px !important;
+  }
+
+  /* Ultra compact header button icons for landscape */
+  .mantine-AppShell-header .mantine-ActionIcon-root svg,
+  .mantine-AppShell-header .mantine-ActionIcon-root .tabler-icon {
+    width: 12px !important;
+    height: 12px !important;
+    min-width: 12px !important;
+    min-height: 12px !important;
+  }
+
+  /* Ultra compact header spacing for landscape */
+  .mantine-AppShell-header .mantine-Group-root {
+    gap: 0.15rem !important;
+  }
+
+  /* Ultra compact header padding for landscape */
+  .mantine-AppShell-header .mantine-Group-root[data-justify="space-between"] {
+    padding: 0 0.3rem !important;
+    gap: 0.1rem !important;
+  }
+
+  .mantine-AppShell-header .mantine-Group-root:not([data-justify="space-between"]) {
+    gap: 0.1rem !important;
+  }
+
+  /* Extra small logo for landscape */
+  .mantine-AppShell-header .mantine-Image-root {
+    width: 20px !important;
+    height: 20px !important;
+  }
+
+  /* Ultra compact header title for landscape */
+  .mantine-AppShell-header .mantine-Text-root[size="lg"] {
+    font-size: 0.85rem !important;
+    font-weight: 600 !important;
+  }
+
+  /* Ultra compact burger menu for landscape */
+  .mantine-AppShell-header .mantine-Burger-root {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* Ultra compact toolbar for landscape */
+  .mobile-editor .modern-toolbar {
+    height: 40px !important;
+    padding: 0.1rem 0.25rem !important;
+  }
+
+  .mobile-editor .modern-toolbar-button,
+  .mobile-editor .modern-toolbar .mantine-ActionIcon-root {
+    min-width: 26px !important;
+    min-height: 26px !important;
+    max-width: 26px !important;
+    max-height: 26px !important;
+    border-radius: 4px !important;
+    margin: 0 0.02rem !important;
+    font-size: 8px !important;
+  }
+
+  /* Reduce padding everywhere in landscape */
+  .mobile-note-editor > *:first-child {
+    padding: 0.3rem !important;
+  }
+
+  .mobile-note-editor .mantine-TextInput-input {
+    font-size: 0.95rem !important;
+    padding: 0.1rem 0 !important;
+  }
+
+  .mobile-editor .ProseMirror {
+    padding: 0.4rem !important;
+    font-size: 14px !important;
+  }
+
+  /* Hide some toolbar groups to save space in landscape */
+  .mobile-editor .modern-toolbar .mantine-Group-root:nth-child(n+4) {
+    display: none !important;
+  }
+
+  /* Compact mobile nav in landscape */
+  .mobile-nav-header {
+    padding: 0.5rem !important;
+  }
+
+  .mobile-nav-footer .mantine-ActionIcon-root {
+    min-width: 36px !important;
+    min-height: 36px !important;
+  }
+
+  /* Reduce note card padding in landscape */
+  .mobile-content-container .modern-note-card {
+    padding: 0.6rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* Smaller FAB in landscape */
+  .mobile-fab {
+    width: 48px !important;
+    height: 48px !important;
+    bottom: 12px !important;
+    right: 12px !important;
+    font-size: 14px !important;
+  }
+}
+
+.mobile-editor .EditorContent > div > div {
+  flex: 1 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  min-height: 0 !important;
+}
+
+.mobile-editor .tiptap {
+  flex: 1 !important;
+  min-height: 0 !important;
+  overflow-y: auto !important;
+  -webkit-overflow-scrolling: touch !important;
+  background: var(--editor-bg) !important;
+  height: 100% !important;
+}
+
+/* Remove any bottom padding/margin that could cause blank space */
+.mobile-editor .modern-rich-text-editor,
+.mobile-editor .modern-editor-content,
+.mobile-editor .modern-editor-prose {
+  margin-bottom: 0 !important;
+  padding-bottom: 0 !important;
+}
+
+/* Mobile Typography */
+.mobile-editor .ProseMirror h1 {
+  font-size: 1.875rem !important;
+  margin: 1.5rem 0 1rem !important;
+}
+
+.mobile-editor .ProseMirror h2 {
+  font-size: 1.5rem !important;
+  margin: 1.25rem 0 0.75rem !important;
+}
+
+.mobile-editor .ProseMirror p {
+  margin: 0.875rem 0 !important;
+  line-height: 1.6 !important;
+}
+
+/* Mobile Form Controls */
+.mantine-TextInput-input,
+.mantine-Textarea-input {
+  font-size: 16px !important;
+  padding: 0.875rem !important;
+  border-radius: 12px !important;
+  -webkit-text-size-adjust: 100% !important;
+}
+
+.mantine-Button-root {
+  min-height: 48px !important;
+  font-size: 16px !important;
+  border-radius: 12px !important;
+  padding: 0.75rem 1.25rem !important;
+  touch-action: manipulation !important;
+}
+
+.mantine-ActionIcon-root {
+  min-width: 48px !important;
+  min-height: 48px !important;
+  border-radius: 12px !important;
+  touch-action: manipulation !important;
+}
+
+/* Modern Mobile Note Cards */
+.mobile-content-container .modern-note-card {
+  margin-bottom: 1rem !important;
+  padding: 1.25rem !important;
+  border-radius: 16px !important;
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-primary) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08) !important;
+  transition: all 0.2s ease !important;
+}
+
+.mobile-content-container .modern-note-card:active {
+  transform: scale(0.98) !important;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.12) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-content-container .modern-note-card {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-accent) !important;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2) !important;
+}
+
+/* Mobile FAB - Modern Style */
+.mobile-fab {
+  position: fixed !important;
+  bottom: 24px !important;
+  right: 24px !important;
+  z-index: 1000 !important;
+  width: 64px !important;
+  height: 64px !important;
+  border-radius: 20px !important;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15) !important;
+  border: none !important;
+  font-size: 20px !important;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1) !important;
+  backdrop-filter: blur(12px) !important;
+  -webkit-backdrop-filter: blur(12px) !important;
+  pointer-events: auto !important;
+}
+
+.mobile-fab:active {
+  transform: scale(0.9) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-fab {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4) !important;
+}
+
+/* Mobile Search Bar */
+.mobile-search {
+  margin-bottom: 1.5rem !important;
+}
+
+.mobile-search .mantine-TextInput-input {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-primary) !important;
+  border-radius: 16px !important;
+  padding: 1rem 1.25rem !important;
+  padding-left: 4rem !important;
+  font-size: 16px !important;
+}
+
+.mobile-search .mantine-TextInput-section[data-position="left"] {
+  margin-left: 1.25rem !important;
+  width: 18px !important;
+  min-width: 18px !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-search .mantine-TextInput-input {
+  background: var(--bg-secondary) !important;
+  border: 1px solid var(--border-accent) !important;
+}
+
+/* Mobile Navigation Improvements */
+.mantine-Drawer-content {
+  background: var(--bg-primary) !important;
+  border-radius: 20px 20px 0 0 !important;
+  z-index: 1200 !important;
+  pointer-events: auto !important;
+  width: 100vw !important;
+  height: 100vh !important;
+  position: fixed !important;
+  top: 0 !important;
+  left: 0 !important;
+}
+
+.mantine-Drawer-overlay {
+  display: none !important;
+}
+
+.mobile-drawer-content {
+  pointer-events: auto !important;
+  touch-action: manipulation !important;
+}
+
+.mobile-drawer-content * {
+  pointer-events: auto !important;
+}
+
+.mobile-nav-header {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-primary) !important;
+  padding: 1.25rem !important;
+  padding-top: max(1.25rem, env(safe-area-inset-top)) !important;
+  border-radius: 20px 20px 0 0 !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-nav-header {
+  background: var(--bg-secondary) !important;
+  border-bottom: 1px solid var(--border-accent) !important;
+}
+
+/* Mobile Editor Safe Areas */
+.mobile-note-editor > *:first-child {
+  padding-top: max(1rem, env(safe-area-inset-top)) !important;
+}
+
+.mobile-note-editor > *:last-child {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom)) !important;
+}
+
+/* Simplified iOS and Android Fixes */
+@supports (-webkit-touch-callout: none) {
+  .mobile-note-editor {
+    height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important;
+  }
+  
+  .mobile-content-container {
+    height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important;
+  }
+
+  /* iOS Safari specific fixes for small screens */
+  .mobile-editor .ProseMirror {
+    -webkit-overflow-scrolling: touch !important;
+    -webkit-transform: translate3d(0, 0, 0) !important;
+  }
+
+  /* Fix iOS Safari viewport units on small screens */
+  html {
+    height: -webkit-fill-available !important;
+  }
+
+  body {
+    height: -webkit-fill-available !important;
+  }
+}
+
+/* Android Specific Fixes */
+.android .mobile-note-editor,
+.android .mobile-content-container {
+  height: calc(100vh - 60px - max(0px, env(safe-area-inset-top))) !important;
+}
+
+/* Mobile Editor Dividers */
+.mobile-editor .mantine-Divider-root[data-orientation="vertical"] {
+  height: 28px !important;
+  margin: 0 0.25rem !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-editor .mantine-Divider-root[data-orientation="vertical"] {
+  border-color: var(--border-accent) !important;
+}
+
+/* Mobile Group Spacing */
+.mobile-editor .mantine-Group-root {
+  gap: 0.25rem !important;
+  flex-wrap: nowrap !important;
+  min-width: max-content !important;
+}
+
+/* Mobile Toolbar Group Wrapping */
+.mobile-editor .modern-toolbar .mantine-Group-root {
+  flex-wrap: nowrap !important;
+  min-width: max-content !important;
+}
+
+/* Mobile Selection Mode */
+.mobile-selection-mode .modern-note-card {
+  padding-left: 3rem !important;
+  position: relative !important;
+}
+
+.mobile-selection-mode .modern-note-card::before {
+  content: '' !important;
+  position: absolute !important;
+  left: 1rem !important;
+  top: 50% !important;
+  transform: translateY(-50%) !important;
+  width: 24px !important;
+  height: 24px !important;
+  border-radius: 6px !important;
+  border: 2px solid var(--border-primary) !important;
+  background: var(--bg-primary) !important;
+}
+
+/* Mobile Empty State */
+.mobile-content-container .empty-state {
+  padding: 3rem 1.5rem !important;
+  text-align: center !important;
+}
+
+.mobile-content-container .empty-state-icon {
+  width: 80px !important;
+  height: 80px !important;
+  margin-bottom: 1.5rem !important;
+}
+
+.mobile-content-container .empty-state-title {
+  font-size: 1.5rem !important;
+  margin-bottom: 0.75rem !important;
+}
+
+.mobile-content-container .empty-state-description {
+  font-size: 1rem !important;
+  margin-bottom: 2rem !important;
+}
+
+.mobile-editor .mantine-Divider-root[data-orientation="vertical"] {
+  height: 28px !important;
+  margin: 0 0.25rem !important;
+  border-color: var(--border-primary) !important;
+}
+
+[data-mantine-color-scheme="dark"] .mobile-editor .mantine-Divider-root[data-orientation="vertical"] {
+  border-color: var(--border-accent) !important;
+}
+
+.mobile-editor .modern-toolbar .mantine-Group-root {
+  gap: 0.25rem !important;
+  flex-wrap: nowrap !important;
+  min-width: max-content !important;
+}
+
+.mobile-editor .ProseMirror-widget,
+.mobile-editor .ProseMirror [data-drag-handle],
+.mobile-editor [data-drag-handle] {
+  display: none !important;
+  opacity: 0 !important;
+  pointer-events: none !important;
+}
+
+.mobile-editor .EditorContent {
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+
+.mobile-editor .EditorContent > div {
+  height: 100% !important;
+  flex: 1 !important;
+  display: flex !important;
+  flex-direction: column !important;
+  overflow: hidden !important;
+  min-height: 0 !important;
+}
+
+/* Mobile Modal Improvements */
+
+/* Handle increased browser font sizes */
+@media (min-resolution: 1dppx) {
+  html {
+    font-size: 16px !important;
+  }
+}
+
+/* Handle users with larger font preferences */
+@media (prefers-reduced-motion: reduce) {
+  .mobile-content-container .modern-note-card,
+  .mobile-fab,
+  .mantine-Button-root,
+  .mantine-ActionIcon-root {
+    transition: none !important;
+    animation: none !important;
+  }
+}
+
+/* High contrast mode adjustments */
+@media (prefers-contrast: high) {
+  .mobile-content-container .modern-note-card,
+  .mobile-editor .modern-toolbar-button,
+  .mantine-Button-root,
+  .mantine-ActionIcon-root {
+    border-width: 2px !important;
+  }
+}

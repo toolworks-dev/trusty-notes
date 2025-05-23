@@ -49,11 +49,20 @@ export function MarkdownEditor({
 
   const renderEditor = () => (
     editorType === 'richtext' ? (
-      <RichTextEditor 
-        content={content} 
-        onChange={onChange}
-        isMobile={!!isMobile}
-      />
+      <Box style={{ 
+        height: '100%', 
+        overflow: 'hidden',
+        display: 'flex',
+        flexDirection: 'column',
+        flex: 1,
+        minHeight: 0
+      }}>
+        <RichTextEditor 
+          content={content} 
+          onChange={onChange}
+          isMobile={!!isMobile}
+        />
+      </Box>
     ) : (
       <Textarea
         value={content}
@@ -63,27 +72,42 @@ export function MarkdownEditor({
           wrapper: { height: '100%' },
           input: {
             height: '100%',
-            padding: '1rem',
-            fontSize: isMobile ? '16px' : undefined,
-            borderRadius: 'var(--mantine-radius-md)',
-            border: '1px solid var(--mantine-color-gray-3)',
-            backgroundColor: 'var(--mantine-color-body)',
-            transition: 'border-color 100ms ease',
-            '&:focus': {
-              borderColor: 'var(--mantine-color-blue-filled)',
-              outline: 'none'
-            },
-            '&:hover': {
-              borderColor: 'var(--mantine-color-gray-5)'
-            }
+            padding: isMobile ? '1rem' : '1.5rem',
+            fontSize: isMobile ? '16px' : '14px',
+            lineHeight: isMobile ? '1.6' : '1.5',
+            borderRadius: 0,
+            border: 'none',
+            backgroundColor: 'var(--editor-bg)',
+            color: 'var(--text-primary)',
+            resize: 'none',
+            outline: 'none',
+            boxShadow: 'none',
+            fontFamily: isMobile 
+              ? '-apple-system, BlinkMacSystemFont, sans-serif' 
+              : '"SF Mono", Monaco, "Cascadia Code", "Roboto Mono", Consolas, monospace'
           }
         }}
+        autosize={false}
+        minRows={undefined}
+        maxRows={undefined}
       />
     )
   );
 
   const renderPreview = () => (
-    <Box className="markdown-preview" p="md" style={{ height: '100%', overflow: 'auto' }}>
+    <Box 
+      className="markdown-preview" 
+      style={{ 
+        height: '100%', 
+        overflow: 'auto',
+        padding: isMobile ? '1rem' : '1.5rem',
+        background: 'var(--editor-bg)',
+        color: 'var(--text-primary)',
+        fontSize: isMobile ? '16px' : '14px',
+        lineHeight: isMobile ? '1.6' : '1.5',
+        WebkitOverflowScrolling: 'touch'
+      }}
+    >
       <ReactMarkdown
         remarkPlugins={[remarkGfm]}
         rehypePlugins={[rehypeRaw, rehypeHighlight]}
@@ -95,7 +119,18 @@ export function MarkdownEditor({
 
   const renderContent = () => {
     if (isMobile) {
-      return view === 'edit' ? renderEditor() : renderPreview();
+      return (
+        <Box style={{ 
+          height: '100%', 
+          overflow: 'hidden',
+          display: 'flex',
+          flexDirection: 'column',
+          flex: 1,
+          minHeight: 0
+        }}>
+          {view === 'edit' ? renderEditor() : renderPreview()}
+        </Box>
+      );
     }
 
     switch (view) {
@@ -103,8 +138,10 @@ export function MarkdownEditor({
         return renderPreview();
       case 'split':
         return (
-          <Group grow style={{ height: '100%' }}>
-            {renderEditor()}
+          <Group grow style={{ height: '100%', gap: 0 }}>
+            <Box style={{ borderRight: '1px solid var(--editor-border)' }}>
+              {renderEditor()}
+            </Box>
             {renderPreview()}
           </Group>
         );
@@ -115,22 +152,42 @@ export function MarkdownEditor({
 
   return (
     <Box 
-      className={`editor-container ${isMobile ? 'mobile-editor' : ''}`}
+      className={`markdown-editor-container ${isMobile ? 'mobile-editor' : ''}`}
       style={{ 
         height: '100%',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        background: 'var(--editor-bg)',
+        overflow: 'hidden',
+        flex: isMobile ? 1 : undefined,
+        minHeight: isMobile ? 0 : undefined
       }}
     >
-      <Group justify="space-between" mb="xs">
-        <WordCount content={content} />
-        <Group>
+      {/* Toolbar */}
+      <Box 
+        className="modern-toolbar"
+        style={{
+          padding: isMobile ? '0.5rem' : '0.75rem 1rem',
+          borderBottom: '1px solid var(--editor-border)',
+          background: 'var(--editor-toolbar)',
+          flexShrink: 0,
+          display: 'flex',
+          justifyContent: isMobile ? 'flex-end' : 'space-between',
+          alignItems: 'center',
+          minHeight: isMobile ? '60px' : 'auto',
+          maxHeight: isMobile ? '60px' : 'auto',
+          overflow: isMobile ? 'hidden' : 'visible'
+        }}
+      >
+        {!isMobile && <WordCount content={content} />}
+        <Group gap="xs">
           {isMobile ? (
             <ActionIcon
               variant={view === 'edit' ? 'filled' : 'subtle'}
               onClick={() => setView(view === 'edit' ? 'preview' : 'edit')}
+              size={44}
             >
-              {view === 'edit' ? <IconEye size={16} /> : <IconEdit size={16} />}
+              {view === 'edit' ? <IconEye size={20} /> : <IconEdit size={20} />}
             </ActionIcon>
           ) : (
             <>
@@ -175,8 +232,21 @@ export function MarkdownEditor({
             </>
           )}
         </Group>
-      </Group>
-      {renderContent()}
+      </Box>
+      
+      {/* Content Area */}
+      <Box 
+        style={{ 
+          flex: 1,
+          overflow: 'hidden',
+          position: 'relative',
+          minHeight: 0,
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        {renderContent()}
+      </Box>
     </Box>
   );
 }

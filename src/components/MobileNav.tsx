@@ -98,7 +98,9 @@ export function MobileNav({
   };
 
   const handleShowSyncSettings = () => {
+    console.log("[MobileNav] handleShowSyncSettings called");
     onClose();
+    console.log("[MobileNav] after onClose, calling onShowSyncSettings prop");
     onShowSyncSettings();
   };
 
@@ -114,6 +116,10 @@ export function MobileNav({
       size="100%"
       position="left"
       withCloseButton={false}
+      withOverlay={false}
+      closeOnClickOutside={false}
+      closeOnEscape={true}
+      trapFocus={false}
       classNames={{
         content: 'mobile-drawer-content'
       }}
@@ -125,8 +131,8 @@ export function MobileNav({
         }
       }}
     >
-      <Stack h="100%" gap={0}>
-        <Group p="md" className="mobile-nav-header">
+      <Stack h="100%" gap={0} onClick={(e) => e.stopPropagation()}>
+        <Group p="md" className="mobile-nav-header" justify="space-between">
           <Group>
             <Avatar radius="xl" src="/trusty.jpg" alt="TrustyNotes Logo" />
             <div>
@@ -134,18 +140,22 @@ export function MobileNav({
               <Text size="xs" c="dimmed">Secure your thoughts</Text>
             </div>
           </Group>
-          <Group>
+          <Group align="center" gap="sm">
             {notes.length > 0 && (
               <ActionIcon 
+                size="md"
                 variant={isSelectionMode ? "filled" : "subtle"} 
                 color={isSelectionMode ? "blue" : "gray"}
-                onClick={onToggleSelectionMode}
+                onClick={(e) => {
+                  e.stopPropagation();
+                  onToggleSelectionMode();
+                }}
                 radius="xl"
               >
                 <IconCheck size={18} />
               </ActionIcon>
             )}
-            <ActionIcon variant="subtle" onClick={onClose} radius="xl">
+            <ActionIcon variant="subtle" onClick={onClose} radius="xl" size="md">
               <IconX size={18} />
             </ActionIcon>
           </Group>
@@ -156,7 +166,8 @@ export function MobileNav({
             leftSection={<IconPlus size={16} />}
             fullWidth
             radius="md"
-            onClick={() => {
+            onClick={(e) => {
+              e.stopPropagation();
               onNewNote();
               onClose();
             }}
@@ -167,9 +178,13 @@ export function MobileNav({
 
         <Box px="md">
           <TextInput
-            placeholder="Search notes..."
+            placeholder="     Search notes..."
             value={searchQuery}
-            onChange={(e) => onSearch(e.currentTarget.value)}
+            onChange={(e) => {
+              e.stopPropagation();
+              onSearch(e.currentTarget.value);
+            }}
+            onClick={(e) => e.stopPropagation()}
             leftSection={<IconSearch size={16} />}
             radius="md"
             size="md"
@@ -194,7 +209,10 @@ export function MobileNav({
               fullWidth
               radius="md"
               color="red"
-              onClick={onDeleteSelectedNotes}
+              onClick={(e) => {
+                e.stopPropagation();
+                onDeleteSelectedNotes();
+              }}
             >
               Delete Selected ({selectedNotes.size})
             </Button>
@@ -209,12 +227,16 @@ export function MobileNav({
                   key={note.id}
                   shadow="sm"
                   p="md"
-                  onClick={() => handleNoteSelect(note)}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    handleNoteSelect(note);
+                  }}
                   className="mobile-note-item"
                   withBorder
                   style={{
                     borderLeft: selectedNote?.id === note.id ? 
-                      `4px solid ${theme.colors.blue[6]}` : undefined
+                      `4px solid ${theme.colors.blue[6]}` : undefined,
+                    cursor: 'pointer'
                   }}
                 >
                   <Group justify="space-between" wrap="nowrap">
@@ -267,7 +289,11 @@ export function MobileNav({
                   variant="light" 
                   mt="md" 
                   leftSection={<IconPlus size={16} />}
-                  onClick={onNewNote}
+                  onClick={(e) => {
+                    e.stopPropagation();
+                    onNewNote();
+                    onClose();
+                  }}
                 >
                   Create Your First Note
                 </Button>
@@ -281,7 +307,11 @@ export function MobileNav({
         <Group grow p="md" className="mobile-nav-footer">
           <ActionIcon 
             variant="light" 
-            onClick={onToggleTheme} 
+            onClick={(e) => {
+              console.log("[MobileNav] Theme toggle button clicked");
+              e.stopPropagation();
+              onToggleTheme();
+            }} 
             size="lg"
             radius="md"
           >
@@ -289,7 +319,10 @@ export function MobileNav({
           </ActionIcon>
           <ActionIcon 
             variant="light" 
-            onClick={handleShowSyncSettings} 
+            onClick={(e) => {
+              e.stopPropagation();
+              handleShowSyncSettings();
+            }} 
             size="lg"
             radius="md"
             disabled={!isOnline}
@@ -298,7 +331,10 @@ export function MobileNav({
           </ActionIcon>
           <ActionIcon 
             variant="light" 
-            onClick={onExport} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onExport();
+            }} 
             size="lg"
             radius="md"
           >
@@ -306,7 +342,10 @@ export function MobileNav({
           </ActionIcon>
           <ActionIcon 
             variant="light" 
-            onClick={onImport} 
+            onClick={(e) => {
+              e.stopPropagation();
+              onImport();
+            }} 
             size="lg"
             radius="md"
           >
@@ -322,6 +361,7 @@ export function MobileNav({
             rel="noreferrer"
             size="xs"
             c="dimmed"
+            onClick={(e) => e.stopPropagation()}
           >
             <Group gap={4}>
               <IconBrandGithub size={14} />
@@ -334,6 +374,7 @@ export function MobileNav({
             rel="noreferrer"
             size="xs"
             c="dimmed"
+            onClick={(e) => e.stopPropagation()}
           >
             Privacy
           </Anchor>

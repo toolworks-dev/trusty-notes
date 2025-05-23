@@ -4,7 +4,6 @@ import {
   AppShell,
   Button,
   Text,
-  Paper,
   TextInput,
   Stack,
   Group,
@@ -16,6 +15,8 @@ import {
   Burger,
   Anchor,
   Image,
+  Paper,
+  Badge,
 } from '@mantine/core';
 import { 
   IconSun, 
@@ -31,6 +32,8 @@ import {
   IconBrandGithub,
   IconNotes,
   IconCheck,
+  IconShieldLock,
+  IconLock,
 } from '@tabler/icons-react';
 import { useDebouncedCallback, useMediaQuery } from '@mantine/hooks';
 import { MobileNav } from './components/MobileNav';
@@ -42,6 +45,8 @@ import { SyncSettings as SyncSettingsType, Note } from './types/sync';
 import { WebStorageService } from './services/webStorage';
 import './styles/richtext.css';
 import './styles/editor-overrides.css';
+import './styles/modern-design.css';
+import './styles/mobile.css';
 
 const isElectron = !!window.electron;
 const logoPath = isElectron ? './trusty.jpg' : '/trusty.jpg';
@@ -67,7 +72,10 @@ function App() {
   const [selectedNotes, setSelectedNotes] = useState<Set<number>>(new Set());
   const [isSelectionMode, setIsSelectionMode] = useState(false);
   const [ignoreNextSave, setIgnoreNextSave] = useState(false);
-  const [isKeyboardVisible, setIsKeyboardVisible] = useState(false);
+
+  const isNoteSelected = (note: Note): boolean => {
+    return selectedNote?.id !== undefined && note.id !== undefined && selectedNote.id === note.id;
+  };
 
   useEffect(() => {
     loadNotes();
@@ -144,8 +152,12 @@ function App() {
     setSelectedNotes(newSelection);
   };
   
-  const deleteSelectedNotes = async () => {
+  const handleDeleteSelectedNotes = async () => {
     if (selectedNotes.size === 0) return;
+    
+    if (!window.confirm(`Are you sure you want to delete ${selectedNotes.size} selected notes?`)) {
+      return;
+    }
     
     try {
       await WebStorageService.deleteNote(Array.from(selectedNotes));
@@ -159,6 +171,77 @@ function App() {
       console.error('Failed to delete notes:', error);
       alert('Failed to delete notes');
     }
+  };
+
+  const handleDeleteNote = async (noteId: number) => {
+    if (!window.confirm('Are you sure you want to delete this note?')) return;
+    try {
+      await WebStorageService.deleteNote(noteId);
+      if (selectedNote?.id === noteId) {
+        clearForm();
+      }
+      await loadNotes();
+    } catch (error) {
+      console.error('Failed to delete note:', error);
+      alert('Failed to delete note');
+    }
+  };
+
+  // Utility function to strip HTML tags
+  const stripHtml = (html: string): string => {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    return tmp.textContent || tmp.innerText || '';
+  };
+
+  // Format note date and time
+  const formatNoteDatetime = (timestamp: number): string => {
+    const date = new Date(timestamp);
+    const now = new Date();
+    const diffInMs = now.getTime() - date.getTime();
+    const diffInHours = diffInMs / (1000 * 60 * 60);
+    const diffInDays = diffInMs / (1000 * 60 * 60 * 24);
+
+    if (diffInHours < 1) {
+      const diffInMinutes = Math.floor(diffInMs / (1000 * 60));
+      return diffInMinutes < 1 ? 'Just now' : `${diffInMinutes}m ago`;
+    } else if (diffInHours < 24) {
+      return `${Math.floor(diffInHours)}h ago`;
+    } else if (diffInDays < 7) {
+      return `${Math.floor(diffInDays)}d ago`;
+    } else {
+      return format(date, 'MMM d, yyyy');
+    }
+  };
+
+  // Get encryption badge for a note
+  const getEncryptionBadge = (note: Note) => {
+    if (note?.encryptionType === 2) {
+      return (
+        <Badge 
+          color="green" 
+          size="xs" 
+          radius="md" 
+          variant="light"
+          leftSection={<IconShieldLock size={10} />}
+        >
+          PQ
+        </Badge>
+      );
+    } else if (note?.encryptionType === 1) {
+      return (
+        <Badge 
+          color="blue" 
+          size="xs" 
+          radius="md" 
+          variant="light"
+          leftSection={<IconLock size={10} />}
+        >
+          AES
+        </Badge>
+      );
+    }
+    return null;
   };
 
   useEffect(() => {
@@ -218,25 +301,30 @@ function App() {
     setTimeout(() => {
       window.dispatchEvent(new Event('resize'));
       
-      // Force redraw of the main content area to fix sidebar overlap
-      const mainContent = document.querySelector('.mantine-AppShell-main');
-      if (mainContent) {
-        // Trigger reflow
-        mainContent.classList.add('force-redraw');
-        
-        // Apply explicit width calculation to fix overlap
-        const navbarWidth = document.querySelector('.mantine-AppShell-navbar')?.clientWidth || 300;
-        const mainContentHtml = mainContent as HTMLElement;
-        
-        // Add a permanent class to fix the layout
-        document.body.classList.add('fixed-layout');
-        mainContentHtml.style.width = `calc(100% - ${navbarWidth}px)`;
-        mainContentHtml.style.marginLeft = `${navbarWidth}px`;
-        
-        // Just remove the animation class after transition
-        setTimeout(() => {
-          mainContentHtml.classList.remove('force-redraw');
-        }, 300);
+      const mainContent = document.querySelector('.mantine-AppShell-main') as HTMLElement | null;
+
+      if (!isMobile) {
+        if (mainContent) {
+          mainContent.classList.add('force-redraw');
+          // Use the sidebarCollapsed state to determine width, consistent with AppShell styles
+          const desktopNavbarWidth = sidebarCollapsed ? 80 : 300;
+          
+          document.body.classList.add('fixed-layout');
+          mainContent.style.width = `calc(100% - ${desktopNavbarWidth}px)`;
+          mainContent.style.marginLeft = `${desktopNavbarWidth}px`;
+
+          setTimeout(() => {
+            mainContent.classList.remove('force-redraw');
+          }, 300);
+        }
+      } else {
+        // On mobile, ensure proper layout by removing potentially problematic desktop styles/classes
+        document.body.classList.remove('fixed-layout');
+        if (mainContent) {
+          // Reset inline styles so AppShell's own dynamic styles can take full effect for mobile
+          mainContent.style.width = ''; 
+          mainContent.style.marginLeft = '';
+        }
       }
     }, 50);
   }
@@ -342,20 +430,6 @@ function App() {
       console.error('Failed to save note:', error);
     }
   };
-
-  async function deleteNote(noteId: number) {
-    if (!window.confirm('Are you sure you want to delete this note?')) return;
-    try {
-      await WebStorageService.deleteNote(noteId);
-      if (selectedNote?.id === noteId) {
-        clearForm();
-      }
-      await loadNotes();
-    } catch (error) {
-      console.error('Failed to delete note:', error);
-      alert('Failed to delete note');
-    }
-  }
 
   async function exportNotes() {
     const notes = await WebStorageService.getNotes();
@@ -506,13 +580,29 @@ function App() {
       const setAppHeight = () => {
         const vh = window.innerHeight * 0.01;
         document.documentElement.style.setProperty('--vh', `${vh}px`);
+        
+        // Force mobile layout
+        document.body.style.height = '100vh';
+        document.body.style.overflow = 'hidden';
       };
       
       setAppHeight();
       window.addEventListener('resize', setAppHeight);
+      window.addEventListener('orientationchange', setAppHeight);
+      
+      // Additional mobile fixes
+      setTimeout(() => {
+        const appShell = document.querySelector('.mantine-AppShell-root') as HTMLElement;
+        if (appShell) {
+          appShell.style.height = '100vh';
+          appShell.style.width = '100vw';
+          appShell.style.overflow = 'hidden';
+        }
+      }, 100);
       
       return () => {
         window.removeEventListener('resize', setAppHeight);
+        window.removeEventListener('orientationchange', setAppHeight);
       };
     } else {
       // Desktop-specific layout settings
@@ -522,6 +612,8 @@ function App() {
       );
       document.body.classList.add('desktop-view');
       document.body.classList.remove('mobile-view');
+      document.body.style.height = '';
+      document.body.style.overflow = '';
       
       // Apply initial layout for desktop
       const mainContent = document.querySelector('.mantine-AppShell-main');
@@ -535,27 +627,17 @@ function App() {
   }, [isMobile, sidebarCollapsed]);
 
   useEffect(() => {
-    if (isMobile) {
-      const handleResize = () => {
-        const isKeyboard = window.innerHeight < window.outerHeight * 0.75;
-        setIsKeyboardVisible(isKeyboard);
-        document.body.classList.toggle('keyboard-visible', isKeyboard);
-        
-        // Update app height variable for mobile
-        document.documentElement.style.setProperty('--app-height', `${window.innerHeight}px`);
-      };
-      
-      window.addEventListener('resize', handleResize);
-      // Set initial value
-      handleResize();
-      
-      return () => window.removeEventListener('resize', handleResize);
+    if (isMobile && !selectedNote) {
+      // Brief delay to allow UI to update before recalculating layout
+      // setTimeout(() => {
+      //   window.dispatchEvent(new Event('resize'));
+      // }, 100);
     }
-  }, [isMobile]);
+  }, [selectedNote, isMobile]);
 
   return (
     <AppShell
-      className={sidebarCollapsed ? 'sidebar-collapsed' : ''}
+      className={`modern-app-shell ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}
       header={isMobile ? { height: 60 } : undefined}
       navbar={{
         width: isMobile ? 0 : (sidebarCollapsed ? 80 : 300),
@@ -574,8 +656,15 @@ function App() {
       }}
     >
       {isMobile && (
-        <AppShell.Header>
-          <Group h="100%" px="md" justify="space-between">
+        <AppShell.Header 
+          className="modern-header"
+          style={{
+            paddingTop: 'max(0.75rem, env(safe-area-inset-top))',
+            height: 'calc(60px + max(0px, env(safe-area-inset-top)))',
+            zIndex: mobileNavOpened ? 100 : 1000
+          }}
+        >
+          <Group h="100%" px="md" justify="space-between" align="center">
             <Group>
               <Burger
                 opened={mobileNavOpened}
@@ -584,14 +673,22 @@ function App() {
                 size="sm"
               />
               <Image src={logoPath} alt="Logo" w={30} h={30} />
+              <Text size="lg" fw={600} c="var(--text-primary)">
+                TrustyNotes
+              </Text>
             </Group>
-            <TextInput
-              placeholder="Note title"
-              value={title}
-              onChange={(e) => setTitle(e.currentTarget.value)}
-              style={{ flex: 1 }}
-            />
             <Group>
+              {filteredNotes.length > 0 && !selectedNote && (
+                <ActionIcon
+                  variant={isSelectionMode ? "filled" : "subtle"}
+                  color={isSelectionMode ? "blue" : "gray"}
+                  onClick={toggleSelectionMode}
+                  size="lg"
+                  radius="xl"
+                >
+                  <IconCheck size={20} />
+                </ActionIcon>
+              )}
               <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
                 <ActionIcon variant="subtle">
                   <IconBrandGithub size={20} />
@@ -612,23 +709,29 @@ function App() {
           onNewNote={clearForm}
           onSearch={setSearchQuery}
           searchQuery={searchQuery}
-          onToggleTheme={toggleColorScheme}
+          onToggleTheme={() => {
+            console.log("[App.tsx] onToggleTheme called");
+            toggleColorScheme();
+          }}
           colorScheme={colorScheme}
-          onShowSyncSettings={() => setShowSyncSettings(true)}
+          onShowSyncSettings={() => {
+            console.log("[App.tsx] onShowSyncSettings called");
+            setShowSyncSettings(true);
+          }}
           onExport={exportNotes}
           onImport={importNotes}
           selectedNote={selectedNote || undefined}
           notes={filteredNotes}
           onSelectNote={selectNote}
-          onDeleteNote={deleteNote}
+          onDeleteNote={handleDeleteNote}
           isSelectionMode={isSelectionMode}
           selectedNotes={selectedNotes}
           onToggleSelectionMode={toggleSelectionMode}
           onToggleNoteSelection={toggleNoteSelection}
-          onDeleteSelectedNotes={deleteSelectedNotes}
+          onDeleteSelectedNotes={handleDeleteSelectedNotes}
         />
       ) : (
-        <AppShell.Navbar p="md">
+        <AppShell.Navbar p="md" className={`modern-navbar ${sidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
           <Stack 
             h="100%" 
             gap="xs" 
@@ -638,28 +741,30 @@ function App() {
             }}
           >
             <Group justify="space-between">
-              <Group>
-                <Image src={logoPath} alt="Logo" w={30} h={30} />
-                <Text size="lg" fw={500}>TrustyNotes</Text>
-                <Tooltip label="GitHub">
-                  <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
-                    <ActionIcon variant="default" size={30}>
-                      <IconBrandGithub size={16} />
-                    </ActionIcon>
-                  </Anchor>
-                </Tooltip>
-                <Tooltip label="Privacy Policy">
-                  <Anchor 
-                    href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" 
-                    target="_blank" 
-                    rel="noreferrer"
-                    size="sm"
-                    c="dimmed"
-                  >
-                    Privacy Policy
-                  </Anchor>
-                </Tooltip>
-              </Group>
+              {!sidebarCollapsed && (
+                <Group>
+                  <Image src={logoPath} alt="Logo" w={30} h={30} />
+                  <Text size="lg" fw={500}>TrustyNotes</Text>
+                  <Tooltip label="GitHub">
+                    <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
+                      <ActionIcon variant="default" size={30}>
+                        <IconBrandGithub size={16} />
+                      </ActionIcon>
+                    </Anchor>
+                  </Tooltip>
+                  <Tooltip label="Privacy Policy">
+                    <Anchor 
+                      href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" 
+                      target="_blank" 
+                      rel="noreferrer"
+                      size="sm"
+                      c="dimmed"
+                    >
+                      Privacy Policy
+                    </Anchor>
+                  </Tooltip>
+                </Group>
+              )}
               <Group>
                 {!sidebarCollapsed && (
                   <>
@@ -695,15 +800,17 @@ function App() {
                     </Tooltip>
                   </>
                 )}
-                <Tooltip label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
-                  <ActionIcon
-                    variant="default"
-                    onClick={toggleSidebar}
-                    size={30}
-                  >
-                    {sidebarCollapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
-                  </ActionIcon>
-                </Tooltip>
+                {!sidebarCollapsed && (
+                  <Tooltip label={sidebarCollapsed ? "Expand sidebar" : "Collapse sidebar"}>
+                    <ActionIcon
+                      variant="default"
+                      onClick={toggleSidebar}
+                      size={30}
+                    >
+                      {sidebarCollapsed ? <IconChevronRight size={16} /> : <IconChevronLeft size={16} />}
+                    </ActionIcon>
+                  </Tooltip>
+                )}
               </Group>
             </Group>
   
@@ -722,65 +829,63 @@ function App() {
                     <Button
                       color="red"
                       leftSection={<IconTrash size={14} />}
-                      onClick={deleteSelectedNotes}
+                      onClick={handleDeleteSelectedNotes}
                     >
                       Delete ({selectedNotes.size})
                     </Button>
                   )}
                 </Group>
                 <TextInput
-                  placeholder="Search notes..."
+                  placeholder="     Search notes..."
                   leftSection={<IconSearch size={16} />}
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                  className="modern-search-input"
                 />
-                <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }}>
+                <Box style={{ flex: 1, overflowY: 'auto', overflowX: 'hidden' }} className="smooth-scroll">
                   <Stack gap="xs">
-                    {filteredNotes.map((note) => (
-                      <Paper
+                    {filteredNotes.map((note: Note) => (
+                      <div
                         key={note.id}
-                        shadow="xs"
-                        p="md"
+                        className={`modern-note-card ${isNoteSelected(note) ? 'selected' : ''}`}
                         onClick={() => selectNote(note)}
-                        style={{
-                          cursor: 'pointer',
-                          backgroundColor: selectedNote?.id === note.id ? 
-                            'var(--mantine-color-blue-light)' : undefined,
-                        }}
                       >
                         <Group justify="apart" wrap="nowrap">
-                          <Box style={{ overflow: 'hidden' }}>
-                            <Text fw={500} lineClamp={1}>
+                          <Box style={{ overflow: 'hidden', flex: 1 }}>
+                            <div className="modern-note-title">
                               {note.title || 'Untitled'}
-                            </Text>
-                            <Text size="xs" color="dimmed" lineClamp={1}>
+                            </div>
+                            <div className="modern-note-date">
                               {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                            </Text>
+                            </div>
                           </Box>
                           {isSelectionMode ? (
                             <ActionIcon
                               variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
                               color="blue"
-                              onClick={(e) => toggleNoteSelection(note.id!, e)}
-                              style={{ flexShrink: 0 }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                toggleNoteSelection(note.id!, e);
+                              }}
+                              size="lg"
+                              radius="xl"
                             >
                               {selectedNotes.has(note.id!) && <IconCheck size={16} />}
                             </ActionIcon>
                           ) : (
-                            <ActionIcon
+                            <ActionIcon 
+                              color="red" 
                               variant="subtle"
-                              color="red"
                               onClick={(e) => {
                                 e.stopPropagation();
-                                deleteNote(note.id!);
+                                handleDeleteNote(note.id!);
                               }}
-                              style={{ flexShrink: 0 }}
                             >
                               <IconTrash size={16} />
                             </ActionIcon>
                           )}
                         </Group>
-                      </Paper>
+                      </div>
                     ))}
                   </Stack>
                 </Box>
@@ -788,14 +893,78 @@ function App() {
             )}
           {sidebarCollapsed && (
             <Stack 
-              gap={0}
+              gap="md"
               align="center" 
               style={{ 
                 flex: 1,
-                paddingTop: 'var(--mantine-spacing-md)',
-                '& > *:not(:last-child)': { marginBottom: 'var(--mantine-spacing-md)' }
+                paddingTop: 'var(--mantine-spacing-lg)',
+                paddingBottom: 'var(--mantine-spacing-lg)',
+                justifyContent: 'space-between'
               }}
             >
+              {/* Top Section */}
+              <Stack gap="md" align="center">
+                <Image src={logoPath} alt="Logo" w={32} h={32} />
+                
+                <Tooltip label="New Note" position="right">
+                  <ActionIcon
+                    size={40}
+                    variant="filled"
+                    onClick={clearForm}
+                    className="collapsed-action-button"
+                  >
+                    <IconPlus size={20} />
+                  </ActionIcon>
+                </Tooltip>
+                
+                <Tooltip label="Sync Settings" position="right">
+                  <ActionIcon
+                    size={36}
+                    variant="subtle"
+                    onClick={() => setShowSyncSettings(true)}
+                    className="collapsed-action-button"
+                  >
+                    <IconCloud size={18} />
+                  </ActionIcon>
+                </Tooltip>
+                
+                <Tooltip label="Toggle Theme" position="right">
+                  <ActionIcon
+                    size={36}
+                    variant="subtle"
+                    onClick={() => toggleColorScheme()}
+                    className="collapsed-action-button"
+                  >
+                    {colorScheme === 'dark' ? <IconSun size={18} /> : <IconMoon size={18} />}
+                  </ActionIcon>
+                </Tooltip>
+              </Stack>
+
+              {/* Bottom Section */}
+              <Stack gap="sm" align="center">
+                <Tooltip label="GitHub" position="right">
+                  <Anchor href="https://github.com/toolworks-dev/trusty-notes" target="_blank" rel="noreferrer">
+                    <ActionIcon
+                      size={32}
+                      variant="subtle"
+                      className="collapsed-action-button"
+                    >
+                      <IconBrandGithub size={16} />
+                    </ActionIcon>
+                  </Anchor>
+                </Tooltip>
+                
+                <Tooltip label="Expand sidebar" position="right">
+                  <ActionIcon
+                    variant="subtle"
+                    onClick={toggleSidebar}
+                    size={36}
+                    className="collapsed-action-button expand-button"
+                  >
+                    <IconChevronRight size={18} />
+                  </ActionIcon>
+                </Tooltip>
+              </Stack>
             </Stack>
           )}
           </Stack>
@@ -806,122 +975,254 @@ function App() {
         padding: 0, 
         overflow: 'hidden',
         display: 'flex',
-        flexDirection: 'column'
+        flexDirection: 'column',
+        position: 'relative',
+        flex: '1 1 auto'
       }}>
         {isMobile ? (
-          <Box className="mobile-content-container">
+          <Box className="mobile-content-container" style={{
+            width: '100%',
+            display: 'flex',
+            flexDirection: 'column',
+            flex: 1,
+            minHeight: 0,
+            overflow: 'hidden'
+          }}>
             {selectedNote ? (
               <NoteEditor 
                 note={selectedNote}
                 isMobile={true}
-                isKeyboardVisible={isKeyboardVisible}
                 onBack={() => setSelectedNote(null)}
                 loadNotes={loadNotes}
               />
             ) : (
-              <Stack p="md" gap="sm">
-                <Group justify="apart" mb="md">
-                  <TextInput
-                    placeholder="Search notes..."
-                    value={searchQuery}
-                    onChange={(e) => setSearchQuery(e.currentTarget.value)}
-                    style={{ flex: 1 }}
-                    leftSection={<IconSearch size={16} />}
-                  />
-                  <Group>
-                    {filteredNotes.length > 0 && (
-                      <ActionIcon
-                        variant="light"
-                        color={isSelectionMode ? "blue" : "gray"}
-                        onClick={toggleSelectionMode}
-                      >
-                        <IconCheck size={20} />
-                      </ActionIcon>
-                    )}
-                    <ActionIcon 
-                      size="lg" 
-                      color="blue" 
+              <>
+                {/* Mobile Notes List Area */}
+                <Box style={{ 
+                  flex: 1, 
+                  overflowY: 'auto',
+                  WebkitOverflowScrolling: 'touch',
+                  paddingLeft: 'max(1rem, env(safe-area-inset-left))',
+                  paddingRight: 'max(1rem, env(safe-area-inset-right))',
+                  paddingTop: 'max(1rem, env(safe-area-inset-top))',
+                }}>
+                  {/* Mobile Search */}
+                  <Box className="mobile-search" style={{ 
+                    paddingLeft: '1rem',
+                    paddingRight: '1rem',
+                    paddingTop: '1rem',
+                    marginBottom: '1.5rem' 
+                  }}>
+                    <TextInput
+                      placeholder="Search your notes..."
+                      value={searchQuery}
+                      onChange={(e) => setSearchQuery(e.currentTarget.value)}
+                      leftSection={<IconSearch size={18} />}
+                      size="lg"
                       radius="xl"
-                      onClick={clearForm}
-                      className="mobile-fab"
-                    >
-                      <IconPlus size={24} />
-                    </ActionIcon>
-                  </Group>
-                </Group>
-                
-                {isSelectionMode && selectedNotes.size > 0 && (
-                  <Button
-                    color="red"
-                    leftSection={<IconTrash size={14} />}
-                    onClick={deleteSelectedNotes}
-                    fullWidth
-                    mb="md"
-                  >
-                    Delete Selected ({selectedNotes.size})
-                  </Button>
-                )}
-                
-                {filteredNotes.length > 0 ? (
-                  <Stack gap="xs">
-                    {filteredNotes.map(note => (
-                      <Paper
-                        key={note.id}
-                        p="md"
-                        withBorder
-                        className="mobile-note-item"
-                        onClick={() => selectNote(note)}
-                      >
-                        <Group justify="apart" wrap="nowrap">
-                          <Box style={{ overflow: 'hidden' }}>
-                            <Text fw={500} lineClamp={1}>
-                              {note.title || 'Untitled'}
-                            </Text>
-                            <Text size="xs" color="dimmed" lineClamp={1}>
-                              {format(note.updated_at, 'MMM d, yyyy HH:mm')}
-                            </Text>
-                          </Box>
-                          {isSelectionMode ? (
-                            <ActionIcon
-                              variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
-                              color="blue"
-                              onClick={(e) => toggleNoteSelection(note.id!, e)}
-                            >
-                              {selectedNotes.has(note.id!) && <IconCheck size={16} />}
-                            </ActionIcon>
-                          ) : (
-                            <ActionIcon 
-                              color="red" 
-                              variant="subtle"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                deleteNote(note.id!);
+                      styles={{
+                        input: {
+                          background: 'var(--bg-secondary)',
+                          border: '1px solid var(--border-primary)',
+                          fontSize: '16px',
+                          padding: '1rem 1.25rem',
+                          paddingLeft: '4rem'
+                        },
+                        section: {
+                          marginLeft: '1.25rem'
+                        }
+                      }}
+                    />
+                  </Box>
+
+                  {filteredNotes.length > 0 ? (
+                    <Stack gap="md" style={{ 
+                      paddingLeft: '1rem',
+                      paddingRight: '1rem',
+                      paddingBottom: 'calc(1rem + 80px + env(safe-area-inset-bottom))'
+                    }}>
+                      {filteredNotes.map((note: Note) => (
+                        <Paper
+                          key={note.id}
+                          className="modern-note-card"
+                          onClick={() => selectNote(note)}
+                          p="lg"
+                          radius="xl"
+                          withBorder
+                          style={{
+                            cursor: 'pointer',
+                            transition: 'all 0.2s ease',
+                            background: 'var(--bg-secondary)',
+                            border: isNoteSelected(note) ? 
+                              '2px solid var(--primary-500)' : 
+                              '1px solid var(--border-primary)',
+                            position: 'relative'
+                          }}
+                        >
+                          {isSelectionMode && (
+                            <Box
+                              style={{
+                                position: 'absolute',
+                                top: '1rem',
+                                left: '1rem',
+                                zIndex: 10
                               }}
                             >
-                              <IconTrash size={16} />
-                            </ActionIcon>
+                              <ActionIcon
+                                variant={selectedNotes.has(note.id!) ? "filled" : "outline"}
+                                color="blue"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  toggleNoteSelection(note.id!, e);
+                                }}
+                                size="lg"
+                                radius="xl"
+                              >
+                                {selectedNotes.has(note.id!) && <IconCheck size={16} />}
+                              </ActionIcon>
+                            </Box>
                           )}
-                        </Group>
-                      </Paper>
-                    ))}
-                  </Stack>
-                ) : (
-                  <Box py="xl" ta="center">
-                    <IconNotes size={48} color={colorScheme === 'dark' ? 'gray.6' : 'gray.3'} stroke={1} />
-                    <Text c="dimmed" mt="md">
-                      No notes found
-                    </Text>
-                    <Button 
-                      variant="light" 
-                      mt="md" 
-                      leftSection={<IconPlus size={16} />}
-                      onClick={clearForm}
+                          
+                          <Box pl={isSelectionMode ? '3rem' : 0}>
+                            <Group justify="space-between" align="flex-start" mb="xs">
+                              <Text 
+                                fw={600} 
+                                size="lg"
+                                lineClamp={2}
+                                className="modern-note-title"
+                                style={{ flex: 1 }}
+                              >
+                                {note.title || 'Untitled'}
+                              </Text>
+                              {!isSelectionMode && (
+                                <ActionIcon
+                                  variant="subtle"
+                                  color="red"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    handleDeleteNote(note.id!);
+                                  }}
+                                  size="sm"
+                                  radius="xl"
+                                >
+                                  <IconTrash size={14} />
+                                </ActionIcon>
+                              )}
+                            </Group>
+                            
+                            <Text 
+                              size="sm" 
+                              c="dimmed" 
+                              lineClamp={3} 
+                              className="modern-note-content"
+                              mb="sm"
+                            >
+                              {stripHtml(note.content).substring(0, 120)}
+                              {stripHtml(note.content).length > 120 ? '...' : ''}
+                            </Text>
+                            
+                            <Group justify="space-between" align="center">
+                              <Text size="xs" c="dimmed" className="modern-note-date">
+                                {formatNoteDatetime(note.updated_at)}
+                              </Text>
+                              {getEncryptionBadge(note)}
+                            </Group>
+                          </Box>
+                        </Paper>
+                      ))}
+                    </Stack>
+                  ) : (
+                    <Box className="empty-state mobile-empty-state" style={{
+                      paddingBottom: 'calc(1rem + 80px + env(safe-area-inset-bottom))'
+                    }}>
+                      <IconNotes size={80} className="empty-state-icon" stroke={1} />
+                      <Text className="empty-state-title" size="xl" fw={700} mb="sm">
+                        {searchQuery ? 'No notes found' : 'Start Writing'}
+                      </Text>
+                      <Text className="empty-state-description" size="md" c="dimmed" mb="xl">
+                        {searchQuery ? 
+                          'Try adjusting your search terms' : 
+                          'Capture your thoughts and ideas securely'
+                        }
+                      </Text>
+                      {!searchQuery && (
+                        <Button 
+                          variant="gradient"
+                          gradient={{ from: 'blue', to: 'purple', deg: 45 }}
+                          size="lg"
+                          radius="xl"
+                          leftSection={<IconPlus size={20} />}
+                          onClick={clearForm}
+                          style={{
+                            minHeight: '48px',
+                            fontSize: '16px'
+                          }}
+                        >
+                          Create Your First Note
+                        </Button>
+                      )}
+                    </Box>
+                  )}
+                </Box>
+
+                {/* Mobile FAB */}
+                <ActionIcon 
+                  size="xl" 
+                  color="blue" 
+                  radius="xl"
+                  onClick={clearForm}
+                  className="mobile-fab"
+                  variant="gradient"
+                  gradient={{ from: 'blue', to: 'purple', deg: 45 }}
+                  style={{
+                    position: 'fixed',
+                    bottom: '24px', // Adjust if needed with safe area
+                    right: 'max(24px, env(safe-area-inset-right))', // Adjust for safe area
+                    width: '64px',
+                    height: '64px',
+                    zIndex: 1000, // Ensure it's above content but potentially below modal/drawer overlays
+                    boxShadow: '0 8px 24px rgba(0, 0, 0, 0.15)',
+                    border: 'none'
+                  }}
+                >
+                  <IconPlus size={24} />
+                </ActionIcon>
+
+                {/* Selection Mode Bottom Bar */}
+                {isSelectionMode && selectedNotes.size > 0 && (
+                  <Box
+                    style={{
+                      position: 'fixed',
+                      bottom: 0,
+                      left: 0,
+                      right: 0,
+                      background: 'var(--bg-secondary)', // Or var(--editor-toolbar) for consistency
+                      borderTop: '1px solid var(--border-primary)',
+                      padding: '1rem',
+                      paddingBottom: 'max(1rem, env(safe-area-inset-bottom))', // Safe area for bottom
+                      paddingLeft: 'max(1rem, env(safe-area-inset-left))', // Safe area for left
+                      paddingRight: 'max(1rem, env(safe-area-inset-right))', // Safe area for right
+                      zIndex: 1001, // Above FAB maybe, or same level if mutually exclusive
+                      backdropFilter: 'blur(12px)'
+                    }}
+                  >
+                    <Button
+                      leftSection={<IconTrash size={18} />}
+                      fullWidth
+                      radius="xl"
+                      color="red"
+                      size="lg"
+                      onClick={handleDeleteSelectedNotes}
+                      style={{
+                        minHeight: '48px',
+                        fontSize: '16px'
+                      }}
                     >
-                      Create Your First Note
+                      Delete Selected ({selectedNotes.size})
                     </Button>
                   </Box>
                 )}
-              </Stack>
+              </>
             )}
           </Box>
         ) : (
@@ -936,14 +1237,17 @@ function App() {
               <NoteEditor 
                 note={selectedNote}
                 isMobile={false}
-                isKeyboardVisible={isKeyboardVisible}
+                onBack={() => setSelectedNote(null)}
                 loadNotes={loadNotes}
               />
             ) : (
-              <Box py="xl" ta="center">
-                <IconNotes size={64} color={colorScheme === 'dark' ? 'gray.6' : 'gray.3'} stroke={1} />
-                <Text size="xl" c="dimmed" mt="md">
+              <Box className="empty-state">
+                <IconNotes size={120} className="empty-state-icon" stroke={1} />
+                <Text className="empty-state-title">
                   Select a note or create a new one
+                </Text>
+                <Text className="empty-state-description">
+                  Your thoughts are waiting to be captured
                 </Text>
               </Box>
             )}
@@ -954,11 +1258,32 @@ function App() {
       <Modal
         opened={showSyncSettings}
         onClose={() => setShowSyncSettings(false)}
-        title="Sync Settings"
+        title={isMobile ? null : "Sync Settings"}
         size="lg"
         fullScreen={isMobile}
+        withCloseButton={!isMobile}
+        closeOnClickOutside={!isMobile}
+        closeOnEscape={true}
+        styles={isMobile ? {
+          header: {
+            display: 'none !important',
+            height: '0 !important',
+            padding: '0 !important',
+            margin: '0 !important',
+          },
+          body: {
+            padding: '0 !important',
+            paddingTop: 'calc(60px + max(0px, env(safe-area-inset-top))) !important',
+            paddingBottom: 'max(1rem, env(safe-area-inset-bottom)) !important',
+            height: '100vh !important',
+          },
+          content: {
+            background: 'var(--bg-primary) !important',
+            height: '100vh !important',
+          }
+        } : {}}
       >
-        <SyncSettings onSync={loadNotes} />
+        <SyncSettings onSync={loadNotes} onClose={() => setShowSyncSettings(false)} />
       </Modal>
     </AppShell>
   );
