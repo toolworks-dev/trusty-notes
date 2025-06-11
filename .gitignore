@@ -25,7 +25,6 @@ dist-ssr
 
 desktop/dist/*
 !desktop/dist/.gitkeep
-desktop/icon.png
 desktop/dist-electron/
 
 src-tauri/target
