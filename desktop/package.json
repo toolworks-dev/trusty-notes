@@ -7,9 +7,11 @@
     "author": "Toolworks.dev",
     "scripts": {
         "start": "electron .",
-        "build:linux": "electron-builder --linux",
-        "build:windows": "electron-builder --windows",
-        "build:all": "electron-builder -l -w"
+        "prebuild": "node build.js",
+        "build:linux": "bun run prebuild && electron-builder --linux",
+        "build:windows": "bun run prebuild && electron-builder --windows",
+        "build:mac": "bun run prebuild && electron-builder --mac",
+        "build:all": "bun run prebuild && electron-builder -l -w -m"
     },
     "build": {
         "appId": "dev.toolworks.trustynotes",
@@ -36,14 +38,32 @@
         "win": {
             "target": ["nsis", "portable"],
             "icon": "icon.png"
+        },
+        "mac": {
+            "target": [
+                {
+                    "target": "dmg",
+                    "arch": ["x64", "arm64"]
+                },
+                {
+                    "target": "zip",
+                    "arch": ["x64", "arm64"]
+                }
+            ],
+            "category": "public.app-category.productivity",
+            "icon": "icon.png",
+            "hardenedRuntime": true,
+            "gatekeeperAssess": false,
+            "entitlements": "build/entitlements.mac.plist",
+            "entitlementsInherit": "build/entitlements.mac.plist"
         }
     },
     "devDependencies": {
-        "electron": "^36.3.1",
+        "electron": "^36.4.0",
         "electron-builder": "^26.0.12"
     },
     "dependencies": {
-        "electron-log": "^5.4.0",
+        "electron-log": "^5.4.1",
         "electron-updater": "^6.6.2",
         "electron-window-state": "^5.0.3"
     }
