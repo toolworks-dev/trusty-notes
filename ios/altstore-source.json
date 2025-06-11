@@ -1,0 +1,51 @@
+{
+  "name": "TrustyNotes",
+  "subtitle": "Simple, secure, and reliable note-taking app",
+  "description": "TrustyNotes is a modern note-taking application built with security and simplicity in mind. Take notes, organize your thoughts, and keep your information secure.",
+  "iconURL": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/public/android-chrome-192x192.png",
+  "headerURL": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/public/trusty.jpg",
+  "website": "https://github.com/toolworks-dev/trusty-notes",
+  "tintColor": "#1A1B1E",
+  "featuredApps": [
+    "dev.toolworks.trustynotes"
+  ],
+  "apps": [
+    {
+      "name": "TrustyNotes",
+      "bundleIdentifier": "dev.toolworks.trustynotes",
+      "developerName": "Toolworks.dev",
+      "subtitle": "Simple, secure, and reliable note-taking app",
+      "localizedDescription": "TrustyNotes is a modern note-taking application built with security and simplicity in mind. Take notes, organize your thoughts, and keep your information secure with this privacy-focused app.",
+      "iconURL": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/public/android-chrome-192x192.png",
+      "tintColor": "#1A1B1E",
+      "category": "utilities",
+      "versions": [
+        {
+          "version": "0.8.2",
+          "date": "2025-01-11",
+          "localizedDescription": "Initial release of TrustyNotes for iOS",
+          "downloadURL": "https://github.com/toolworks-dev/trusty-notes/releases/download/v0.8.2/TrustyNotes-0.8.2.ipa",
+          "size": 3259499
+        }
+      ],
+      "appPermissions": {
+        "entitlements": [
+          "com.apple.security.application-groups"
+        ],
+        "privacy": {}
+      }
+    }
+  ],
+  "news": [
+    {
+      "title": "TrustyNotes iOS Release",
+      "identifier": "ios_release_v0.8.2",
+      "caption": "TrustyNotes is now available for iOS devices!",
+      "date": "2025-06-11",
+      "tintColor": "#1A1B1E",
+      "imageURL": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/public/trusty.jpg",
+      "notify": true,
+      "appID": "dev.toolworks.trustynotes"
+    }
+  ]
+} 

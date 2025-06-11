@@ -6,6 +6,8 @@ WebApp: https://trustynotes.app
 
 Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
 
+iOS AltStore: https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/ios/altstore-source.json
+
 Vim Mode documentation at: https://github.com/toolworks-dev/trusty-notes/blob/main/docs/vim.md
 
 ![image](https://github.com/user-attachments/assets/0d573b72-41af-4851-b90b-d2105bc50286)

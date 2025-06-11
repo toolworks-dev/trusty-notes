@@ -20,7 +20,9 @@
     "generate-android-icons": "bun scripts/generate-android-icons.js",
     "android": "bun run build && bunx cap sync && bunx cap open android",
     "build:android": "bun run build && bunx cap sync && cd android && ./gradlew assembleRelease",
-    "add:android": "bunx cap add android"
+    "add:android": "bunx cap add android",
+    "ios": "bun run build && bunx cap sync && bunx cap open ios",
+    "build:ios": "bun run build && bunx cap sync ios"
   },
   "dependencies": {
     "@capacitor/android": "^7.3.0",

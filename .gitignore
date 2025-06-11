@@ -47,3 +47,4 @@ browser-extension/web-ext-artifacts
 
 server/symlink.sh
 ARCHIVED-browser-extension/
+*.ipa
