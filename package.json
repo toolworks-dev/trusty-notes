@@ -14,6 +14,7 @@
     "dev:electron": "concurrently \"vite\" \"cd desktop && cross-env NODE_ENV=development electron .\"",
     "dist:linux": "bun run build:electron && cd desktop && bun run build:linux",
     "dist:windows": "bun run build:electron && cd desktop && bun run build:windows",
+    "dist:mac": "bun run build:electron && cd desktop && bun run build:mac",
     "dist:all": "bun run build:electron && cd desktop && bun run build:all",
     "generate-android-icons": "bun scripts/generate-android-icons.js",
     "android": "bun run build && bunx cap sync && bunx cap open android",
