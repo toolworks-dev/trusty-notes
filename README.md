@@ -82,7 +82,8 @@ bun install
 cd ..
 bun run dist:linux // for linux
 bun run dist:windows // for windows
-bun run dist:all // for both
+bun run dist:mac // for mac
+bun run dist:all // for all
 ```
 
 Builds are in ```desktop/dist-electron```
