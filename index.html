@@ -25,7 +25,6 @@
       property="og:description"
       content="Take notes securely with TrustyNotes. End-to-end encrypted, Markdown editor, automatic cloud sync, and cross-platform accessibility."
     />
-    <meta property="og:url" content="https://trustynotes.app" />
     <meta
       property="og:image"
       content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
@@ -44,47 +43,8 @@
       content="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png"
     />
 
-    <!-- Canonical URL -->
-    <link rel="canonical" href="https://trustynotes.app" />
-
     <!-- Privacy Policy Link -->
     <link rel="privacy-policy" href="https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md" />
-
-    <!-- Structured Data (Schema Markup) -->
-    <script type="application/ld+json">
-      {
-        "@context": "https://schema.org",
-        "@type": "SoftwareApplication",
-        "name": "TrustyNotes",
-        "operatingSystem": "Cross-Platform",
-        "applicationCategory": "Utility",
-        "description": "TrustyNotes is a secure, open-source note-taking app featuring end-to-end encryption, Markdown editing, cloud synchronization, and cross-platform compatibility.",
-        "url": "https://trustynotes.app",
-        "screenshot": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png",
-        "offers": {
-          "@type": "Offer",
-          "price": "0.00",
-          "priceCurrency": "USD"
-        },
-        "termsOfService": {
-          "@type": "DigitalDocument",
-          "name": "Privacy Policy",
-          "url": "https://raw.githubusercontent.com/toolworks-dev/trusty-notes/refs/heads/main/PRIVACY.md"
-        }
-      }
-    </script>
-
-    <!-- Analytics -->
-    <script>
-      // Only load analytics in web mode, not in electron
-      if (!window.electron) {
-        const script = document.createElement('script');
-        script.defer = true;
-        script.dataset.domain = "trustynotes.app";
-        script.src = "https://plausible.toolworks.dev/js/script.js";
-        document.head.appendChild(script);
-      }
-    </script>
 
     <!-- Main App Script -->
     <script defer type="module" src="/src/main.tsx"></script>
