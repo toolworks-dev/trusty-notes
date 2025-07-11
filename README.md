@@ -1,12 +1,10 @@
 # Trusty Notes
 
-A secure cross-platform note-taking application. Features end-to-end encryption for cloud sync and a modern React frontend.
+A secure cross-platform note-taking application designed for self-hosting. Features end-to-end encryption for cloud sync and a modern React frontend.
 
-WebApp: https://trustynotes.app
+* As of now (v1.0.0) the public instance of trustynotes has been shutdown and moved to a selfhost only project
 
 Windows/Linux/Android Builds: https://github.com/toolworks-dev/trusty-notes/releases
-
-iOS AltStore: https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/ios/altstore-source.json
 
 Vim Mode documentation at: https://github.com/toolworks-dev/trusty-notes/blob/main/docs/vim.md
 
@@ -25,25 +23,23 @@ Vim Mode documentation at: https://github.com/toolworks-dev/trusty-notes/blob/ma
 - 💾 Import/Export functionality
 - 🔒 Seed phrase-based encryption
 
-## To-Do
-- [x] Improved Sync
-- [x] Rich Text
-- [ ] Browser Extension - No longer maintained
-- [ ] Attachments/Files
-- [x] Desktop Application
-- [x] Mobile Application
-- [x] Post Quantum Encrpytion
+## Self-Hosting Setup
 
-## Client Self-Hosting
+### Quick Start
+1. **Configure Sync Server**: Edit `src/config/sync.ts` to set your sync server URL
+2. **Start Server**: Follow the server setup instructions below  
+3. **Build Frontend**: Run `bun run build` to create production files
+4. **Deploy**: Serve the `dist/` folder or use Docker
 
-### Prerequisites
-- Docker
-- Docker Compose
+See `SELF_HOSTING.md` for detailed configuration instructions.
 
-### Setup & Run
-```
-git clone https://github.com/toolworks-dev/trusty-notes
-cd trusty-notes
+### Frontend Build
+```bash
+# Install dependencies and build
+bun install
+bun run build
+
+# Or use Docker
 docker compose up --build -d
 ```
 

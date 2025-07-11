@@ -20,12 +20,8 @@ import { WebStorageService } from '../services/webStorage';
 import { SyncSettings as SyncSettingsType } from '../types/sync';
 import { CryptoService } from '../services/cryptoService';
 import { ApiService } from '../services/apiService';
+import { getAvailableSyncServers, getDefaultSyncServer } from '../config/sync';
 //import { NumberInput } from '@mantine/core';
-
-const DEFAULT_SERVERS = [
-  { label: 'Official Server', value: 'https://sync.trustynotes.app' },
-  { label: 'Local Server', value: 'http://localhost:3222' },
-];
 
 interface SyncSettingsProps {
   onSync?: () => Promise<void>;
@@ -38,7 +34,7 @@ export function SyncSettings({ onSync, onClose }: SyncSettingsProps) {
   const [showNewSeedPhrase, setShowNewSeedPhrase] = useState(false);
   const [newSeedPhrase, setNewSeedPhrase] = useState('');
   const [syncing, setSyncing] = useState(false);
-  const [selectedServer, setSelectedServer] = useState(DEFAULT_SERVERS[0].value);
+  const [selectedServer, setSelectedServer] = useState(getDefaultSyncServer());
   const [customServers, setCustomServers] = useState<string[]>([]);
   const [newServerUrl, setNewServerUrl] = useState('');
   const [showAddServer, setShowAddServer] = useState(false);
@@ -112,7 +108,7 @@ export function SyncSettings({ onSync, onClose }: SyncSettingsProps) {
       }
       
       if (customServers.includes(newServerUrl) || 
-          DEFAULT_SERVERS.some(s => s.value === newServerUrl)) {
+          getAvailableSyncServers().some(s => s.value === newServerUrl)) {
         notifications.show({
           title: 'Error',
           message: 'Server already exists',
@@ -151,7 +147,7 @@ export function SyncSettings({ onSync, onClose }: SyncSettingsProps) {
     await saveSettings({ custom_servers: updatedServers });
     
     if (selectedServer === serverUrl) {
-      const newServer = DEFAULT_SERVERS[0].value;
+      const newServer = getDefaultSyncServer();
       setSelectedServer(newServer);
       await saveSettings({ server_url: newServer });
     }
@@ -236,7 +232,7 @@ export function SyncSettings({ onSync, onClose }: SyncSettingsProps) {
   };
 
   const serverOptions = [
-    ...DEFAULT_SERVERS,
+    ...getAvailableSyncServers(),
     ...customServers.map(url => ({
       label: url,
       value: url,

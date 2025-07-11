@@ -31,9 +31,9 @@ const ASSETS_TO_CACHE = [
   'https://raw.githubusercontent.com/toolworks-dev/trusty-notes/main/trusty-notes.png'
 ];
 
-const API_ROUTES = [
-  'https://sync.trustynotes.app'
-];
+// API routes are now configurable in src/config/sync.ts
+// The service worker will not cache sync server requests
+const API_ROUTES = [];
 
 self.addEventListener('install', (event) => {
   event.waitUntil(

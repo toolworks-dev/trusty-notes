@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { Button, Stack, Text, PasswordInput } from '@mantine/core';
 import { notifications } from '@mantine/notifications';
 import { WebStorageService } from '../services/webStorage';
+import { getDefaultSyncServer } from '../config/sync';
 
 interface SyncSetupProps {
   onSync?: () => Promise<void>;
@@ -23,11 +24,12 @@ export function SyncSetup({ onSync }: SyncSetupProps) {
 
     try {
       setStatus('syncing');
+      const defaultServer = getDefaultSyncServer();
       await WebStorageService.initializeCrypto(seedPhrase);
-      await WebStorageService.syncWithServer('https://sync.trustynotes.app');
+      await WebStorageService.syncWithServer(defaultServer);
       await WebStorageService.saveSyncSettings({ 
         seed_phrase: seedPhrase,
-        server_url: 'https://sync.trustynotes.app',
+        server_url: defaultServer,
         auto_sync: false,
         sync_interval: 5,
         custom_servers: []

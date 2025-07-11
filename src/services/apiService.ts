@@ -10,7 +10,7 @@
     notes: EncryptedNote[];
   }
   
-  //const DEFAULT_SERVER = 'https://sync.trustynotes.app';
+  // Default server is now configured in src/config/sync.ts
   
   export class ApiService {
     private static getEndpoint(serverUrl: string, path: string): string {

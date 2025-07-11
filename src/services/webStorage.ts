@@ -1,6 +1,7 @@
 import { CryptoService } from './cryptoService';
 import { ApiService } from './apiService';
 import { Note, SyncSettings } from '../types/sync';
+import { getDefaultSyncServer } from '../config/sync';
 
 export class WebStorageService {
   private static readonly NOTES_KEY = 'notes';
@@ -90,7 +91,7 @@ export class WebStorageService {
     return settingsJson ? JSON.parse(settingsJson) : {
       auto_sync: false,
       sync_interval: 300,
-      server_url: 'https://sync.trustynotes.app',
+      server_url: getDefaultSyncServer(),
       custom_servers: [],
       seed_phrase: null
     };
